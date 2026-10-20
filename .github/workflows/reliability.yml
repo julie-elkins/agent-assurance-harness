@@ -68,6 +68,14 @@ jobs:
           --output /tmp/agent-reliability-conformance.json
           --fail-on-findings
 
+      - name: Validate reusable action from consumer fixture
+        run: >-
+          uv run python tools/consumer_validation.py
+          --output /tmp/agent-reliability-consumer-validation.json
+          --markdown
+          --fail-on-block
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Compare candidate with Golden Trace
         run: >-
           uv run python tools/golden_trace_report.py
@@ -225,6 +233,7 @@ jobs:
             /tmp/agent-reliability-golden-negative.json
             /tmp/agent-reliability-provider-assurance.json
             /tmp/agent-reliability-provider-contract.json
+            /tmp/agent-reliability-consumer-validation.json
             /tmp/agent-reliability-release-manifest.json
             /tmp/agent-reliability-runtime-sbom.json
             /tmp/agent-reliability-release-artifacts/*

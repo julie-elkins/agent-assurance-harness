@@ -81,6 +81,7 @@ The current progression is intentionally operational:
 | 15 | Release promotion | Whether an explicitly approved, provenance-verified artifact may proceed to a future release boundary |
 | 16 | Reusable GitHub Action | Whether another repository can consume the same bounded assurance contract and structured decision |
 | 17 | Evidence-quality abstention | Whether stale or wrong-source evidence produces abstention with a diagnostic failure reason |
+| 18 | Consumer repository validation | Whether a separate repository can invoke the pinned action, pass a guarded adapter, and block a degraded adapter |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -258,6 +259,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `.github/actions/agent-assurance/action.yml` — pinned-revision reusable consumer action.
 - `tools/reusable_action_runner.py` — JSON-argument-vector action runner and metadata-only outputs.
 - `examples/reusable-action-consumer.yml` — consumer workflow example.
+- `examples/consumer-repository/` — separate synthetic consumer fixture with positive and negative adapter workflows.
+- `tools/consumer_validation.py` — local metadata-only consumer validation and workflow contract check.
 
 ### Audit evidence binding
 
@@ -369,6 +372,25 @@ text from becoming an unintended shell program. Consumers should pin the action
 to a reviewed commit and use a separate runner or container if the adapter
 itself is untrusted; the action constrains the protocol boundary but is not an
 operating-system sandbox.
+
+### Consumer repository validation
+
+Phase 18 exercises the reusable action from a separate synthetic consumer
+repository fixture instead of only testing the action from inside its source
+repository. The fixture uses a standard-library-only adapter and pins both its
+positive and deliberately degraded workflow steps to the reviewed Phase 17
+commit.
+
+`tools/consumer_validation.py` runs the same bounded subprocess runner locally
+for both adapters. It requires the guarded adapter to pass, requires the
+degraded adapter to return a blocked decision, checks that the fixture has
+read-only permissions and no moving `@main` reference, and emits only
+metadata. The root reliability workflow runs this check and uploads its
+metadata-only report with the other assurance evidence.
+
+This proves that the reusable action's consumer contract is exercised outside
+the harness's normal example adapter. It does not prove GitHub-hosted runner
+availability, live-provider quality, or consumer-specific deployment behavior.
 
 ### Operational ship gate
 

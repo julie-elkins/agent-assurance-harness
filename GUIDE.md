@@ -434,7 +434,7 @@ outputs:
 ```yaml
 - name: Run reusable Agent Assurance
   id: assurance
-  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@main # Pin to a reviewed commit before production use.
+  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@0c84a8c442a4229206a05fee9eb9e07982a4f0c3 # Reviewed Phase 17 revision.
   with:
     agent-id: external
     adapter-command-json: '["python", "examples/guarded_adapter.py"]'
@@ -447,6 +447,28 @@ commit, keep the adapter output identifier equal to `agent-id`, and treat a
 refusal as blocked evidence. The action can validate a consumer-supplied pack
 directory, but custom packs do not automatically receive the built-in mutation
 controls.
+
+### Consumer repository validation
+
+Phase 18 checks the reusable action from a separate synthetic consumer
+repository fixture. Consumer validation means proving that a repository outside
+the harness can call the pinned action, pass a guarded adapter, receive
+structured outputs, and block a deliberately degraded adapter.
+
+Run the local check with:
+
+```bash
+uv run python tools/consumer_validation.py \
+  --output /tmp/agent-reliability-consumer-validation.json \
+  --markdown \
+  --fail-on-block
+```
+
+The fixture is standard-library-only and metadata-only. It contains no
+credentials, network calls, private content, provider payloads, prompts, or
+traces. The check proves the bounded local action path and its negative
+control; it does not prove GitHub-hosted runner availability, live-provider
+quality, or consumer-specific deployment behavior.
 
 ### Evidence-quality abstention
 

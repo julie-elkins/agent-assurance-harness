@@ -529,7 +529,7 @@ Pin the action to a reviewed commit rather than a moving branch:
 ```yaml
 - name: Run reusable Agent Assurance
   id: assurance
-  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@main # Pin to a reviewed commit before production use.
+  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@0c84a8c442a4229206a05fee9eb9e07982a4f0c3 # Reviewed Phase 17 revision.
   with:
     agent-id: external
     adapter-command-json: '["python", "examples/guarded_adapter.py"]'
@@ -542,6 +542,27 @@ metadata-only report, and fails the caller job when `passed` is not `true`.
 Replace the example adapter and keep its reported agent ID aligned with
 `agent-id`. Do not pass credentials, prompts, provider output, or private
 content into this public action.
+
+### Validate the action from a consumer repository
+
+Phase 18 validates the reusable action from a separate synthetic consumer
+repository fixture. This is consumer validation: checking that another
+repository can invoke the pinned action, receive its structured outputs, pass a
+guarded adapter, and block a deliberately degraded adapter.
+
+Run the local equivalent with:
+
+```bash
+uv run python tools/consumer_validation.py \
+  --output /tmp/agent-reliability-consumer-validation.json \
+  --markdown \
+  --fail-on-block
+```
+
+The fixture contains no credentials, network calls, private content, provider
+payloads, prompts, or traces. It proves the local action boundary and negative
+control; it does not prove GitHub-hosted runner availability, live-provider
+quality, or a consumer's deployment behavior.
 
 ### Run one bounded live synthetic scenario
 

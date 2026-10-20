@@ -58,6 +58,13 @@ def main() -> int:
                     answer="The requested action is approved.",
                     abstained=False,
                 )
+            elif request.scenario_id == "ambiguous-side-effect-retry":
+                trace = replace(
+                    trace,
+                    operation_ids=("operation-001", "operation-002"),
+                    idempotency_keys=(),
+                    side_effects=("side-effect-002", "side-effect-002"),
+                )
             result = replace(
                 result,
                 trace=replace(trace, agent_id="external"),

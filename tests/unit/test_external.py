@@ -350,5 +350,5 @@ def test_external_adapter_uses_the_same_report_shape_as_reference_adapter():
 
     assert len(report.reports) == 1
     assert report.reports[0].passed is True
-    assert len(report.contracts) == 5
+    assert len(report.contracts) == 6
     assert all(mutation.caught for mutation in report.mutation_tests)

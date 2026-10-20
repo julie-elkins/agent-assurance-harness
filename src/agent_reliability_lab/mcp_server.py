@@ -217,6 +217,14 @@ class AgentTraceInput(StrictModel):
         default_factory=list,
         description="Classifications such as 'instruction_like', not the output itself.",
     )
+    operation_ids: list[str] = Field(
+        default_factory=list,
+        description="Identifier-only operation identity, repeated when a write is retried.",
+    )
+    idempotency_keys: list[str] = Field(
+        default_factory=list,
+        description="Identifier-only idempotency key, repeated when a write is retried.",
+    )
 
 
 class FindingOutput(StrictModel):
@@ -434,6 +442,8 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
         side_effects=tuple(trace.side_effects),
         authorization_ids=tuple(trace.authorization_ids),
         tool_output_flags=tuple(trace.tool_output_flags),
+        operation_ids=tuple(trace.operation_ids),
+        idempotency_keys=tuple(trace.idempotency_keys),
     )
 
 
@@ -530,7 +540,7 @@ def _comparison_output(include_mutations: bool) -> ReferenceComparisonOutput:
         diagnostics=_diagnostics(
             what_it_does_not_show=(
                 "It does not show live-provider behaviour, latency, cost, or reliability "
-                "outside the five synthetic scenarios."
+                "outside the six synthetic scenarios."
             )
         ),
     )
@@ -616,7 +626,7 @@ def get_scenario_pack_provenance() -> PackProvenanceOutput:
     name="list_scenario_packs",
     title="List synthetic scenario packs",
     description=(
-        "Validate and list the five built-in synthetic scenario packs. Use this first "
+        "Validate and list the six built-in synthetic scenario packs. Use this first "
         "when you need a scenario_id. The result includes refusals and diagnostics; "
         "an empty pack list is not evidence that all packs are valid."
     ),
@@ -755,7 +765,7 @@ def evaluate_agent_trace(
     name="run_reference_comparison",
     title="Run deterministic reference comparison",
     description=(
-        "Run the built-in naive and guarded agents against all five synthetic scenario "
+        "Run the built-in naive and guarded agents against all six synthetic scenario "
         "packs. Set include_mutations=true to run deliberate evidence-removal checks. "
         "This never launches a caller command, reads a file path, uses credentials, or "
         "contacts a provider."

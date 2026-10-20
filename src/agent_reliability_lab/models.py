@@ -97,6 +97,8 @@ class Trace:
     side_effects: tuple[str, ...] = ()
     authorization_ids: tuple[str, ...] = ()
     tool_output_flags: tuple[str, ...] = ()
+    operation_ids: tuple[str, ...] = ()
+    idempotency_keys: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

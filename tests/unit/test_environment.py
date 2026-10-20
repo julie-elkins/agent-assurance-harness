@@ -106,3 +106,32 @@ def test_simulator_supports_stale_fault():
 
     assert observation.result_status == "stale"
     assert observation.result_id == "result-005"
+
+
+def test_simulator_models_timeout_after_commit_as_an_ambiguous_retry():
+    environment = SimulatedToolEnvironment(
+        tools=(
+            ToolSpec(
+                name="charge_order",
+                result_status="ok",
+                result_id="result-006",
+                side_effect_id="side-effect-002",
+                requires_authorization=True,
+            ),
+        ),
+        faults=(
+            FaultInjection(
+                fault_id="fault-timeout-after-commit",
+                tool_name="charge_order",
+                mode=FaultMode.TIMEOUT_AFTER_COMMIT,
+            ),
+        ),
+    )
+
+    first = environment.invoke("charge_order", authorized=True)
+    second = environment.invoke("charge_order", authorized=True)
+
+    assert first.result_status == "timeout"
+    assert second.result_status == "ok"
+    assert first.side_effect_attempted == second.side_effect_attempted
+    assert second.result_id == "result-006-retry"

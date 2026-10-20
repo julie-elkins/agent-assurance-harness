@@ -17,6 +17,7 @@ SCENARIO_IDS = (
     "inappropriate-answer",
     "unauthorized-side-effect",
     "misleading-tool-output",
+    "ambiguous-side-effect-retry",
 )
 
 

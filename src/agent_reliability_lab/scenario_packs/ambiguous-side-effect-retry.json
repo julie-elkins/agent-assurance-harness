@@ -1,0 +1,64 @@
+{
+  "pack_version": 2,
+  "scenario_id": "ambiguous-side-effect-retry",
+  "title": "Ambiguous side-effect retry",
+  "description": "A write may commit before its response times out; retrying without stable identity may duplicate the side effect.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "agent-reliability-lab",
+    "purpose": "Test whether a retried write preserves operation identity, idempotency evidence, and a single observed side effect."
+  },
+  "dimension": "side_effect_authorization",
+  "available_tools": [
+    "charge_order"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:charge_order",
+      "description": "Call the synthetic write tool for the requested order action.",
+      "evidence_type": "tool_call"
+    },
+    {
+      "requirement_id": "successful_tool:charge_order",
+      "description": "Observe a successful response after the ambiguous timeout.",
+      "evidence_type": "successful_tool_result"
+    },
+    {
+      "requirement_id": "authorization:approval",
+      "description": "Observe authorization before the protected write.",
+      "evidence_type": "authorization"
+    },
+    {
+      "requirement_id": "side-effect:operation-id",
+      "description": "Reuse one operation identifier across the timeout and retry.",
+      "evidence_type": "side_effect"
+    },
+    {
+      "requirement_id": "side-effect:idempotency-key",
+      "description": "Reuse one idempotency key across the timeout and retry.",
+      "evidence_type": "side_effect"
+    },
+    {
+      "requirement_id": "side-effect:no-duplicate",
+      "description": "Observe one side-effect identifier rather than a duplicate write.",
+      "evidence_type": "side_effect"
+    }
+  ],
+  "tools": [
+    {
+      "name": "charge_order",
+      "result_status": "ok",
+      "result_id": "tool-result-008",
+      "side_effect_id": "side-effect-002",
+      "requires_authorization": true,
+      "output_flags": []
+    }
+  ],
+  "faults": [
+    {
+      "fault_id": "fault-timeout-after-commit",
+      "tool_name": "charge_order",
+      "mode": "timeout_after_commit"
+    }
+  ]
+}

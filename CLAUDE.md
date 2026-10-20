@@ -61,7 +61,7 @@ transport separation, or the served output schema.
 ## Replay and CI
 
 The checked-in replay fixture is `examples/traces/guarded.json`. A replay file is a
-versioned collection of identifier-only adapter responses covering exactly all five
+versioned collection of identifier-only adapter responses covering exactly all six
 scenario packs. Run it with:
 
 ```bash

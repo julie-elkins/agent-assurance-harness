@@ -67,6 +67,8 @@ _RELIABILITY_EVENT_IDS = {
     "agent.reliability.authorization",
     "agent.reliability.side_effect",
     "agent.reliability.tool_output_flag",
+    "agent.reliability.operation_id",
+    "agent.reliability.idempotency_key",
 }
 _RELIABILITY_EVENT_ABSTENTION = "agent.reliability.abstention"
 
@@ -322,6 +324,10 @@ def _record_event(
         recorder.record_authorization(event_id)
     elif name == "agent.reliability.side_effect":
         recorder.record_side_effect(event_id)
+    elif name == "agent.reliability.operation_id":
+        recorder.record_operation_id(event_id)
+    elif name == "agent.reliability.idempotency_key":
+        recorder.record_idempotency_key(event_id)
     else:
         recorder.record_tool_output_flag(event_id)
 

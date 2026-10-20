@@ -11,7 +11,7 @@ def test_list_packs_json_reports_all_builtin_packs(capsys):
     data = json.loads(captured.out)
 
     assert exit_code == 0
-    assert len(data["packs"]) == 5
+    assert len(data["packs"]) == 6
     assert data["refusals"] == []
 
 

@@ -11,6 +11,7 @@ def test_scenarios_are_public_synthetic_cases():
         "inappropriate-answer",
         "unauthorized-side-effect",
         "misleading-tool-output",
+        "ambiguous-side-effect-retry",
     ]
     assert all("synthetic" in case.description.lower() or case.scenario_id for case in cases)
 

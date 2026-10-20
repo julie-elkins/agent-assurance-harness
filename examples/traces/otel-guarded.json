@@ -326,6 +326,171 @@
                   "attributes": []
                 }
               ]
+            },
+            {
+              "traceId": "ffffffffffffffffffffffffffffffff",
+              "spanId": "0000000000000007",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "ambiguous-side-effect-retry"
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "charge_order"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "tool-result-008"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "timeout"
+                  }
+                }
+              ],
+              "events": []
+            },
+            {
+              "traceId": "ffffffffffffffffffffffffffffffff",
+              "spanId": "0000000000000008",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "ambiguous-side-effect-retry"
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "charge_order"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "tool-result-008-retry"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "ok"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "name": "agent.reliability.claim",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "claim:retry_reused_identity"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.answer",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "answer:order_action_complete"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.authorization",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "authorization:approval"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.side_effect",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "side-effect-002"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.operation_id",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "operation-001"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.operation_id",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "operation-001"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.idempotency_key",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "idempotency-001"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.idempotency_key",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "idempotency-001"
+                      }
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

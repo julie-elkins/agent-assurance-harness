@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 from agent_reliability_lab.adapters import reference_adapters, trace_to_events
 from agent_reliability_lab.environment import environment_for_scenario
 from agent_reliability_lab.models import Trace
@@ -60,6 +62,48 @@ def test_guarded_adapter_quarantines_instruction_like_output():
     assert run.trace is not None
     assert run.trace.tool_output_flags == ("instruction_like",)
     assert run.trace.abstained is True
+
+
+def test_guarded_adapter_reuses_retry_identity_for_ambiguous_write():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "ambiguous-side-effect-retry"
+    )
+    request = ScenarioRequest(
+        scenario_id=scenario.scenario_id,
+        task_label=scenario.title,
+        available_tools=scenario.available_tools,
+        contract=scenario.contract,
+    )
+
+    run = reference_adapters()[1].run(
+        request,
+        environment=environment_for_scenario(scenario.scenario_id),
+    )
+
+    assert run.trace is not None
+    assert run.trace.operation_ids == ("operation-001", "operation-001")
+    assert run.trace.idempotency_keys == (
+        "idempotency-001",
+        "idempotency-001",
+    )
+    assert run.trace.side_effects == ("side-effect-002",)
+
+
+def test_ambiguous_retry_requires_an_observed_side_effect():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "ambiguous-side-effect-retry"
+    )
+    trace = scenario.run_guarded()
+    trace = replace(trace, side_effects=())
+
+    finding = scenario.evaluate(trace, scenario.contract)
+
+    assert finding.status.value == "failed"
+    assert "side-effect:no-duplicate" in finding.missing_evidence
 
 
 def test_adapter_refuses_a_non_simulated_environment():

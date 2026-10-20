@@ -17,7 +17,7 @@ answer. It is whether the agent can show:
 - what the result still does not prove; and
 - whether the evaluator itself can catch a known false pass.
 
-The current harness compares a deliberately naive agent with a guarded agent across five
+The current harness compares a deliberately naive agent with a guarded agent across six
 synthetic agent cases:
 
 1. **Tool misuse** — a plausible result comes from the wrong tool.
@@ -27,11 +27,13 @@ synthetic agent cases:
 4. **Unauthorized side effect** — the agent attempts a protected action without
    authorization.
 5. **Misleading tool output** — the tool result is classified as instruction-like data.
+6. **Ambiguous side-effect retry** — a write may commit before its response times out,
+   so the retry must reuse stable operation identity and an idempotency key.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.
 
-The harness also checks a sixth failure family: **evaluator false pass**. This means a weak
+The harness also checks a separate failure family: **evaluator false pass**. This means a weak
 evaluator marks incomplete evidence as complete while the contract evaluator catches the
 missing requirement.
 
@@ -112,7 +114,7 @@ requirements, and named simulator faults. Packs are data only: the loader reject
 fields and unsupported evidence types, and it never executes predicates, imports pack code,
 or discovers files outside a directory explicitly supplied by the caller.
 
-The five built-in packs are the source of truth for the reference scenarios. List and
+The six built-in packs are the source of truth for the reference scenarios. List and
 validate them without running an agent:
 
 ```bash

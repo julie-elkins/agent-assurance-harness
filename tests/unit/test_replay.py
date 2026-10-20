@@ -19,7 +19,7 @@ def test_guarded_fixture_replays_as_passing():
     assert report.refusal is None
     assert report.agent_report is not None
     assert report.agent_report.passed is True
-    assert len(report.agent_report.findings) == 5
+    assert len(report.agent_report.findings) == 6
 
 
 def test_adapter_replay_covers_all_builtin_scenarios_in_memory():
@@ -31,7 +31,7 @@ def test_adapter_replay_covers_all_builtin_scenarios_in_memory():
         ),
     )
 
-    assert len(replay.cases) == 5
+    assert len(replay.cases) == 6
     assert replay.harness_change is not None
     assert replay.harness_change.components == ("guardrails",)
     assert all(case.response.trace is not None for case in replay.cases)

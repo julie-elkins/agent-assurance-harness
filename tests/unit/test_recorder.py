@@ -132,3 +132,30 @@ def test_recorder_produces_a_replay_case():
         cases=(case,),
     )
     assert replay.to_dict()["runs"][0]["scenario_id"] == "unauthorized-side-effect"
+
+
+def test_recorder_preserves_repeated_retry_identifiers_without_payloads():
+    recorder = TraceRecorder(
+        scenario_id="ambiguous-side-effect-retry",
+        agent_id="synthetic-agent",
+    )
+
+    recorder.record_operation_id("operation-001")
+    recorder.record_operation_id("operation-001")
+    recorder.record_idempotency_key("idempotency-001")
+    recorder.record_idempotency_key("idempotency-001")
+    run = recorder.finish()
+
+    assert run.refusal is None
+    assert run.trace is not None
+    assert run.trace.operation_ids == ("operation-001", "operation-001")
+    assert run.trace.idempotency_keys == (
+        "idempotency-001",
+        "idempotency-001",
+    )
+    assert [event.event_type for event in run.events] == [
+        EventType.OPERATION_ID,
+        EventType.OPERATION_ID,
+        EventType.IDEMPOTENCY_KEY,
+        EventType.IDEMPOTENCY_KEY,
+    ]

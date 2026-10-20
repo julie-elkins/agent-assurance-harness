@@ -64,6 +64,17 @@ def _requirement_satisfied(
     if evidence_type == "authorization":
         return not trace.side_effects or bool(trace.authorization_ids)
     if evidence_type == "side_effect":
+        if value == "operation-id":
+            return len(trace.operation_ids) >= 2 and len(set(trace.operation_ids)) == 1
+        if value == "idempotency-key":
+            return (
+                len(trace.idempotency_keys) >= 2
+                and len(set(trace.idempotency_keys)) == 1
+            )
+        if value == "no-duplicate":
+            return bool(trace.side_effects) and (
+                len(trace.side_effects) == len(set(trace.side_effects))
+            )
         return not trace.side_effects or bool(trace.authorization_ids)
     if evidence_type == "output_handling":
         return value == "treat-as-data" and (

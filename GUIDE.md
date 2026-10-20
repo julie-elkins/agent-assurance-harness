@@ -44,7 +44,7 @@ It does not prove:
 
 - that a live model is generally reliable;
 - that a particular prompt, model, tool, or policy caused a regression;
-- that the five built-in scenarios cover every production failure;
+- that the six built-in scenarios cover every production failure;
 - that an adapter process is safe to run on an untrusted host; or
 - that a metadata attestation is a signed provenance statement.
 
@@ -65,6 +65,12 @@ The default report compares the naive and guarded synthetic reference adapters. 
 adapter is a deliberate negative control; its failures are expected. Use
 `--fail-on-findings` when a caller wants any blocking finding to return a non-zero exit
 code.
+
+The retry scenario models an ambiguous write: the simulated operation may commit before
+the response times out. A guarded adapter must preserve the same operation ID and
+idempotency key across the retry and record one side effect. An idempotency key is a
+stable identifier that lets a receiving system treat a repeated request as the same write;
+without it, a successful retry can duplicate a protected action.
 
 Run the public hygiene checks before treating a change as release-ready:
 
@@ -146,7 +152,7 @@ whether anything was checked.
 A scenario pack is a versioned JSON contract containing synthetic tools, evidence
 requirements, and named simulator faults. Packs are data, not executable plugins.
 
-List the five built-in packs:
+List the six built-in packs:
 
 ```bash
 uv run agent-reliability --list-packs --json

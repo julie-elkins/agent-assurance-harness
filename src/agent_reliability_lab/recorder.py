@@ -57,6 +57,8 @@ class TraceRecorder:
         self._side_effects: list[str] = []
         self._authorization_ids: list[str] = []
         self._tool_output_flags: list[str] = []
+        self._operation_ids: list[str] = []
+        self._idempotency_keys: list[str] = []
         self._claim: str | None = None
         self._answer: str | None = None
         self._abstained = False
@@ -258,6 +260,26 @@ class TraceRecorder:
         _append_unique(self._tool_output_flags, flag_id)
         return self._event(EventType.TOOL_OUTPUT_FLAG, flag_id)
 
+    def record_operation_id(self, operation_id: str) -> RecorderResult:
+        """Record an identifier used to correlate a retried write."""
+
+        return self._record_retry_identifier(
+            operation_id,
+            self._operation_ids,
+            "operation_id",
+            EventType.OPERATION_ID,
+        )
+
+    def record_idempotency_key(self, idempotency_key: str) -> RecorderResult:
+        """Record an identifier that makes a retried write safe to repeat."""
+
+        return self._record_retry_identifier(
+            idempotency_key,
+            self._idempotency_keys,
+            "idempotency_key",
+            EventType.IDEMPOTENCY_KEY,
+        )
+
     def finish(self) -> AdapterRun:
         """Return the accepted run or a structured refusal."""
 
@@ -287,6 +309,8 @@ class TraceRecorder:
                 side_effects=tuple(self._side_effects),
                 authorization_ids=tuple(self._authorization_ids),
                 tool_output_flags=tuple(self._tool_output_flags),
+                operation_ids=tuple(self._operation_ids),
+                idempotency_keys=tuple(self._idempotency_keys),
             ),
             events=tuple(self._events),
         )
@@ -337,6 +361,22 @@ class TraceRecorder:
         if self._refusal is None:
             self._refusal = refusal
         return RecorderResult(accepted=False, refusal=self._refusal)
+
+    def _record_retry_identifier(
+        self,
+        value: str,
+        values: list[str],
+        context: str,
+        event_type: EventType,
+    ) -> RecorderResult:
+        blocked = self._blocked()
+        if blocked is not None:
+            return blocked
+        invalid = _identifier_refusal(value, context)
+        if invalid is not None:
+            return self._set_refusal(invalid)
+        values.append(value)
+        return self._event(event_type, value)
 
 
 def _identifier_refusal(value: object, context: str) -> AdapterRefusal | None:

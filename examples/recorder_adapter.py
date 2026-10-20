@@ -76,6 +76,22 @@ def _record_guarded_run(
         _record_observation(recorder, environment.invoke("lookup_catalog"))
         recorder.record_claim("claim:tool_output_is_data")
         recorder.record_abstention()
+    elif scenario_id == "ambiguous-side-effect-retry":
+        first = environment.invoke("charge_order", authorized=True)
+        second = environment.invoke("charge_order", authorized=True)
+        _record_observation(recorder, first)
+        recorder.record_operation_id("operation-001")
+        recorder.record_idempotency_key("idempotency-001")
+        recorder.record_tool_call(second.tool_name)
+        recorder.record_tool_result(
+            second.tool_name,
+            second.result_status,
+            result_id=second.result_id,
+        )
+        recorder.record_operation_id("operation-001")
+        recorder.record_idempotency_key("idempotency-001")
+        recorder.record_claim("claim:retry_reused_identity")
+        recorder.record_answer("answer:order_action_complete")
     else:
         recorder.record_claim(f"claim:unknown_scenario:{scenario_id}")
     return recorder.finish()

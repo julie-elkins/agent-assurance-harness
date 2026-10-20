@@ -366,6 +366,14 @@ def _openai_events(trace) -> list[dict[str, object]]:
         {"type": "side_effect", "id": item}
         for item in trace.side_effects
     )
+    events.extend(
+        {"type": "classification", "kind": "operation_id", "id": item}
+        for item in trace.operation_ids
+    )
+    events.extend(
+        {"type": "classification", "kind": "idempotency_key", "id": item}
+        for item in trace.idempotency_keys
+    )
     return events
 
 
@@ -416,6 +424,14 @@ def _anthropic_events(trace) -> list[dict[str, object]]:
     events.extend(
         {"type": "reliability", "kind": "side_effect", "id": item}
         for item in trace.side_effects
+    )
+    events.extend(
+        {"type": "reliability", "kind": "operation_id", "id": item}
+        for item in trace.operation_ids
+    )
+    events.extend(
+        {"type": "reliability", "kind": "idempotency_key", "id": item}
+        for item in trace.idempotency_keys
     )
     return events
 
@@ -616,6 +632,22 @@ def _record_classification(
                 "Emit an identifier-only side-effect classification.",
             )
         recorder.record_side_effect(identifier)
+    elif kind == "operation_id":
+        if identifier is None:
+            raise ProviderPayloadError(
+                "missing_classification_id",
+                "An operation-id classification requires an identifier.",
+                "Emit an identifier-only operation-id classification.",
+            )
+        recorder.record_operation_id(identifier)
+    elif kind == "idempotency_key":
+        if identifier is None:
+            raise ProviderPayloadError(
+                "missing_classification_id",
+                "An idempotency-key classification requires an identifier.",
+                "Emit an identifier-only idempotency-key classification.",
+            )
+        recorder.record_idempotency_key(identifier)
     else:
         raise ProviderPayloadError(
             "unknown_reliability_classification",

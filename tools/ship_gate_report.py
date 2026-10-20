@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -15,12 +17,96 @@ from agent_reliability_lab.ship_gate import (
     load_ship_gate,
 )
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def _read_object(path: Path) -> dict[str, Any]:
     value = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(value, dict):
         raise ValueError("Report must contain a JSON object.")
     return value
+
+
+def _package_version() -> str:
+    with (ROOT / "pyproject.toml").open("rb") as stream:
+        return tomllib.load(stream)["project"]["version"]
+
+
+def _git_commit() -> str:
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _safe_value(value: object) -> str | None:
+    if isinstance(value, str) and value and all(
+        character.isalnum() or character in "._:/-" for character in value
+    ):
+        return value
+    return None
+
+
+def _audit_observation(
+    check_id: str,
+    regression_path: Path | None,
+    golden_path: Path | None,
+) -> tuple[CheckObservation, dict[str, str]]:
+    """Bind report identifiers to the current checkout and baseline manifest."""
+
+    reasons: list[str] = []
+    values: dict[str, str] = {}
+    regression = _read_object(regression_path) if regression_path else {}
+    golden = _read_object(golden_path) if golden_path else {}
+    attestation = regression.get("assurance_attestation")
+    if not isinstance(attestation, dict):
+        reasons.append("assurance-attestation-missing")
+        attestation = {}
+    manifest = golden.get("manifest")
+    if not isinstance(manifest, dict):
+        reasons.append("golden-manifest-missing")
+        manifest = {}
+
+    observed = {
+        "git-commit": attestation.get("git_commit"),
+        "package-version": attestation.get("package_version"),
+        "scenario-pack-sha256": attestation.get("pack_set_sha256"),
+        "golden-trace-sha256": golden.get("candidate_trace_sha256"),
+    }
+    for field, value in observed.items():
+        safe = _safe_value(value)
+        if safe is None:
+            reasons.append(f"{field}-missing")
+        else:
+            values[field] = safe
+
+    try:
+        current_git_commit = _git_commit()
+        current_package_version = _package_version()
+    except (OSError, subprocess.SubprocessError, KeyError, TypeError) as error:
+        raise ValueError("Current checkout identity could not be read.") from error
+
+    if values.get("git-commit") != current_git_commit:
+        reasons.append("git-commit-mismatch")
+    if values.get("package-version") != current_package_version:
+        reasons.append("package-version-mismatch")
+    if values.get("scenario-pack-sha256") != _safe_value(
+        manifest.get("pack_set_sha256")
+    ):
+        reasons.append("scenario-pack-sha256-mismatch")
+    if values.get("golden-trace-sha256") != _safe_value(
+        manifest.get("trace_sha256")
+    ):
+        reasons.append("golden-trace-sha256-mismatch")
+
+    return CheckObservation(
+        check_id,
+        not reasons,
+        "matched" if not reasons else ";".join(reasons),
+    ), values
 
 
 def _regression_observation(
@@ -83,9 +169,13 @@ def _golden_observation(
 def _observations(
     manifest: ShipGateManifest,
     paths: dict[str, Path],
+    audit_observation: CheckObservation,
 ) -> dict[str, CheckObservation]:
     observations: dict[str, CheckObservation] = {}
     for check in manifest.required_checks:
+        if check.report_kind == "audit":
+            observations[check.check_id] = audit_observation
+            continue
         path = paths.get(check.check_id)
         if path is None:
             continue
@@ -165,7 +255,24 @@ def main(argv: list[str] | None = None) -> int:
     paths = {key: value for key, value in paths.items() if value is not None}
     try:
         manifest = load_ship_gate(args.gate)
-        report = evaluate_ship_gate(manifest, _observations(manifest, paths))
+        audit_check_id = next(
+            (
+                check.check_id
+                for check in manifest.required_checks
+                if check.report_kind == "audit"
+            ),
+            "audit-evidence-integrity",
+        )
+        audit_observation, audit_values = _audit_observation(
+            audit_check_id,
+            args.adapter_regression_positive,
+            args.golden_trace_positive,
+        )
+        observations = _observations(manifest, paths, audit_observation)
+        audit_values["decision"] = "pending"
+        preliminary = evaluate_ship_gate(manifest, observations, audit_values)
+        audit_values["decision"] = preliminary.decision
+        report = evaluate_ship_gate(manifest, observations, audit_values)
         data = report.to_dict()
         rendered = _render(data, report) if args.markdown else (
             json.dumps(data, indent=2, sort_keys=True) + "\n"

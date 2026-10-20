@@ -16,7 +16,6 @@ from typing import Mapping
 
 SHIP_GATE_VERSION = 1
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
-_SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 def _text(value: object, field: str) -> str:
@@ -166,6 +165,25 @@ class CheckObservation:
 
 
 @dataclass(frozen=True)
+class AuditEvidence:
+    """Observed audit identifiers and their completeness state."""
+
+    values: tuple[tuple[str, str], ...]
+    missing_fields: tuple[str, ...]
+
+    @property
+    def complete(self) -> bool:
+        return not self.missing_fields
+
+    def to_dict(self) -> dict[str, object]:
+        return {
+            "values": dict(self.values),
+            "complete": self.complete,
+            "missing_fields": list(self.missing_fields),
+        }
+
+
+@dataclass(frozen=True)
 class ShipGateReport:
     """A release decision containing identifiers and operational metadata only."""
 
@@ -177,6 +195,7 @@ class ShipGateReport:
     blocking_reasons: tuple[str, ...]
     rollback: RollbackPolicy
     audit: AuditPolicy
+    audit_evidence: AuditEvidence
     stop_condition: StopCondition
 
     @property
@@ -195,6 +214,7 @@ class ShipGateReport:
             "blocking_reasons": list(self.blocking_reasons),
             "rollback": self.rollback.to_dict(),
             "audit": self.audit.to_dict(),
+            "audit_evidence": self.audit_evidence.to_dict(),
             "stop_condition": self.stop_condition.to_dict(),
             "diagnostics": {
                 "warnings": [
@@ -240,12 +260,27 @@ class ShipGateReport:
                 f"`{self.rollback.target}`.",
                 f"- **Verification:** `{self.rollback.verification}`.",
                 f"- **Audit storage:** `{self.audit.storage}`.",
+                f"- **Audit evidence:** "
+                f"{'complete' if self.audit_evidence.complete else 'incomplete'}.",
                 f"- **Stop condition:** "
                 f"{self.stop_condition.max_iterations} iteration(s), "
                 f"{self.stop_condition.max_elapsed_seconds} seconds.",
                 "",
             ]
         )
+        lines.extend(
+            [
+                "## Audit evidence",
+                "",
+                "| Field | Value |",
+                "| --- | --- |",
+            ]
+        )
+        lines.extend(
+            f"| `{field}` | `{value}` |"
+            for field, value in self.audit_evidence.values
+        )
+        lines.append("")
         if self.blocking_reasons:
             lines.extend(
                 ["## Blocking reasons", ""]
@@ -297,11 +332,13 @@ def load_ship_gate(path: Path) -> ShipGateManifest:
 def evaluate_ship_gate(
     manifest: ShipGateManifest,
     observations: Mapping[str, CheckObservation],
+    audit_values: Mapping[str, str] | None = None,
 ) -> ShipGateReport:
     """Evaluate required observations and return a bounded ship decision."""
 
     checks: list[CheckObservation] = []
     blocking: list[str] = []
+    audit_evidence = _audit_evidence(manifest, audit_values or {})
     for required in manifest.required_checks:
         observation = observations.get(required.check_id)
         if observation is None:
@@ -313,6 +350,8 @@ def evaluate_ship_gate(
         checks.append(observation)
         if required.blocking and not observation.passed:
             blocking.append(f"{required.check_id}:{observation.reason}")
+    for field in audit_evidence.missing_fields:
+        blocking.append(f"audit:{field}:missing")
     return ShipGateReport(
         gate_id=manifest.gate_id,
         decision="ready" if not blocking else "blocked",
@@ -322,8 +361,30 @@ def evaluate_ship_gate(
         blocking_reasons=tuple(blocking),
         rollback=manifest.rollback,
         audit=manifest.audit,
+        audit_evidence=audit_evidence,
         stop_condition=manifest.stop_condition,
     )
+
+
+def _audit_evidence(
+    manifest: ShipGateManifest,
+    values: Mapping[str, str],
+) -> AuditEvidence:
+    """Keep only declared, identifier-only audit values and expose omissions."""
+
+    declared = set(manifest.audit.fields)
+    unknown = set(values) - declared
+    if unknown:
+        raise ValueError("Audit evidence contains undeclared fields.")
+    safe_values: list[tuple[str, str]] = []
+    missing: list[str] = []
+    for field in manifest.audit.fields:
+        value = values.get(field)
+        if isinstance(value, str) and value and _IDENTIFIER.fullmatch(value):
+            safe_values.append((field, value))
+        else:
+            missing.append(field)
+    return AuditEvidence(tuple(safe_values), tuple(missing))
 
 
 def _parse_required_checks(value: object) -> tuple[RequiredCheck, ...]:

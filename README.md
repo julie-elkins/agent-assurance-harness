@@ -213,6 +213,11 @@ uv run python tools/ship_gate_report.py \
 This public example uses synthetic identifiers only. It does not deploy,
 contact a real owner, export provider output, or store credentials.
 
+The ship-gate report also verifies its audit evidence against the current Git
+revision, package version, scenario-pack SHA-256, and approved Golden Trace
+manifest. Stale or mismatched metadata blocks the decision; the report exposes
+only safe identifiers and hashes.
+
 ### Compare a changed harness with its approved baseline
 
 Harness²-style workflows can change the surrounding harness—such as guardrails, skills,

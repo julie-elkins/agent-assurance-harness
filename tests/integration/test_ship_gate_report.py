@@ -1,12 +1,28 @@
 import json
 import subprocess
 import sys
+import tomllib
 from pathlib import Path
 
 
 REPOSITORY = Path(__file__).parents[2]
 TOOL = REPOSITORY / "tools" / "ship_gate_report.py"
 MANIFEST = REPOSITORY / "examples" / "ship-gate.json"
+GOLDEN_MANIFEST = REPOSITORY / "examples" / "traces" / "golden-manifest.json"
+
+
+def _current_identity() -> tuple[str, str]:
+    package_data = tomllib.loads(
+        (REPOSITORY / "pyproject.toml").read_text(encoding="utf-8")
+    )
+    git_commit = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPOSITORY,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    return git_commit, package_data["project"]["version"]
 
 
 def _report(
@@ -14,13 +30,16 @@ def _report(
     passed: bool,
     findings: list[dict[str, object]] | None = None,
     drifts: list[dict[str, object]] | None = None,
+    **extra: object,
 ) -> dict[str, object]:
-    return {
+    report = {
         "passed": passed,
         "refusal": None,
         "findings": findings if findings is not None else [],
         "drifts": drifts if drifts is not None else [],
     }
+    report.update(extra)
+    return report
 
 
 def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[str]:
@@ -29,12 +48,29 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
     negative_regression = tmp_path / "negative-regression.json"
     negative_golden = tmp_path / "negative-golden.json"
     output = tmp_path / "ship-gate.json"
+    git_commit, package_version = _current_identity()
+    golden_manifest = json.loads(GOLDEN_MANIFEST.read_text(encoding="utf-8"))
     positive_regression.write_text(
-        json.dumps(_report(passed=True)),
+        json.dumps(
+            _report(
+                passed=True,
+                assurance_attestation={
+                    "git_commit": git_commit,
+                    "package_version": package_version,
+                    "pack_set_sha256": golden_manifest["pack_set_sha256"],
+                },
+            )
+        ),
         encoding="utf-8",
     )
     positive_golden.write_text(
-        json.dumps(_report(passed=True)),
+        json.dumps(
+            _report(
+                passed=True,
+                manifest=golden_manifest,
+                candidate_trace_sha256=golden_manifest["trace_sha256"],
+            )
+        ),
         encoding="utf-8",
     )
     negative_regression.write_text(

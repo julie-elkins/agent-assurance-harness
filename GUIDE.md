@@ -310,6 +310,12 @@ successful release. The report records the configured rollback method,
 last-known-good target, audit fields, and bounded stop condition; it does not
 perform a rollback or claim production health.
 
+Phase 9 binds those audit fields to actual evidence. The report must carry the
+current Git revision, package version, scenario-pack SHA-256, Golden Trace
+SHA-256, and final decision. The gate compares them with the current checkout
+and the approved Golden Trace manifest. A stale report or cross-report mismatch
+blocks release instead of leaving an audit field as an unverified declaration.
+
 ## Read the attestation
 
 An assurance attestation is a metadata-only record of one evaluation state. It contains:

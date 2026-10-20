@@ -69,6 +69,7 @@ The current progression is intentionally operational:
 | 6 | Evidence source and freshness | Whether evidence is from the approved source and within its age window |
 | 7 | Golden Trace baseline | Whether canonical successful evidence drifted even when status still passes |
 | 8 | Operational ship gate | Who notices a failure, what blocks release, how to roll back, and what audit record remains |
+| 9 | Audit evidence binding | Whether the release record is complete and matches the current checkout and approved baseline |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -223,6 +224,18 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/golden_trace_report.py` — Golden Trace comparison and drift gate.
 - `examples/ship-gate.json` — synthetic operational ownership, blocking, rollback, audit, and stop-condition contract.
 - `tools/ship_gate_report.py` — release-readiness decision from metadata-only assurance reports.
+
+### Audit evidence binding
+
+Phase 9 makes the audit section enforceable. The ship-gate report now carries the
+observed Git revision, package version, scenario-pack SHA-256, Golden Trace
+SHA-256, and final decision. It compares those values with the current checkout
+and the approved Golden Trace manifest. A stale report, missing identifier, or
+cross-report mismatch blocks the gate.
+
+The report remains metadata-only: hashes and identifiers are visible, while
+prompts, traces, provider output, credentials, and private contacts remain
+excluded.
 
 ### Operational ship gate
 

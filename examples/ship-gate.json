@@ -27,6 +27,12 @@
       "report_kind": "golden-trace",
       "expected": "drift-caught",
       "blocking": true
+    },
+    {
+      "check_id": "audit-evidence-integrity",
+      "report_kind": "audit",
+      "expected": "match",
+      "blocking": true
     }
   ],
   "failure_policies": [

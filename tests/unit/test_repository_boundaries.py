@@ -21,12 +21,23 @@ jobs:
     permissions:
       contents: read
   release-provenance:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_approval == 'approve')
     needs: reliability
     permissions:
       contents: read
       id-token: write
       attestations: write
+  release-promotion:
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_approval == 'approve'
+    needs: release-provenance
+    environment:
+      name: release
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Re-verify signed release provenance
+        run: uv run python tools/provenance_report.py
 """
 
     assert _provenance_permission_failures(workflow) == []

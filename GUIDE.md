@@ -391,6 +391,36 @@ This is a build-identity control, not a deployment-health check. A passing
 report proves that the reviewed package files were covered by a verified
 attestation; it does not prove that a deployment target accepted or ran them.
 
+### Evaluate release promotion
+
+Phase 15 adds a manual promotion boundary. Promotion is the decision that an
+already-built artifact may proceed to a future publisher or deployment system.
+The workflow runs only from `main`, requires an approval identifier, and pauses
+at the protected `release` environment.
+
+The promotion report rechecks the exact downloaded artifact bytes against the
+release manifest and signed provenance, then requires a passing rollback
+rehearsal and matching source commit:
+
+```bash
+uv run python tools/release_promotion_report.py \
+  --artifact-directory /tmp/agent-release-promotion/artifacts \
+  --provenance-report /tmp/agent-release-promotion/provenance.json \
+  --release-manifest /tmp/agent-release-promotion/release-manifest.json \
+  --rollback-report /tmp/agent-release-promotion/rollback.json \
+  --repository julie-elkins/agent-assurance-harness \
+  --signer-workflow github.com/julie-elkins/agent-assurance-harness/.github/workflows/reliability.yml \
+  --source-digest GIT_COMMIT \
+  --approved-by REVIEWER \
+  --approval-id RELEASE_APPROVAL_ID \
+  --environment release \
+  --fail-on-block
+```
+
+This is still a public, synthetic demonstration: it emits a decision but does
+not publish or deploy. A GitHub administrator must configure required reviewers
+on the `release` environment for the external approval control to exist.
+
 ## Read the attestation
 
 An assurance attestation is a metadata-only record of one evaluation state. It contains:

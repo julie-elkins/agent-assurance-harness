@@ -3,6 +3,20 @@ name: Agent reliability gate
 on:
   push:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      release_approval:
+        description: "Approve the metadata-only release promotion decision"
+        required: true
+        type: choice
+        options:
+          - hold
+          - approve
+        default: hold
+      approval_id:
+        description: "Human-readable release approval or change identifier"
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -308,9 +322,10 @@ jobs:
 
   release-provenance:
     name: Release provenance gate
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_approval == 'approve')
     needs: reliability
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       id-token: write
@@ -345,6 +360,12 @@ jobs:
           subject-path: /tmp/agent-reliability-release-artifacts/*
           sbom-path: /tmp/agent-reliability-runtime-sbom.json
 
+      - name: Rehearse rollback for promotion evidence
+        run: >-
+          uv run python tools/rollback_rehearsal.py
+          --output /tmp/agent-reliability-rollback.json
+          --fail-on-findings
+
       - name: Verify release provenance
         env:
           GH_TOKEN: ${{ github.token }}
@@ -360,15 +381,98 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Prepare release promotion evidence bundle
+        if: always()
+        run: |
+          mkdir -p /tmp/agent-release-promotion-bundle/artifacts
+          cp /tmp/agent-reliability-provenance.json /tmp/agent-release-promotion-bundle/provenance.json
+          cp /tmp/agent-reliability-release-manifest.json /tmp/agent-release-promotion-bundle/release-manifest.json
+          cp /tmp/agent-reliability-runtime-sbom.json /tmp/agent-release-promotion-bundle/runtime-sbom.json
+          cp /tmp/agent-reliability-rollback.json /tmp/agent-release-promotion-bundle/rollback.json
+          cp /tmp/agent-reliability-release-artifacts/* /tmp/agent-release-promotion-bundle/artifacts/
+
       - name: Upload release provenance evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: agent-release-provenance-${{ github.run_id }}
           path: |
-            /tmp/agent-reliability-provenance.json
-            /tmp/agent-reliability-release-manifest.json
-            /tmp/agent-reliability-runtime-sbom.json
-            /tmp/agent-reliability-release-artifacts/*
+            /tmp/agent-release-promotion-bundle/provenance.json
+            /tmp/agent-release-promotion-bundle/release-manifest.json
+            /tmp/agent-release-promotion-bundle/runtime-sbom.json
+            /tmp/agent-release-promotion-bundle/rollback.json
+            /tmp/agent-release-promotion-bundle/artifacts/*
+          if-no-files-found: error
+          retention-days: 14
+
+  release-promotion:
+    name: Release promotion decision
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_approval == 'approve'
+    needs: release-provenance
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: release
+    permissions:
+      contents: read
+      attestations: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install locked dependencies
+        run: uv sync --extra dev
+
+      - name: Download exact release evidence bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-release-provenance-${{ github.run_id }}
+          path: /tmp/agent-release-promotion
+
+      - name: Re-verify signed release provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          uv run python tools/provenance_report.py
+          --artifact-directory /tmp/agent-release-promotion/artifacts
+          --repository "$GITHUB_REPOSITORY"
+          --signer-workflow
+          "github.com/$GITHUB_REPOSITORY/.github/workflows/reliability.yml"
+          --source-digest "$GITHUB_SHA"
+          --output /tmp/agent-release-promotion/provenance-reverified.json
+          --fail-on-findings
+
+      - name: Evaluate release promotion
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          uv run python tools/release_promotion_report.py
+          --artifact-directory /tmp/agent-release-promotion/artifacts
+          --provenance-report /tmp/agent-release-promotion/provenance-reverified.json
+          --release-manifest /tmp/agent-release-promotion/release-manifest.json
+          --rollback-report /tmp/agent-release-promotion/rollback.json
+          --repository "$GITHUB_REPOSITORY"
+          --signer-workflow
+          "github.com/$GITHUB_REPOSITORY/.github/workflows/reliability.yml"
+          --source-digest "$GITHUB_SHA"
+          --approved-by "$GITHUB_ACTOR"
+          --approval-id "${{ inputs.approval_id }}"
+          --environment release
+          --output /tmp/agent-release-promotion.json
+          --markdown
+          --fail-on-block
+          >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release promotion decision
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-release-promotion-${{ github.run_id }}
+          path: /tmp/agent-release-promotion.json
           if-no-files-found: error
           retention-days: 14

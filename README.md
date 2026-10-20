@@ -478,6 +478,38 @@ certificates, credentials, prompts, provider output, or artifact contents.
 Successful provenance proves how the artifact was built; it does not prove
 deployment health or package suitability.
 
+### Evaluate a provenance-aware release promotion
+
+Phase 15 adds a manual release-promotion decision after provenance. Promotion
+is the final authorization step before a future publisher or deployment system
+would act. It runs only from `main`, requires an explicit approval identifier,
+and uses the protected `release` environment for reviewer approval.
+
+The decision downloads the exact evidence bundle from the provenance run and
+checks the local artifact bytes, signed provenance, release manifest, rollback
+rehearsal, source commit, and approval identity:
+
+```bash
+uv run python tools/release_promotion_report.py \
+  --artifact-directory /tmp/agent-release-promotion/artifacts \
+  --provenance-report /tmp/agent-release-promotion/provenance.json \
+  --release-manifest /tmp/agent-release-promotion/release-manifest.json \
+  --rollback-report /tmp/agent-release-promotion/rollback.json \
+  --repository julie-elkins/agent-assurance-harness \
+  --signer-workflow github.com/julie-elkins/agent-assurance-harness/.github/workflows/reliability.yml \
+  --source-digest GIT_COMMIT \
+  --approved-by REVIEWER \
+  --approval-id RELEASE_APPROVAL_ID \
+  --environment release \
+  --fail-on-block
+```
+
+The report is metadata-only and does not publish or deploy anything. It blocks
+when an artifact is tampered with, the evidence describes another commit, the
+rollback rehearsal is absent, or the approval is incomplete. Configure the
+GitHub `release` environment with required reviewers before treating this as a
+real release control.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

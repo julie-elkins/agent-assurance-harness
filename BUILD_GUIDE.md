@@ -78,6 +78,7 @@ The current progression is intentionally operational:
 | 12 | Rollback rehearsal | Whether a controlled artifact failure can be detected and restored without external side effects |
 | 13 | Release artifact assurance | Whether the exact clean package artifact and SBOM were produced by the checked source state |
 | 14 | Release provenance | Whether signed CI provenance covers the exact artifacts from the committed source state |
+| 15 | Release promotion | Whether an explicitly approved, provenance-verified artifact may proceed to a future release boundary |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -244,6 +245,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/release_check.py` — clean source/wheel parity, dependency SBOM, and release manifest.
 - `src/agent_reliability_lab/provenance.py` — signed artifact-subject verification records.
 - `tools/provenance_report.py` — metadata-only GitHub attestation verification.
+- `src/agent_reliability_lab/release_promotion.py` — exact-evidence promotion decision and tamper check.
+- `tools/release_promotion_report.py` — metadata-only pre-release promotion report.
 
 ### Audit evidence binding
 
@@ -326,6 +329,20 @@ untrusted change must not receive authority to create release identity
 evidence. The resulting report is metadata-only. It proves build identity,
 not deployment health, package correctness, or acceptance by a deployment
 system.
+
+### Release promotion
+
+Phase 15 adds a manual, main-branch-only promotion decision after provenance.
+The workflow requires an explicit approval input and the protected `release`
+environment. It downloads the exact evidence bundle from the provenance job
+and rechecks the artifact bytes, provenance report, release manifest, rollback
+rehearsal, source commit, and approval identity.
+
+The public repository stops at this decision. A future publisher or deployment
+system can consume the metadata-only result, but no package is published and no
+deployment is attempted here. The `release` environment must be configured
+with required reviewers outside the repository; declaring the environment in
+YAML does not create that reviewer policy.
 
 ### Operational ship gate
 

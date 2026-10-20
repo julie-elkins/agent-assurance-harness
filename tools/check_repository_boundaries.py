@@ -116,7 +116,9 @@ def _workflow_failures() -> list[str]:
 def _provenance_permission_failures(workflow: str) -> list[str]:
     """Allow signing permissions only in the explicitly trusted push job."""
 
-    main_workflow, separator, provenance_job = workflow.partition(PUSH_PROVENANCE_JOB)
+    main_workflow, separator, trusted_jobs = workflow.partition(
+        PUSH_PROVENANCE_JOB
+    )
     elevated_markers = ("id-token: write", "attestations: write")
     failures = [
         (
@@ -135,8 +137,11 @@ def _provenance_permission_failures(workflow: str) -> list[str]:
             )
         return failures
 
+    provenance_job, promotion_separator, promotion_job = trusted_jobs.partition(
+        "\n  release-promotion:\n"
+    )
     required_controls = (
-        "if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
+        "if: (github.event_name == 'push' && github.ref == 'refs/heads/main') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_approval == 'approve')",
         "needs: reliability",
         "permissions:",
         "contents: read",
@@ -148,6 +153,24 @@ def _provenance_permission_failures(workflow: str) -> list[str]:
             failures.append(
                 f"release-provenance job is missing required control: {control}"
             )
+    if not promotion_separator:
+        failures.append("workflow is missing the release-promotion job")
+    else:
+        promotion_controls = (
+            "if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' && inputs.release_approval == 'approve'",
+            "needs: release-provenance",
+            "environment:",
+            "name: release",
+            "permissions:",
+            "contents: read",
+            "attestations: read",
+            "tools/provenance_report.py",
+        )
+        for control in promotion_controls:
+            if control not in promotion_job:
+                failures.append(
+                    f"release-promotion job is missing required control: {control}"
+                )
     return failures
 
 

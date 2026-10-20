@@ -10,7 +10,9 @@ The default pull-request CI job is offline with respect to model providers. It h
 read-only repository permissions, receives no provider credentials, and must not enable
 the live provider flag. A separate push-only job has the minimum GitHub permissions
 needed to create release provenance attestations; it runs only after the read-only job
-passes and does not receive provider credentials.
+passes and does not receive provider credentials. A manual promotion job can evaluate
+the exact evidence bundle only on `main` and pauses at the protected `release`
+environment; it does not publish or deploy.
 
 ## Live-provider boundary
 
@@ -47,3 +49,16 @@ uv run pytest
 
 The boundary check is a high-signal guard, not proof that the repository contains no
 possible secret. Reviewers must still inspect unexpected files and diffs.
+
+## Release promotion
+
+Phase 15 adds a manual promotion boundary after provenance. The promotion
+report re-hashes the exact downloaded artifacts, requires the signed provenance
+and release manifest to identify the current commit, requires the rollback
+rehearsal to pass without network or external writes, and records the approval
+identifier and actor as metadata.
+
+The GitHub `release` environment must be configured with required reviewers by
+repository administrators. The workflow declaration alone does not create that
+external policy. The public repository emits only a promotion decision; it
+does not publish artifacts, deploy services, or handle provider credentials.

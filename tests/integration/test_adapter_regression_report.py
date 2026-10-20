@@ -53,7 +53,7 @@ def test_adapter_regression_report_passes_without_emitting_commands_or_traces(tm
     attestation = report["assurance_attestation"]
     assert attestation["attestation_version"] == 1
     assert attestation["attestation_id"] == "adapter-regression-attestation-v1"
-    assert attestation["package_version"] == "0.39.0"
+    assert attestation["package_version"] == "0.40.0"
     assert len(attestation["git_commit"]) == 40
     assert len(attestation["pack_set_sha256"]) == 64
     assert len(attestation["pack_manifests"]) == 7

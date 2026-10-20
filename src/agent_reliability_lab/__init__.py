@@ -57,6 +57,11 @@ from .replay import (
 )
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
+from .live import (
+    LiveProviderAdapter,
+    LiveProviderPolicy,
+    live_provider_adapter,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,
@@ -87,6 +92,7 @@ from .packs import (
 from .runner import (
     run_adapter_comparison,
     run_adapters_comparison,
+    run_adapter_scenario,
     run_comparison,
 )
 
@@ -131,6 +137,8 @@ __all__ = [
     "ToolSpec",
     "Trace",
     "TraceRecorder",
+    "LiveProviderAdapter",
+    "LiveProviderPolicy",
     "MockProviderAdapter",
     "ProviderLimits",
     "ProviderPolicy",
@@ -148,7 +156,9 @@ __all__ = [
     "reference_adapters",
     "run_adapter_comparison",
     "run_adapters_comparison",
+    "run_adapter_scenario",
     "run_comparison",
+    "live_provider_adapter",
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_replay_file",

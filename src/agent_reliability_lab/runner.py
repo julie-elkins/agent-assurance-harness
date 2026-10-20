@@ -185,6 +185,30 @@ def run_adapters_comparison(
     )
 
 
+def run_adapter_scenario(
+    adapter: AgentAdapter,
+    scenario_id: str,
+) -> ComparisonReport:
+    """Run one adapter against one registered scenario."""
+
+    selected = tuple(
+        scenario for scenario in scenarios() if scenario.scenario_id == scenario_id
+    )
+    if not selected:
+        raise ValueError(f"Unknown scenario: {scenario_id}.")
+    selected_packs = tuple(
+        pack
+        for pack in load_builtin_packs()
+        if pack.scenario_id == scenario_id
+    )
+    return _build_comparison(
+        (adapter,),
+        selected,
+        selected_packs,
+        include_mutations=False,
+    )
+
+
 def _build_comparison(
     adapters: tuple[AgentAdapter, ...],
     scenario_cases: tuple[Scenario, ...],

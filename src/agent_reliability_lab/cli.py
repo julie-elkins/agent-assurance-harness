@@ -12,15 +12,17 @@ from .external import (
     DEFAULT_MAX_RESPONSE_BYTES,
     SubprocessAdapter,
 )
+from .live import LiveProviderPolicy, live_provider_adapter
 from .packs import load_builtin_pack_results, load_pack_directory
 from .otlp import load_otlp_file
-from .providers import mock_provider_adapters
+from .providers import ProviderLimits, mock_provider_adapters
 from .replay import REPLAY_VERSION, ReplayReport, run_replay, run_replay_file
 from .regression import RegressionReport, compare_replay_files
 from .runner import (
     failed_checks,
     run_adapter_comparison,
     run_adapters_comparison,
+    run_adapter_scenario,
     run_comparison,
 )
 
@@ -99,6 +101,29 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("openai", "anthropic", "all"),
         help="Run the credential-free mocked provider adapter(s).",
     )
+    parser.add_argument(
+        "--live-provider",
+        choices=("openai", "anthropic"),
+        help="Run one explicitly bounded live provider scenario.",
+    )
+    parser.add_argument(
+        "--scenario-id",
+        help="Built-in synthetic scenario to run with --live-provider.",
+    )
+    parser.add_argument(
+        "--model",
+        help="Provider model identifier for --live-provider.",
+    )
+    parser.add_argument(
+        "--allow-network",
+        action="store_true",
+        help="Explicitly permit the one local synthetic provider request.",
+    )
+    parser.add_argument("--max-requests", type=int)
+    parser.add_argument("--max-output-tokens", type=int)
+    parser.add_argument("--max-elapsed-seconds", type=float)
+    parser.add_argument("--max-estimated-cost-usd", type=float)
+    parser.add_argument("--estimated-cost-usd-per-request", type=float)
     parser.add_argument(
         "--compare-replay",
         nargs=2,
@@ -191,6 +216,8 @@ def main(argv: list[str] | None = None) -> int:
             or args.adapter_check
             or args.adapter_command
             or args.mutations
+            or args.mock_provider is not None
+            or args.live_provider is not None
         ):
             print(
                 "--compare-replay cannot be combined with another trace input, "
@@ -216,6 +243,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.adapter_command
             or args.mutations
             or args.mock_provider is not None
+            or args.live_provider is not None
         ):
             print(
                 "Trace input cannot be combined with another trace input, pack listing, "
@@ -247,12 +275,76 @@ def main(argv: list[str] | None = None) -> int:
         if args.fail_on_findings and report.failed:
             return 1
         return 0
+    if args.live_provider is not None:
+        required = {
+            "--scenario-id": args.scenario_id,
+            "--model": args.model,
+            "--max-requests": args.max_requests,
+            "--max-output-tokens": args.max_output_tokens,
+            "--max-elapsed-seconds": args.max_elapsed_seconds,
+            "--max-estimated-cost-usd": args.max_estimated_cost_usd,
+            "--estimated-cost-usd-per-request": (
+                args.estimated_cost_usd_per_request
+            ),
+        }
+        missing = [name for name, value in required.items() if value is None]
+        if missing:
+            print(
+                "--live-provider requires: " + ", ".join(missing) + ".",
+                file=sys.stderr,
+            )
+            return 2
+        if (
+            args.list_packs
+            or args.pack_directory is not None
+            or args.adapter_check
+            or args.adapter_command
+            or args.mutations
+            or args.mock_provider is not None
+        ):
+            print(
+                "--live-provider cannot be combined with pack listing, adapter, "
+                "mutation, or mocked-provider options.",
+                file=sys.stderr,
+            )
+            return 2
+        credential_env_var = (
+            "OPENAI_API_KEY"
+            if args.live_provider == "openai"
+            else "ANTHROPIC_API_KEY"
+        )
+        policy = LiveProviderPolicy(
+            provider_id=args.live_provider,
+            model=args.model,
+            credential_env_var=credential_env_var,
+            limits=ProviderLimits(
+                max_requests=args.max_requests,
+                max_output_tokens=args.max_output_tokens,
+                max_elapsed_seconds=args.max_elapsed_seconds,
+                max_estimated_cost_usd=args.max_estimated_cost_usd,
+            ),
+            estimated_cost_usd_per_request=args.estimated_cost_usd_per_request,
+            allow_network=args.allow_network,
+        )
+        try:
+            report = run_adapter_scenario(
+                live_provider_adapter(policy),
+                args.scenario_id,
+            )
+        except ValueError as error:
+            print(str(error), file=sys.stderr)
+            return 2
+        _print_comparison_report(report, args)
+        if failed_checks(report):
+            return 1
+        return 0
     if args.mock_provider is not None:
         if (
             args.list_packs
             or args.pack_directory is not None
             or args.adapter_check
             or args.adapter_command
+            or args.live_provider is not None
         ):
             print(
                 "--mock-provider cannot be combined with pack listing or adapter options.",

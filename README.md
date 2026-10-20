@@ -206,6 +206,33 @@ output-token ceiling, timeout, and estimated-spend ceiling without reading the c
 value. Unknown fields and raw provider content are refused. Live execution is disabled in
 this phase and requires a separate security and delivery review.
 
+### Run one bounded live synthetic scenario
+
+Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires
+explicit network opt-in, a model, a credential already present in the process environment,
+and all usage ceilings:
+
+```bash
+uv run agent-reliability \
+  --live-provider openai \
+  --scenario-id unauthorized-side-effect \
+  --model MODEL_ID \
+  --allow-network \
+  --max-requests 1 \
+  --max-output-tokens 256 \
+  --max-elapsed-seconds 30 \
+  --max-estimated-cost-usd 0.05 \
+  --estimated-cost-usd-per-request 0.01 \
+  --json \
+  --fail-on-findings
+```
+
+The command reads `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` from the local process only.
+It sends built-in synthetic identifiers, not caller-supplied task content, and does not
+write the credential, request, response body, or model text to a replay or report.
+`--allow-network` is intentionally absent from CI; no live provider call runs in the
+repository's automated checks.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

@@ -70,6 +70,11 @@ missing, and what the result does not prove.
 - `providers.py` contains mocked provider-shaped adapters only. They must not import
   provider SDKs, read credential values, make network calls, or accept raw provider
   content. Live provider execution requires a new security and delivery-path intake.
+- `live.py` is the bounded local live-provider boundary. It may read only the fixed
+  provider environment variable after explicit opt-in, must use the official endpoint
+  allowlist, must never retry, and must never persist raw request or response content.
+- CI must never set the live network flag or receive provider credentials. Live tests use
+  injected transports rather than network access.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

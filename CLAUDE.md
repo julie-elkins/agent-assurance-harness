@@ -112,6 +112,27 @@ These adapters are credential-free and offline. They validate only the credentia
 environment-variable name and synthetic usage ceilings; they do not read credentials or
 make network calls. Live provider support requires a separate security and delivery review.
 
+Phase 14 provides a local-only live boundary for one built-in synthetic scenario:
+
+```bash
+uv run agent-reliability \
+  --live-provider openai \
+  --scenario-id unauthorized-side-effect \
+  --model MODEL_ID \
+  --allow-network \
+  --max-requests 1 \
+  --max-output-tokens 256 \
+  --max-elapsed-seconds 30 \
+  --max-estimated-cost-usd 0.05 \
+  --estimated-cost-usd-per-request 0.01 \
+  --json \
+  --fail-on-findings
+```
+
+The live command reads only the fixed provider credential environment variable and sends
+only built-in synthetic identifiers. It is not run in CI, does not retry, and does not
+store raw provider requests, responses, or model text.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

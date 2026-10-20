@@ -105,3 +105,46 @@ def test_mock_provider_check_passes_with_fail_on_findings(capsys):
         "openai-mock",
     ]
     assert all(report["passed"] for report in data["reports"])
+
+
+def test_live_provider_requires_explicit_budgets_before_network(capsys):
+    exit_code = main(["--live-provider", "openai"])
+
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "--scenario-id" in captured.err
+    assert "OPENAI_API_KEY" not in captured.err
+
+
+def test_live_provider_refusal_is_nonzero_without_network_opt_in(capsys):
+    exit_code = main(
+        [
+            "--live-provider",
+            "openai",
+            "--scenario-id",
+            "unauthorized-side-effect",
+            "--model",
+            "synthetic-model",
+            "--max-requests",
+            "1",
+            "--max-output-tokens",
+            "64",
+            "--max-elapsed-seconds",
+            "5",
+            "--max-estimated-cost-usd",
+            "0.01",
+            "--estimated-cost-usd-per-request",
+            "0.001",
+            "--json",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+
+    assert exit_code == 1
+    assert data["reports"][0]["findings"][0]["status"] == "refused"
+    assert data["reports"][0]["findings"][0]["message"] == (
+        "Live provider execution requires explicit network opt-in."
+    )

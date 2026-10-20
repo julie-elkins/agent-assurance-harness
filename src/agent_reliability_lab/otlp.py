@@ -69,6 +69,7 @@ _RELIABILITY_EVENT_IDS = {
     "agent.reliability.tool_output_flag",
     "agent.reliability.operation_id",
     "agent.reliability.idempotency_key",
+    "agent.reliability.reconciliation",
 }
 _RELIABILITY_EVENT_ABSTENTION = "agent.reliability.abstention"
 
@@ -328,6 +329,15 @@ def _record_event(
         recorder.record_operation_id(event_id)
     elif name == "agent.reliability.idempotency_key":
         recorder.record_idempotency_key(event_id)
+    elif name == "agent.reliability.reconciliation":
+        status = _first_string(attributes, "agent.reliability.status")
+        if status is None:
+            raise OtlpDecodeError(
+                "missing_reconciliation_status",
+                "A reconciliation event has no status classification.",
+                "Add an identifier-only agent.reliability.status value.",
+            )
+        recorder.record_reconciliation(event_id, status)
     else:
         recorder.record_tool_output_flag(event_id)
 

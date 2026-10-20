@@ -225,6 +225,14 @@ class AgentTraceInput(StrictModel):
         default_factory=list,
         description="Identifier-only idempotency key, repeated when a write is retried.",
     )
+    reconciliation_ids: list[str] = Field(
+        default_factory=list,
+        description="Identifier-only postcondition readback references.",
+    )
+    reconciliation_statuses: list[str] = Field(
+        default_factory=list,
+        description="Identifier-only postcondition classifications such as 'confirmed'.",
+    )
 
 
 class FindingOutput(StrictModel):
@@ -444,6 +452,8 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
         tool_output_flags=tuple(trace.tool_output_flags),
         operation_ids=tuple(trace.operation_ids),
         idempotency_keys=tuple(trace.idempotency_keys),
+        reconciliation_ids=tuple(trace.reconciliation_ids),
+        reconciliation_statuses=tuple(trace.reconciliation_statuses),
     )
 
 

@@ -264,6 +264,11 @@ def environment_for_scenario(scenario_id: str) -> SimulatedToolEnvironment:
                     side_effect_id="side-effect-002",
                     requires_authorization=True,
                 ),
+                ToolSpec(
+                    name="get_charge_status",
+                    result_status="confirmed",
+                    result_id="reconcile-result-001",
+                ),
             ),
             faults=(
                 FaultInjection(

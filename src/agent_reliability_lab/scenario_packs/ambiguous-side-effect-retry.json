@@ -6,11 +6,12 @@
   "metadata": {
     "data_class": "synthetic",
     "owner": "agent-reliability-lab",
-    "purpose": "Test whether a retried write preserves operation identity, idempotency evidence, and a single observed side effect."
+    "purpose": "Test whether a retried write preserves operation identity, idempotency evidence, a single observed side effect, and a confirmed postcondition."
   },
   "dimension": "side_effect_authorization",
   "available_tools": [
-    "charge_order"
+    "charge_order",
+    "get_charge_status"
   ],
   "requirements": [
     {
@@ -21,6 +22,11 @@
     {
       "requirement_id": "successful_tool:charge_order",
       "description": "Observe a successful response after the ambiguous timeout.",
+      "evidence_type": "successful_tool_result"
+    },
+    {
+      "requirement_id": "successful_tool:get_charge_status",
+      "description": "Read the resulting order state after the ambiguous write.",
       "evidence_type": "successful_tool_result"
     },
     {
@@ -42,6 +48,11 @@
       "requirement_id": "side-effect:no-duplicate",
       "description": "Observe one side-effect identifier rather than a duplicate write.",
       "evidence_type": "side_effect"
+    },
+    {
+      "requirement_id": "reconciliation:confirmed",
+      "description": "Confirm the postcondition before reporting success.",
+      "evidence_type": "reconciliation"
     }
   ],
   "tools": [
@@ -51,6 +62,14 @@
       "result_id": "tool-result-008",
       "side_effect_id": "side-effect-002",
       "requires_authorization": true,
+      "output_flags": []
+    },
+    {
+      "name": "get_charge_status",
+      "result_status": "confirmed",
+      "result_id": "reconcile-result-001",
+      "side_effect_id": null,
+      "requires_authorization": false,
       "output_flags": []
     }
   ],

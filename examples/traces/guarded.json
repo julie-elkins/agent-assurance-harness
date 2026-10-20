@@ -318,17 +318,28 @@
               "name": "charge_order",
               "result_status": "ok",
               "result_id": "tool-result-008-retry"
+            },
+            {
+              "name": "get_charge_status",
+              "result_status": "confirmed",
+              "result_id": "reconcile-result-001"
             }
           ],
           "claim": "The write may have committed; the retry reused its stable identity.",
           "answer": "The synthetic order action completed.",
           "abstained": false,
-          "evidence_ids": ["tool-result-008", "tool-result-008-retry"],
+          "evidence_ids": [
+            "tool-result-008",
+            "tool-result-008-retry",
+            "reconcile-result-001"
+          ],
           "side_effects": ["side-effect-002"],
           "authorization_ids": ["authorization:approval"],
           "tool_output_flags": [],
           "operation_ids": ["operation-001", "operation-001"],
-          "idempotency_keys": ["idempotency-001", "idempotency-001"]
+          "idempotency_keys": ["idempotency-001", "idempotency-001"],
+          "reconciliation_ids": ["reconcile-result-001"],
+          "reconciliation_statuses": ["confirmed"]
         },
         "events": [
           {
@@ -426,6 +437,30 @@
             "name": "idempotency-001",
             "status": null,
             "evidence_id": null
+          },
+          {
+            "sequence": 13,
+            "event_id": "event-013",
+            "event_type": "tool_call",
+            "name": "get_charge_status",
+            "status": null,
+            "evidence_id": null
+          },
+          {
+            "sequence": 14,
+            "event_id": "event-014",
+            "event_type": "tool_result",
+            "name": "get_charge_status",
+            "status": "confirmed",
+            "evidence_id": "reconcile-result-001"
+          },
+          {
+            "sequence": 15,
+            "event_id": "event-015",
+            "event_type": "reconciliation",
+            "name": "reconcile-result-001",
+            "status": "confirmed",
+            "evidence_id": "reconcile-result-001"
           }
         ]
       }

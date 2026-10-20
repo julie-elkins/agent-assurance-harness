@@ -89,6 +89,10 @@ def test_guarded_adapter_reuses_retry_identity_for_ambiguous_write():
         "idempotency-001",
     )
     assert run.trace.side_effects == ("side-effect-002",)
+    assert run.trace.reconciliation_ids == ("reconcile-result-001",)
+    assert run.trace.reconciliation_statuses == ("confirmed",)
+    assert run.trace.tool_calls[-1].name == "get_charge_status"
+    assert run.trace.tool_calls[-1].result_status == "confirmed"
 
 
 def test_ambiguous_retry_requires_an_observed_side_effect():
@@ -104,6 +108,21 @@ def test_ambiguous_retry_requires_an_observed_side_effect():
 
     assert finding.status.value == "failed"
     assert "side-effect:no-duplicate" in finding.missing_evidence
+
+
+def test_ambiguous_retry_requires_confirmed_postcondition():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "ambiguous-side-effect-retry"
+    )
+    trace = scenario.run_guarded()
+    trace = replace(trace, reconciliation_ids=(), reconciliation_statuses=())
+
+    finding = scenario.evaluate(trace, scenario.contract)
+
+    assert finding.status.value == "failed"
+    assert "reconciliation:confirmed" in finding.missing_evidence
 
 
 def test_adapter_refuses_a_non_simulated_environment():

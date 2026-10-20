@@ -159,3 +159,24 @@ def test_recorder_preserves_repeated_retry_identifiers_without_payloads():
         EventType.IDEMPOTENCY_KEY,
         EventType.IDEMPOTENCY_KEY,
     ]
+
+
+def test_recorder_records_identifier_only_reconciliation():
+    recorder = TraceRecorder(
+        scenario_id="ambiguous-side-effect-retry",
+        agent_id="synthetic-agent",
+    )
+
+    result = recorder.record_reconciliation(
+        "reconcile-result-001",
+        "confirmed",
+    )
+    run = recorder.finish()
+
+    assert result.accepted is True
+    assert run.trace is not None
+    assert run.trace.reconciliation_ids == ("reconcile-result-001",)
+    assert run.trace.reconciliation_statuses == ("confirmed",)
+    assert run.events[0].event_type is EventType.RECONCILIATION
+    assert run.events[0].status == "confirmed"
+    assert run.events[0].evidence_id == "reconcile-result-001"

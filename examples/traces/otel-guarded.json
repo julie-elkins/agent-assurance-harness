@@ -491,6 +491,62 @@
                   ]
                 }
               ]
+            },
+            {
+              "traceId": "ffffffffffffffffffffffffffffffff",
+              "spanId": "0000000000000009",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "ambiguous-side-effect-retry"
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "get_charge_status"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "reconcile-result-001"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "confirmed"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "name": "agent.reliability.reconciliation",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "reconcile-result-001"
+                      }
+                    },
+                    {
+                      "key": "agent.reliability.status",
+                      "value": {
+                        "stringValue": "confirmed"
+                      }
+                    }
+                  ]
+                }
+              ]
             }
           ]
         }

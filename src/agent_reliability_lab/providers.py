@@ -374,6 +374,16 @@ def _openai_events(trace) -> list[dict[str, object]]:
         {"type": "classification", "kind": "idempotency_key", "id": item}
         for item in trace.idempotency_keys
     )
+    events.extend(
+        {
+            "type": "classification",
+            "kind": "reconciliation",
+            "id": reconciliation_id,
+            "status": trace.reconciliation_statuses[index],
+        }
+        for index, reconciliation_id in enumerate(trace.reconciliation_ids)
+        if index < len(trace.reconciliation_statuses)
+    )
     return events
 
 
@@ -433,6 +443,16 @@ def _anthropic_events(trace) -> list[dict[str, object]]:
         {"type": "reliability", "kind": "idempotency_key", "id": item}
         for item in trace.idempotency_keys
     )
+    events.extend(
+        {
+            "type": "reliability",
+            "kind": "reconciliation",
+            "id": reconciliation_id,
+            "status": trace.reconciliation_statuses[index],
+        }
+        for index, reconciliation_id in enumerate(trace.reconciliation_ids)
+        if index < len(trace.reconciliation_statuses)
+    )
     return events
 
 
@@ -487,13 +507,17 @@ def _translate_openai(
         elif event_type == "classification":
             _keys(
                 event,
-                {"type", "kind", "id"},
+                {"type", "kind", "id", "status"},
                 f"openai events[{index}]",
             )
             _record_classification(
                 recorder,
                 _identifier(event.get("kind"), "openai classification kind"),
                 _optional_identifier(event.get("id"), "openai classification id"),
+                status=_optional_identifier(
+                    event.get("status"),
+                    "openai classification status",
+                ),
             )
         elif event_type in {"authorization", "side_effect"}:
             _keys(event, {"type", "id"}, f"openai events[{index}]")
@@ -576,13 +600,17 @@ def _translate_anthropic(
         elif event_type == "reliability":
             _keys(
                 event,
-                {"type", "kind", "id"},
+                {"type", "kind", "id", "status"},
                 f"anthropic content[{index}]",
             )
             _record_classification(
                 recorder,
                 _identifier(event.get("kind"), "anthropic reliability kind"),
                 _optional_identifier(event.get("id"), "anthropic reliability id"),
+                status=_optional_identifier(
+                    event.get("status"),
+                    "anthropic reliability status",
+                ),
             )
         else:
             raise ProviderPayloadError(
@@ -597,6 +625,8 @@ def _record_classification(
     recorder: TraceRecorder,
     kind: str,
     identifier: str | None,
+    *,
+    status: str | None = None,
 ) -> None:
     if kind == "claim":
         if identifier is None:
@@ -648,6 +678,14 @@ def _record_classification(
                 "Emit an identifier-only idempotency-key classification.",
             )
         recorder.record_idempotency_key(identifier)
+    elif kind == "reconciliation":
+        if identifier is None or status is None:
+            raise ProviderPayloadError(
+                "missing_classification_id",
+                "A reconciliation classification requires an identifier and status.",
+                "Emit an identifier-only reconciliation classification with its status.",
+            )
+        recorder.record_reconciliation(identifier, status)
     else:
         raise ProviderPayloadError(
             "unknown_reliability_classification",

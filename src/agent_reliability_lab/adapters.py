@@ -70,6 +70,18 @@ def trace_to_events(trace: Trace) -> tuple[ObservableEvent, ...]:
         add_event(EventType.OPERATION_ID, operation_id)
     for idempotency_key in trace.idempotency_keys:
         add_event(EventType.IDEMPOTENCY_KEY, idempotency_key)
+    for index, reconciliation_id in enumerate(trace.reconciliation_ids):
+        status = (
+            trace.reconciliation_statuses[index]
+            if index < len(trace.reconciliation_statuses)
+            else None
+        )
+        add_event(
+            EventType.RECONCILIATION,
+            reconciliation_id,
+            status=status,
+            evidence_id=reconciliation_id,
+        )
     return tuple(events)
 
 
@@ -178,19 +190,27 @@ class ScenarioAdapter:
                 tool_output_flags=observation.output_flags,
             )
         if scenario_id == "ambiguous-side-effect-retry":
-            first = environment.invoke("charge_order", authorized=True)
-            second = environment.invoke("charge_order", authorized=True)
+            observations = [
+                environment.invoke("charge_order", authorized=True),
+                environment.invoke("charge_order", authorized=True),
+            ]
+            if self.guarded:
+                observations.append(environment.invoke("get_charge_status"))
             return Trace(
                 scenario_id=scenario_id,
                 agent_id=self.agent_id,
-                tool_calls=(_tool_call(first), _tool_call(second)),
+                tool_calls=tuple(_tool_call(item) for item in observations),
                 claim=(
                     "The write may have committed; the retry reused its stable identity."
                     if self.guarded
                     else "The write completed after retrying the timed-out request."
                 ),
                 answer="The synthetic order action completed.",
-                evidence_ids=_evidence_ids(first) + _evidence_ids(second),
+                evidence_ids=tuple(
+                    evidence_id
+                    for item in observations
+                    for evidence_id in _evidence_ids(item)
+                ),
                 side_effects=(
                     ("side-effect-002",)
                     if self.guarded
@@ -207,6 +227,12 @@ class ScenarioAdapter:
                     if self.guarded
                     else ()
                 ),
+                reconciliation_ids=(
+                    ("reconcile-result-001",)
+                    if self.guarded
+                    else ()
+                ),
+                reconciliation_statuses=("confirmed",) if self.guarded else (),
             )
         raise ValueError(f"Unknown synthetic scenario: {scenario_id}")
 

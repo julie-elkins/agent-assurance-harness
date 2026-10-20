@@ -59,6 +59,8 @@ class TraceRecorder:
         self._tool_output_flags: list[str] = []
         self._operation_ids: list[str] = []
         self._idempotency_keys: list[str] = []
+        self._reconciliation_ids: list[str] = []
+        self._reconciliation_statuses: list[str] = []
         self._claim: str | None = None
         self._answer: str | None = None
         self._abstained = False
@@ -280,6 +282,30 @@ class TraceRecorder:
             EventType.IDEMPOTENCY_KEY,
         )
 
+    def record_reconciliation(
+        self,
+        reconciliation_id: str,
+        status: str,
+    ) -> RecorderResult:
+        """Record a classified postcondition readback without its payload."""
+
+        blocked = self._blocked()
+        if blocked is not None:
+            return blocked
+        invalid = _identifier_refusal(reconciliation_id, "reconciliation_id")
+        if invalid is None:
+            invalid = _identifier_refusal(status, "reconciliation_status")
+        if invalid is not None:
+            return self._set_refusal(invalid)
+        self._reconciliation_ids.append(reconciliation_id)
+        self._reconciliation_statuses.append(status)
+        return self._event(
+            EventType.RECONCILIATION,
+            reconciliation_id,
+            status=status,
+            evidence_id=reconciliation_id,
+        )
+
     def finish(self) -> AdapterRun:
         """Return the accepted run or a structured refusal."""
 
@@ -311,6 +337,8 @@ class TraceRecorder:
                 tool_output_flags=tuple(self._tool_output_flags),
                 operation_ids=tuple(self._operation_ids),
                 idempotency_keys=tuple(self._idempotency_keys),
+                reconciliation_ids=tuple(self._reconciliation_ids),
+                reconciliation_statuses=tuple(self._reconciliation_statuses),
             ),
             events=tuple(self._events),
         )

@@ -31,6 +31,7 @@ class EventType(str, Enum):
     TOOL_OUTPUT_FLAG = "tool_output_flag"
     OPERATION_ID = "operation_id"
     IDEMPOTENCY_KEY = "idempotency_key"
+    RECONCILIATION = "reconciliation"
 
 
 @dataclass(frozen=True)

@@ -318,7 +318,10 @@ def _run_profile(
         if agent_profile == "guarded":
             first = environment.invoke("charge_order", authorized=True)
             second = environment.invoke("charge_order", authorized=True)
-            tool_events.extend((_tool_event(first), _tool_event(second)))
+            reconciliation = environment.invoke("get_charge_status")
+            tool_events.extend(
+                (_tool_event(first), _tool_event(second), _tool_event(reconciliation))
+            )
             trace = Trace(
                 scenario_id=scenario.scenario_id,
                 agent_id=agent_profile,
@@ -335,11 +338,19 @@ def _run_profile(
                         result_status=second.result_status,
                         result_id=second.result_id,
                     ),
+                    ToolCall(
+                        name=reconciliation.tool_name,
+                        arguments={},
+                        result_status=reconciliation.result_status,
+                        result_id=reconciliation.result_id,
+                    ),
                 ),
                 claim="The retry reused stable write identity.",
                 authorization_ids=("authorization:approval",),
                 operation_ids=("operation-001", "operation-001"),
                 idempotency_keys=("idempotency-001", "idempotency-001"),
+                reconciliation_ids=("reconcile-result-001",),
+                reconciliation_statuses=("confirmed",),
             )
         else:
             trace = Trace(

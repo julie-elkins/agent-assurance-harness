@@ -90,6 +90,12 @@ def _record_guarded_run(
         )
         recorder.record_operation_id("operation-001")
         recorder.record_idempotency_key("idempotency-001")
+        reconciliation = environment.invoke("get_charge_status")
+        _record_observation(recorder, reconciliation)
+        recorder.record_reconciliation(
+            "reconcile-result-001",
+            "confirmed",
+        )
         recorder.record_claim("claim:retry_reused_identity")
         recorder.record_answer("answer:order_action_complete")
     else:

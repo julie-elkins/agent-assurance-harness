@@ -68,9 +68,12 @@ code.
 
 The retry scenario models an ambiguous write: the simulated operation may commit before
 the response times out. A guarded adapter must preserve the same operation ID and
-idempotency key across the retry and record one side effect. An idempotency key is a
-stable identifier that lets a receiving system treat a repeated request as the same write;
-without it, a successful retry can duplicate a protected action.
+idempotency key across the retry, record one side effect, and perform a confirmed status
+readback before reporting success. An idempotency key is a stable identifier that lets a
+receiving system treat a repeated request as the same write; without it, a successful retry
+can duplicate a protected action. The status readback is the postcondition check: it tests
+the resulting state after the timeout instead of treating a retry response as proof that the
+write happened exactly once.
 
 Run the public hygiene checks before treating a change as release-ready:
 

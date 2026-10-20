@@ -28,7 +28,8 @@ synthetic agent cases:
    authorization.
 5. **Misleading tool output** — the tool result is classified as instruction-like data.
 6. **Ambiguous side-effect retry** — a write may commit before its response times out,
-   so the retry must reuse stable operation identity and an idempotency key.
+   so the retry must reuse stable operation identity and an idempotency key, then confirm
+   the resulting state before reporting success.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.

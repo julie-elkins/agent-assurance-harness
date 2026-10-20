@@ -199,6 +199,8 @@ def _trace_from_dict(value: object) -> Trace:
             "tool_output_flags",
             "operation_ids",
             "idempotency_keys",
+            "reconciliation_ids",
+            "reconciliation_statuses",
         },
         "response.trace",
     )
@@ -260,6 +262,14 @@ def _trace_from_dict(value: object) -> Trace:
             data.get("idempotency_keys", []),
             "trace idempotency_keys",
         ),
+        reconciliation_ids=_string_tuple(
+            data.get("reconciliation_ids", []),
+            "trace reconciliation_ids",
+        ),
+        reconciliation_statuses=_string_tuple(
+            data.get("reconciliation_statuses", []),
+            "trace reconciliation_statuses",
+        ),
     )
 
 
@@ -288,6 +298,8 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
             "tool_output_flags": list(run.trace.tool_output_flags),
             "operation_ids": list(run.trace.operation_ids),
             "idempotency_keys": list(run.trace.idempotency_keys),
+            "reconciliation_ids": list(run.trace.reconciliation_ids),
+            "reconciliation_statuses": list(run.trace.reconciliation_statuses),
         }
     if run.refusal is not None:
         response["refusal"] = run.refusal.to_dict()

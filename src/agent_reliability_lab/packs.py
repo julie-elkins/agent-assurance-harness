@@ -28,6 +28,7 @@ SUPPORTED_EVIDENCE_TYPES = frozenset(
         "successful_tool_result",
         "authorization",
         "side_effect",
+        "reconciliation",
         "output_handling",
         "agent_behaviour",
     }
@@ -37,6 +38,7 @@ REQUIRED_ID_PREFIXES = {
     "successful_tool_result": "successful_tool:",
     "authorization": "authorization:",
     "side_effect": "side-effect:",
+    "reconciliation": "reconciliation:",
     "output_handling": "output:",
     "agent_behaviour": "abstain:",
 }

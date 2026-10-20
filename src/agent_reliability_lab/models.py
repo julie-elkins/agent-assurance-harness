@@ -99,6 +99,8 @@ class Trace:
     tool_output_flags: tuple[str, ...] = ()
     operation_ids: tuple[str, ...] = ()
     idempotency_keys: tuple[str, ...] = ()
+    reconciliation_ids: tuple[str, ...] = ()
+    reconciliation_statuses: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

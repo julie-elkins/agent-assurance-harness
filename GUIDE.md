@@ -1,0 +1,297 @@
+# Agent Assurance Harness Guide
+
+This is the short path through the repository for a reviewer, adapter author, or
+maintainer. It explains what the harness proves, how to run the checks, how to read the
+evidence, how it helps ship production code, and where the safety boundary stops.
+
+This guide is intentionally hand-maintained. The repository does not have a lesson tree
+from which a generated manual could be assembled, so `README.md` remains the command
+reference and the implementation remains the source of truth. A documentation test checks
+that the files named here still exist.
+
+## What this project does
+
+The Agent Assurance Harness tests whether a tool-using AI agent has enough observable
+evidence to act, abstain, and report honestly.
+
+An evidence contract is the minimum set of observable facts required before a result can
+pass. The harness does not ask only whether an agent produced an answer. It checks whether
+the agent can show:
+
+- the required tool was used;
+- required checks completed;
+- required evidence was present;
+- the agent abstained when evidence was insufficient;
+- a protected side effect had authorization; and
+- the evaluator can catch a deliberately planted false pass.
+
+The harness is provider-neutral and offline by default. Its built-in scenarios use
+synthetic identifiers and a simulated tool environment, so the standard checks require
+no provider credentials and make no network calls.
+
+## What it proves, and what it does not
+
+It can prove that:
+
+- a declared evidence contract is evaluated consistently;
+- missing evidence is reported as a failure or refusal rather than silently passing;
+- safety and evidence regressions block a candidate harness change;
+- task-outcome changes remain visible instead of being hidden inside one trust score;
+- a negative control is actually caught by the gate; and
+- a CI run produced evidence tied to a specific Git revision and scenario-pack set.
+
+It does not prove:
+
+- that a live model is generally reliable;
+- that a particular prompt, model, tool, or policy caused a regression;
+- that the five built-in scenarios cover every production failure;
+- that an adapter process is safe to run on an untrusted host; or
+- that a metadata attestation is a signed provenance statement.
+
+Those limits matter because a green synthetic gate is evidence about the checked contract,
+not a universal quality claim.
+
+## The five-minute path
+
+Install the locked development environment and run the local suite:
+
+```bash
+uv sync --extra dev
+uv run pytest
+uv run agent-reliability --json
+```
+
+The default report compares the naive and guarded synthetic reference adapters. The naive
+adapter is a deliberate negative control; its failures are expected. Use
+`--fail-on-findings` when a caller wants any blocking finding to return a non-zero exit
+code.
+
+Run the public hygiene checks before treating a change as release-ready:
+
+```bash
+uv run python tools/check_repository_boundaries.py
+uv run python tools/audit_dependencies.py
+uv lock --check
+git diff --check
+```
+
+## How the evidence flows
+
+```text
+scenario pack
+     │
+     ▼
+synthetic scenario request
+     │
+     ▼
+agent adapter
+     │
+     ▼
+identifier-only events
+     │
+     ▼
+evidence evaluator
+     │
+     ├──────────────► findings and statuses
+     │
+     ▼
+regression comparator
+     │
+     ├──────────────► PASS
+     └──────────────► BLOCK on safety/evidence regression
+                         │
+                         ▼
+                 metadata-only attestation
+                         │
+                         ▼
+                 pull-request artifact
+```
+
+“Identifier-only” means the record keeps names, statuses, and synthetic IDs while
+excluding prompts, memory text, raw tool arguments, raw tool results, credentials, and
+provider output. This is the boundary that lets the public repository demonstrate the
+control without publishing protected material.
+
+## How this helps ship production code
+
+The harness is a pre-merge safety test: a repeatable check that runs before code is
+accepted into the main branch. It helps ship production code by:
+
+- testing candidate adapters through the same assurance gate used before release;
+- blocking regressions involving evidence, abstention, authorization, or privacy;
+- requiring explicit request, response, timeout, memory, and process limits;
+- proving credentials are referenced by environment-variable name without being stored or
+  logged;
+- keeping a deterministic negative control so the CI check proves it can block a bad
+  candidate;
+- recording the exact Git revision and scenario-pack fingerprints that were evaluated;
+- uploading reviewable metadata-only evidence to the pull request workflow; and
+- giving reviewers a stable `Agent reliability gate` status check to require through
+  branch protection (the GitHub setting that blocks merging until named checks pass).
+
+This reduces a specific production risk: a change can appear green because a check was
+skipped, evidence was missing, or the evaluator silently accepted an incomplete result.
+The harness makes those conditions visible and turns the important ones into a merge
+blocker.
+
+It remains a release assurance layer, not a substitute for integration tests, deployment
+controls, monitoring, incident response, or live-model evaluation.
+
+## The assurance dimensions
+
+The harness reports separate dimensions instead of collapsing them into a composite trust
+score:
+
+- **Task outcome** — whether the requested synthetic task completed correctly.
+- **Evidence completeness** — whether every required fact was observed.
+- **Abstention** — whether the agent refused when it lacked usable evidence.
+- **Side-effect authorization** — whether a protected action had explicit authorization.
+- **Evaluator validity** — whether the evaluator catches known incomplete-evidence
+  mutations.
+
+The status vocabulary distinguishes `completed`, `failed`, `skipped`, `refused`, and
+`not_applicable`. An empty result is not automatically a pass: the report must say
+whether anything was checked.
+
+## Inspect the scenario packs
+
+A scenario pack is a versioned JSON contract containing synthetic tools, evidence
+requirements, and named simulator faults. Packs are data, not executable plugins.
+
+List the five built-in packs:
+
+```bash
+uv run agent-reliability --list-packs --json
+```
+
+Create and validate a starter custom pack:
+
+```bash
+uv run python tools/init_scenario_pack.py \
+  --output /tmp/agent-assurance-custom-pack/custom.json
+uv run python tools/custom_pack_report.py \
+  --pack-directory /tmp/agent-assurance-custom-pack \
+  --agent-id custom-example \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/custom_pack_adapter.py \
+  --fail-on-findings
+```
+
+The loader rejects unknown fields, unsupported requirement types, duplicate scenario IDs,
+empty directories, and non-synthetic metadata. It never imports pack code or discovers
+files outside an explicitly supplied directory.
+
+## Review an adapter change
+
+An adapter is a small connector that runs an agent through the existing evidence contract.
+The adapter protocol uses one JSON object per line on stdin and one JSON object per line on
+stdout. The harness starts a fresh process for each scenario and passes command arguments
+directly without invoking a shell.
+
+Compare a baseline and candidate adapter:
+
+```bash
+uv run python tools/adapter_regression_report.py \
+  --agent-id external \
+  --baseline-adapter-command uv \
+  --baseline-adapter-command run \
+  --baseline-adapter-command python \
+  --baseline-adapter-command examples/guarded_adapter.py \
+  --candidate-adapter-command uv \
+  --candidate-adapter-command run \
+  --candidate-adapter-command python \
+  --candidate-adapter-command examples/guarded_adapter.py \
+  --baseline-change-id approved-baseline \
+  --baseline-component guardrails \
+  --candidate-change-id candidate-change \
+  --candidate-component guardrails \
+  --output /tmp/agent-assurance-regression.json \
+  --attestation-output /tmp/agent-assurance-attestation.json \
+  --fail-on-findings
+```
+
+The comparator blocks new failures, refusals, and lost evidence in safety or evidence
+dimensions. A task-outcome change remains a visible non-blocking observation. Replays stay
+in memory in this convenience workflow so it does not create an unreviewed trace file.
+
+The negative control uses `examples/regressed_adapter.py` and must be run with
+`--expect-blocking`. It succeeds only when the comparator catches at least one blocking
+regression. That proves enforcement of the current contract; it does not measure live
+model quality.
+
+## Read the attestation
+
+An assurance attestation is a metadata-only record of one evaluation state. It contains:
+
+- package version and Git revision;
+- the canonical hash of the complete built-in pack set;
+- one manifest per pack;
+- baseline and candidate harness change IDs;
+- scenario and finding counts; and
+- a refusal code when the evaluation could not establish a result.
+
+The attestation is hash-based evidence, not a cryptographic signature. It identifies what
+the harness evaluated, but it does not prove who ran it or establish live-provider quality.
+
+The pull-request verifier checks that the report and standalone attestation match each
+other and the current checkout:
+
+```bash
+uv run python tools/verify_assurance_evidence.py \
+  --positive-report /tmp/agent-reliability-adapter-regression.json \
+  --positive-attestation /tmp/agent-reliability-adapter-attestation.json \
+  --negative-report /tmp/agent-reliability-negative-regression.json \
+  --negative-attestation /tmp/agent-reliability-negative-attestation.json
+```
+
+The GitHub Actions job named `Agent reliability gate` uploads the positive report,
+positive attestation, negative report, and negative attestation as a metadata-only
+artifact. The upload uses `if: always()` so a failed check does not hide the evidence
+needed to diagnose it. Repository owners must still require that job in branch protection;
+the workflow cannot change that GitHub setting.
+
+## Extend the harness safely
+
+When adding a capability, use this order:
+
+1. Add or reuse a declarative synthetic scenario pack.
+2. Keep the adapter on the existing protocol and recorder path.
+3. Reuse the existing evaluator and regression comparator.
+4. Add a positive test and a deliberate negative control.
+5. Update the evidence output without adding raw content.
+6. Run the boundary, dependency, release, and full test gates.
+
+Do not add provider SDKs, credentials, private prompts, private traces, network access, or
+untrusted subprocess execution to this public repository without a new security and
+delivery-path review. The current subprocess controls bound time, output, memory, and
+process groups; they are not a complete network sandbox.
+
+## Repository map
+
+- [`README.md`](README.md) — full command reference and feature history.
+- [`SECURITY.md`](SECURITY.md) — vulnerability reporting and public data boundary.
+- [`src/agent_reliability_lab/`](src/agent_reliability_lab/) — protocol, packs,
+  evaluators, adapters, replay, regression, and attestation implementation.
+- [`examples/`](examples/) — deterministic synthetic adapters and replay fixtures.
+- [`tools/`](tools/) — CI-facing reports, boundary checks, release checks, and evidence
+  verification.
+- [`.github/workflows/reliability.yml`](.github/workflows/reliability.yml) — required
+  test and evidence workflow.
+- [`AGENTS.md`](AGENTS.md) — public-repository safety and development constraints.
+
+## Reviewer checklist
+
+Before accepting a pull request, confirm:
+
+- the workflow job `Agent reliability gate` passed;
+- the positive control has no blocking findings;
+- the negative control has at least one blocking finding;
+- the attestation matches the report, Git revision, package version, and pack-set hash;
+- no artifact contains prompts, credentials, raw provider output, or protected content;
+- new scenarios are synthetic and declarative; and
+- the change does not quietly widen network, filesystem, credential, or subprocess reach.
+
+If any of these cannot be established, the correct result is a refusal to call the change
+assured—not a green-looking summary with missing evidence.

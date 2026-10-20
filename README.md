@@ -3,6 +3,9 @@
 A provider-neutral harness for testing whether tool-using AI agents have the evidence to
 act, abstain, and report honestly.
 
+Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path.
+This README remains the full command reference and feature history.
+
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
 answer. It is whether the agent can show:

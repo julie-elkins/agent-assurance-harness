@@ -12,6 +12,8 @@ def test_guide_exists_and_local_references_are_present():
     assert "Agent reliability gate" in guide
     assert "verify_assurance_evidence.py" in guide
     assert "How this helps ship production code" in guide
+    assert "```mermaid" in guide
+    assert "Candidate merge blocked" in guide
 
     for relative_path in (
         "README.md",

@@ -77,35 +77,23 @@ git diff --check
 
 ## How the evidence flows
 
-```text
-scenario pack
-     │
-     ▼
-synthetic scenario request
-     │
-     ▼
-agent adapter
-     │
-     ▼
-identifier-only events
-     │
-     ▼
-evidence evaluator
-     │
-     ├──────────────► findings and statuses
-     │
-     ▼
-regression comparator
-     │
-     ├──────────────► PASS
-     └──────────────► BLOCK on safety/evidence regression
-                         │
-                         ▼
-                 metadata-only attestation
-                         │
-                         ▼
-                 pull-request artifact
+```mermaid
+flowchart TD
+    A["Scenario pack"] --> B["Synthetic scenario request"]
+    B --> C["Agent adapter"]
+    C --> D["Identifier-only events"]
+    D --> E["Evidence evaluator"]
+    E --> F["Regression comparator"]
+    F -->|PASS| G["Metadata-only attestation"]
+    F -->|BLOCK| H["Candidate merge blocked"]
+    G --> I["Pull-request artifact"]
+    I --> J["Agent reliability gate"]
+    J -->|Required check passes| K["Merge eligible"]
 ```
+
+GitHub renders this Mermaid diagram (a text-based diagram syntax) without requiring an
+image file. The `PASS` and `BLOCK` labels carry the meaning, so the diagram does not
+depend on color.
 
 “Identifier-only” means the record keeps names, statuses, and synthetic IDs while
 excluding prompts, memory text, raw tool arguments, raw tool results, credentials, and

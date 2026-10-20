@@ -125,6 +125,13 @@ It contains no traces, prompts, commands, credentials, provider output, or raw f
 messages; it identifies the evaluated state but does not sign provenance or establish
 live-provider quality.
 
+Phase 26 makes that evidence visible and enforceable in pull requests. CI writes the
+positive and negative-control reports and attestations, verifies that they match the
+current checkout and pack set, and uploads them as a metadata-only artifact even when a
+later step fails. The job is explicitly named `Agent reliability gate` so a repository
+owner can require that status check in branch protection; branch protection itself is
+configured outside this repository.
+
 The Phase 12 candidate demonstration is reproducible locally:
 
 ```bash

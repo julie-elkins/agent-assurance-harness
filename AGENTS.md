@@ -102,6 +102,11 @@ missing, and what the result does not prove.
   include traces, prompts, commands, credentials, provider output, or raw finding
   messages. It identifies what was checked; it is not a signed provenance claim or
   live-provider quality result.
+- The pull-request workflow must write positive and negative-control reports and
+  attestations, verify them against the current Git revision and built-in pack set with
+  `tools/verify_assurance_evidence.py`, and upload the metadata-only files with
+  `if: always()`. Keep the job name `Agent reliability gate` stable so repository owners
+  can require that status check in branch protection.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.

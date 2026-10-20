@@ -9,7 +9,9 @@ permissions:
 
 jobs:
   reliability:
+    name: Agent reliability gate
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
@@ -87,8 +89,30 @@ jobs:
           --baseline-component guardrails
           --candidate-change-id candidate-regression-control
           --candidate-component guardrails
+          --output /tmp/agent-reliability-negative-regression.json
           --attestation-output /tmp/agent-reliability-negative-attestation.json
           --expect-blocking
+
+      - name: Verify pull-request assurance evidence
+        run: >-
+          uv run python tools/verify_assurance_evidence.py
+          --positive-report /tmp/agent-reliability-adapter-regression.json
+          --positive-attestation /tmp/agent-reliability-adapter-attestation.json
+          --negative-report /tmp/agent-reliability-negative-regression.json
+          --negative-attestation /tmp/agent-reliability-negative-attestation.json
+
+      - name: Upload pull-request assurance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-assurance-evidence-${{ github.run_id }}
+          path: |
+            /tmp/agent-reliability-adapter-regression.json
+            /tmp/agent-reliability-adapter-attestation.json
+            /tmp/agent-reliability-negative-regression.json
+            /tmp/agent-reliability-negative-attestation.json
+          if-no-files-found: error
+          retention-days: 14
 
       - name: Generate starter custom pack
         run: >-

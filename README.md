@@ -257,6 +257,26 @@ commands, credentials, tool payloads, provider output, or raw finding messages. 
 evidence of what the local harness checked, not a signed provenance claim and not proof
 of live-provider quality.
 
+### Make assurance evidence visible in pull requests
+
+The required pull-request workflow writes both the healthy-candidate report and the
+deliberately degraded negative-control report. A verifier checks that each standalone
+attestation matches its report, the current Git revision, the current package version,
+and the complete built-in pack set. The workflow then uploads the reports and
+attestations as a metadata-only artifact, even when a later step fails:
+
+```bash
+uv run python tools/verify_assurance_evidence.py \
+  --positive-report /tmp/agent-reliability-adapter-regression.json \
+  --positive-attestation /tmp/agent-reliability-adapter-attestation.json \
+  --negative-report /tmp/agent-reliability-negative-regression.json \
+  --negative-attestation /tmp/agent-reliability-negative-attestation.json
+```
+
+The explicit `Agent reliability gate` job name gives repository owners a stable status
+check to require in branch protection. Branch protection is a GitHub repository setting
+and cannot be verified or changed from this checkout.
+
 ### Exercise provider integrations without network access
 
 The repository includes mocked OpenAI-shaped and Anthropic-shaped adapters. A mocked

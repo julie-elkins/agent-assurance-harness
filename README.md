@@ -159,10 +159,25 @@ manifest to each replay:
 Then compare the approved baseline with the candidate:
 
 ```bash
+uv run python examples/candidate_replay.py > /tmp/candidate-replay.json
 uv run agent-reliability \
-  --compare-replay examples/traces/guarded.json ./candidate.json \
+  --compare-replay examples/traces/guarded.json /tmp/candidate-replay.json \
   --markdown \
   --fail-on-findings
+```
+
+The flow is:
+
+```text
+Harness change
+     │
+     ▼
+Identifier-only candidate replay
+     │
+     ▼
+Baseline ──► Assurance comparator ──► PASS
+                         │
+                         └──────────► BLOCK on safety/evidence regression
 ```
 
 The gate blocks new failures, refusals, and lost evidence in safety or evidence

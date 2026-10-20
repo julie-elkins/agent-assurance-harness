@@ -79,11 +79,16 @@ jobs:
           --json
           --fail-on-findings
 
-      - name: Compare approved harness baseline
+      - name: Generate synthetic candidate harness replay
+        run: >-
+          uv run python examples/candidate_replay.py
+          > /tmp/candidate-replay.json
+
+      - name: Compare approved baseline with candidate harness
         run: >-
           uv run agent-reliability
           --compare-replay
           examples/traces/guarded.json
-          examples/traces/guarded.json
+          /tmp/candidate-replay.json
           --json
           --fail-on-findings

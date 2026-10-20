@@ -90,7 +90,7 @@ def _run_request(request: ScenarioRequest) -> AdapterRun:
     )
 
 
-def _replay_file() -> ReplayFile:
+def replay_file() -> ReplayFile:
     """Generate a complete synthetic replay through TraceRecorder."""
 
     cases = tuple(
@@ -137,7 +137,7 @@ def main(argv: list[str] | None = None) -> int:
     )
     args = parser.parse_args(argv)
     if args.replay:
-        print(json.dumps(_replay_file().to_dict(), indent=2, sort_keys=True))
+        print(json.dumps(replay_file().to_dict(), indent=2, sort_keys=True))
         return 0
     return _jsonl_main()
 

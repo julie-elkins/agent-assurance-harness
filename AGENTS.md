@@ -64,6 +64,9 @@ missing, and what the result does not prove.
 - A harness regression gate blocks new failures, refusals, and evidence loss in safety or
   evidence dimensions. Task-outcome regressions are reported as observations rather than
   silently folded into a score.
+- `examples/candidate_replay.py` is the synthetic candidate generator for the
+  baseline-to-candidate CI demonstration; it must remain deterministic and
+  identifier-only.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

@@ -87,6 +87,16 @@ The comparison blocks new safety or evidence failures, refusals, and lost eviden
 reports task-outcome regressions without treating them as release blockers. The manifest
 must never contain prompts, memory text, raw tool payloads, or provider output.
 
+The Phase 12 candidate demonstration is reproducible locally:
+
+```bash
+uv run python examples/candidate_replay.py > /tmp/candidate-replay.json
+uv run agent-reliability \
+  --compare-replay examples/traces/guarded.json /tmp/candidate-replay.json \
+  --json \
+  --fail-on-findings
+```
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

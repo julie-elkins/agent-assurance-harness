@@ -1,5 +1,5 @@
 {
-  "pack_version": 2,
+  "pack_version": 3,
   "scenario_id": "false-completion",
   "title": "False completion",
   "description": "The agent claims completion before all required checks ran.",

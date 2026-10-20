@@ -98,6 +98,21 @@ def test_pack_rejects_unsupported_requirement_type():
     assert "not supported" in result.refusal.message
 
 
+def test_pack_rejects_partial_source_freshness_requirement():
+    value = next(
+        pack
+        for pack in load_builtin_packs()
+        if pack.scenario_id == "evidence-freshness-source"
+    ).to_dict()
+    value["requirements"][0].pop("max_age_seconds")
+
+    result = decode_scenario_pack(value, source="test-pack")
+
+    assert result.pack is None
+    assert result.refusal is not None
+    assert "together" in result.refusal.message
+
+
 def test_pack_rejects_non_synthetic_metadata():
     value = load_builtin_packs()[0].to_dict()
     value["metadata"]["data_class"] = "private"

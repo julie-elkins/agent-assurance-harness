@@ -44,15 +44,22 @@ class EvidenceRequirement:
     requirement_id: str
     description: str
     evidence_type: str
+    source: str | None = None
+    max_age_seconds: float | None = None
 
-    def to_dict(self) -> dict[str, str]:
+    def to_dict(self) -> dict[str, Any]:
         """Return a JSON-safe contract entry."""
 
-        return {
+        value: dict[str, Any] = {
             "requirement_id": self.requirement_id,
             "description": self.description,
             "evidence_type": self.evidence_type,
         }
+        if self.source is not None:
+            value["source"] = self.source
+        if self.max_age_seconds is not None:
+            value["max_age_seconds"] = self.max_age_seconds
+        return value
 
 
 @dataclass(frozen=True)
@@ -81,6 +88,8 @@ class ToolCall:
     arguments: dict[str, str]
     result_status: str
     result_id: str | None = None
+    source: str | None = None
+    age_seconds: float | None = None
 
 
 @dataclass(frozen=True)

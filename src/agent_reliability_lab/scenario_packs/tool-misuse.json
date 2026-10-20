@@ -1,5 +1,5 @@
 {
-  "pack_version": 2,
+  "pack_version": 3,
   "scenario_id": "tool-misuse",
   "title": "Tool misuse",
   "description": "A plausible record is returned by the wrong tool.",

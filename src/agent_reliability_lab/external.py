@@ -77,6 +77,21 @@ def _string(value: object, context: str, *, allow_none: bool = False) -> str | N
     return value
 
 
+def _number(
+    value: object,
+    context: str,
+    *,
+    allow_none: bool = False,
+) -> float | None:
+    if value is None and allow_none:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ProtocolDecodeError(f"{context} must be a number.")
+    if value < 0:
+        raise ProtocolDecodeError(f"{context} must be non-negative.")
+    return float(value)
+
+
 def _string_tuple(value: object, context: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise ProtocolDecodeError(f"{context} must be a list of strings.")
@@ -112,7 +127,13 @@ def scenario_request_from_dict(value: object) -> ScenarioRequest:
         )
         _keys(
             requirement_data,
-            {"requirement_id", "description", "evidence_type"},
+            {
+                "requirement_id",
+                "description",
+                "evidence_type",
+                "source",
+                "max_age_seconds",
+            },
             f"request.contract.requirements[{index}]",
         )
         requirements.append(
@@ -132,6 +153,16 @@ def scenario_request_from_dict(value: object) -> ScenarioRequest:
                     "evidence_type",
                 )
                 or "",
+                source=_string(
+                    requirement_data.get("source"),
+                    "requirement source",
+                    allow_none=True,
+                ),
+                max_age_seconds=_number(
+                    requirement_data.get("max_age_seconds"),
+                    "requirement max_age_seconds",
+                    allow_none=True,
+                ),
             )
         )
     return ScenarioRequest(
@@ -218,7 +249,7 @@ def _trace_from_dict(value: object) -> Trace:
         )
         _keys(
             tool_call_data,
-            {"name", "result_status", "result_id"},
+            {"name", "result_status", "result_id", "source", "age_seconds"},
             f"response.trace.tool_calls[{index}]",
         )
         tool_calls.append(
@@ -233,6 +264,16 @@ def _trace_from_dict(value: object) -> Trace:
                 result_id=_string(
                     tool_call_data.get("result_id"),
                     "tool result id",
+                    allow_none=True,
+                ),
+                source=_string(
+                    tool_call_data.get("source"),
+                    "tool evidence source",
+                    allow_none=True,
+                ),
+                age_seconds=_number(
+                    tool_call_data.get("age_seconds"),
+                    "tool evidence age_seconds",
                     allow_none=True,
                 ),
             )
@@ -301,6 +342,16 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
                     "name": call.name,
                     "result_status": call.result_status,
                     "result_id": call.result_id,
+                    **(
+                        {"source": call.source}
+                        if call.source is not None
+                        else {}
+                    ),
+                    **(
+                        {"age_seconds": call.age_seconds}
+                        if call.age_seconds is not None
+                        else {}
+                    ),
                 }
                 for call in run.trace.tool_calls
             ],

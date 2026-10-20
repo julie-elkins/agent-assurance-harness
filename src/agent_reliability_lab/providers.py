@@ -361,6 +361,16 @@ def _openai_events(trace) -> list[dict[str, object]]:
                 "output_flags": (
                     list(trace.tool_output_flags) if index == 1 else []
                 ),
+                **(
+                    {"source": call.source}
+                    if call.source is not None
+                    else {}
+                ),
+                **(
+                    {"age_seconds": call.age_seconds}
+                    if call.age_seconds is not None
+                    else {}
+                ),
             }
         )
     if trace.claim is not None:
@@ -450,6 +460,16 @@ def _anthropic_events(trace) -> list[dict[str, object]]:
                 "evidence_id": call.result_id,
                 "output_flags": (
                     list(trace.tool_output_flags) if index == 1 else []
+                ),
+                **(
+                    {"source": call.source}
+                    if call.source is not None
+                    else {}
+                ),
+                **(
+                    {"age_seconds": call.age_seconds}
+                    if call.age_seconds is not None
+                    else {}
                 ),
             }
         )
@@ -547,7 +567,15 @@ def _translate_openai(
         elif event_type == "function_result":
             _keys(
                 event,
-                {"type", "call_id", "status", "evidence_id", "output_flags"},
+                {
+                    "type",
+                    "call_id",
+                    "status",
+                    "evidence_id",
+                    "output_flags",
+                    "source",
+                    "age_seconds",
+                },
                 f"openai events[{index}]",
             )
             call_id = _identifier(event.get("call_id"), "openai call_id")
@@ -568,6 +596,14 @@ def _translate_openai(
                 output_flags=_identifier_list(
                     event.get("output_flags"),
                     "openai output_flags",
+                ),
+                source=_optional_identifier(
+                    event.get("source"),
+                    "openai evidence source",
+                ),
+                age_seconds=_optional_number(
+                    event.get("age_seconds"),
+                    "openai evidence age_seconds",
                 ),
             )
         elif event_type == "classification":
@@ -663,6 +699,8 @@ def _translate_anthropic(
                     "status",
                     "evidence_id",
                     "output_flags",
+                    "source",
+                    "age_seconds",
                 },
                 f"anthropic content[{index}]",
             )
@@ -687,6 +725,14 @@ def _translate_anthropic(
                 output_flags=_identifier_list(
                     event.get("output_flags"),
                     "anthropic output_flags",
+                ),
+                source=_optional_identifier(
+                    event.get("source"),
+                    "anthropic evidence source",
+                ),
+                age_seconds=_optional_number(
+                    event.get("age_seconds"),
+                    "anthropic evidence age_seconds",
                 ),
             )
         elif event_type == "reliability":
@@ -828,6 +874,24 @@ def _parse_usage(value: object) -> dict[str, int | float]:
             )
         result[field] = item
     return result
+
+
+def _optional_number(value: object, context: str) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ProviderPayloadError(
+            "invalid_provider_metadata",
+            f"{context} must be a non-negative number.",
+            "Emit only identifier and non-negative numeric evidence metadata.",
+        )
+    if value < 0:
+        raise ProviderPayloadError(
+            "invalid_provider_metadata",
+            f"{context} must be a non-negative number.",
+            "Emit only identifier and non-negative numeric evidence metadata.",
+        )
+    return float(value)
 
 
 def _object(value: object, context: str) -> dict[str, Any]:

@@ -95,6 +95,45 @@ def test_anthropic_raw_text_event_is_refused():
     assert "private provider output" not in result.refusal.message
 
 
+def test_provider_translation_preserves_evidence_source_and_age():
+    payload = {
+        "events": [
+            {
+                "type": "function_call",
+                "name": "lookup_authoritative_record",
+                "call_id": "record:authoritative:001",
+            },
+            {
+                "type": "function_result",
+                "call_id": "record:authoritative:001",
+                "status": "ok",
+                "evidence_id": "record:authoritative:001",
+                "output_flags": [],
+                "source": "authoritative-catalog",
+                "age_seconds": 60,
+            },
+        ],
+        "usage": {
+            "requests": 1,
+            "output_tokens": 1,
+            "elapsed_seconds": 0.01,
+            "estimated_cost_usd": 0.001,
+        },
+    }
+
+    result = translate_provider_payload(
+        "openai",
+        payload,
+        scenario_id="evidence-freshness-source",
+        agent_id="openai-mock",
+    )
+
+    assert result.refusal is None
+    assert result.trace is not None
+    assert result.trace.tool_calls[0].source == "authoritative-catalog"
+    assert result.trace.tool_calls[0].age_seconds == 60.0
+
+
 def test_provider_limits_refuse_excess_synthetic_usage():
     adapter = mock_provider_adapters(
         "openai",

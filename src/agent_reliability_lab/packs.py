@@ -21,7 +21,8 @@ from .models import AssuranceDimension, EvidenceContract, EvidenceRequirement
 from .protocol import ScenarioRequest
 
 
-PACK_VERSION = 2
+PACK_VERSION = 3
+SUPPORTED_PACK_VERSIONS = frozenset({2, PACK_VERSION})
 SUPPORTED_EVIDENCE_TYPES = frozenset(
     {
         "tool_call",
@@ -138,6 +139,16 @@ class ScenarioPack:
                     "side_effect_id": tool.side_effect_id,
                     "requires_authorization": tool.requires_authorization,
                     "output_flags": list(tool.output_flags),
+                    **(
+                        {"source": tool.source}
+                        if tool.source is not None
+                        else {}
+                    ),
+                    **(
+                        {"age_seconds": tool.age_seconds}
+                        if tool.age_seconds is not None
+                        else {}
+                    ),
                 }
                 for tool in self.tools
             ],
@@ -209,7 +220,13 @@ def _parse_requirements(value: object) -> tuple[EvidenceRequirement, ...]:
         data = _object(raw_requirement, f"requirements[{index}]")
         _keys(
             data,
-            {"requirement_id", "description", "evidence_type"},
+            {
+                "requirement_id",
+                "description",
+                "evidence_type",
+                "source",
+                "max_age_seconds",
+            },
             f"requirements[{index}]",
         )
         requirement_id = _required_string(
@@ -235,6 +252,28 @@ def _parse_requirements(value: object) -> tuple[EvidenceRequirement, ...]:
                 f"requirements[{index}].requirement_id must use the "
                 f"{required_prefix} prefix for {evidence_type}."
             )
+        source = data.get("source")
+        if source is not None and (
+            not isinstance(source, str) or not source
+        ):
+            raise ValueError(
+                f"requirements[{index}].source must be a string or null."
+            )
+        max_age_seconds = data.get("max_age_seconds")
+        if max_age_seconds is not None and (
+            isinstance(max_age_seconds, bool)
+            or not isinstance(max_age_seconds, (int, float))
+            or max_age_seconds < 0
+        ):
+            raise ValueError(
+                f"requirements[{index}].max_age_seconds must be a non-negative number or null."
+            )
+        if evidence_type == "successful_tool_result" and (
+            (source is None) != (max_age_seconds is None)
+        ):
+            raise ValueError(
+                f"requirements[{index}] must provide both source and max_age_seconds together."
+            )
         requirements.append(
             EvidenceRequirement(
                 requirement_id=requirement_id,
@@ -243,6 +282,12 @@ def _parse_requirements(value: object) -> tuple[EvidenceRequirement, ...]:
                     f"requirements[{index}].description",
                 ),
                 evidence_type=evidence_type,
+                source=source,
+                max_age_seconds=(
+                    float(max_age_seconds)
+                    if max_age_seconds is not None
+                    else None
+                ),
             )
         )
     return tuple(requirements)
@@ -264,6 +309,8 @@ def _parse_tools(value: object) -> tuple[ToolSpec, ...]:
                 "side_effect_id",
                 "requires_authorization",
                 "output_flags",
+                "source",
+                "age_seconds",
             },
             f"tools[{index}]",
         )
@@ -281,6 +328,20 @@ def _parse_tools(value: object) -> tuple[ToolSpec, ...]:
             not isinstance(side_effect_id, str) or not side_effect_id
         ):
             raise ValueError(f"tools[{index}].side_effect_id must be a string or null.")
+        source = data.get("source")
+        if source is not None and (
+            not isinstance(source, str) or not source
+        ):
+            raise ValueError(f"tools[{index}].source must be a string or null.")
+        age_seconds = data.get("age_seconds")
+        if age_seconds is not None and (
+            isinstance(age_seconds, bool)
+            or not isinstance(age_seconds, (int, float))
+            or age_seconds < 0
+        ):
+            raise ValueError(
+                f"tools[{index}].age_seconds must be a non-negative number or null."
+            )
         tools.append(
             ToolSpec(
                 name=name,
@@ -297,6 +358,10 @@ def _parse_tools(value: object) -> tuple[ToolSpec, ...]:
                 output_flags=_string_list(
                     data.get("output_flags"),
                     f"tools[{index}].output_flags",
+                ),
+                source=source,
+                age_seconds=(
+                    float(age_seconds) if age_seconds is not None else None
                 ),
             )
         )
@@ -356,7 +421,7 @@ def _parse_pack(value: object) -> ScenarioPack:
         },
         "pack",
     )
-    if data.get("pack_version") != PACK_VERSION:
+    if data.get("pack_version") not in SUPPORTED_PACK_VERSIONS:
         raise ValueError("pack_version is not supported.")
     available_tools = _string_list(data.get("available_tools"), "available_tools")
     requirements = _parse_requirements(data.get("requirements"))

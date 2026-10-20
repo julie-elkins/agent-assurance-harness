@@ -6,8 +6,8 @@ evidence, how it helps ship production code, and where the safety boundary stops
 
 This guide is intentionally hand-maintained. The repository does not have a lesson tree
 from which a generated manual could be assembled, so `README.md` remains the command
-reference and the implementation remains the source of truth. A documentation test checks
-that the files named here still exist.
+reference, `BUILD_GUIDE.md` explains the design decisions, and the implementation remains
+the source of truth. A documentation test checks that the files named here still exist.
 
 ## What this project does
 
@@ -44,7 +44,7 @@ It does not prove:
 
 - that a live model is generally reliable;
 - that a particular prompt, model, tool, or policy caused a regression;
-- that the six built-in scenarios cover every production failure;
+- that the seven built-in scenarios cover every production failure;
 - that an adapter process is safe to run on an untrusted host; or
 - that a metadata attestation is a signed provenance statement.
 
@@ -81,6 +81,12 @@ from satisfying the side-effect gate. It also requires the same canonical action
 on the observed action and the authorization evidence. A digest is a one-way fingerprint
 of the canonical action fields; here it is synthetic equality evidence, not a signature and
 not proof that a live service interpreted the action correctly.
+
+The freshness scenario adds another production-facing boundary: evidence must identify its
+approved source and remain within the contract's maximum age. This catches a common
+failure mode where an agent returns the right-looking answer from a stale cache or an
+unapproved source. The harness carries only the source identifier and numeric age; it does
+not export the record contents or claim that the source itself is trustworthy.
 
 Run the public hygiene checks before treating a change as release-ready:
 
@@ -184,7 +190,7 @@ whether anything was checked.
 A scenario pack is a versioned JSON contract containing synthetic tools, evidence
 requirements, and named simulator faults. Packs are data, not executable plugins.
 
-List the six built-in packs:
+List the seven built-in packs:
 
 ```bash
 uv run agent-reliability --list-packs --json
@@ -277,6 +283,13 @@ positive attestation, negative report, and negative attestation as a metadata-on
 artifact. The upload uses `if: always()` so a failed check does not hide the evidence
 needed to diagnose it. Repository owners must still require that job in branch protection;
 the workflow cannot change that GitHub setting.
+
+The same job writes a GitHub Actions job summary—a rendered review panel attached to the
+workflow run. It shows the candidate pass, the expected negative-control block, the Git
+revision, the scenario-pack hash, and the evidence limits. The mocked-provider check
+appends its metadata-only efficiency table, so reviewers can see the request, token,
+time, and estimated-spend ceilings without downloading the JSON artifact. No PR-comment
+permission is needed.
 
 ## Extend the harness safely
 

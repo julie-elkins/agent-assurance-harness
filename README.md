@@ -3,8 +3,9 @@
 A provider-neutral harness for testing whether tool-using AI agents have the evidence to
 act, abstain, and report honestly.
 
-Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path.
-This README remains the full command reference and feature history.
+Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
+then read [Building the Agent Assurance Harness](BUILD_GUIDE.md) for the design rationale
+and extension path. This README remains the full command reference and feature history.
 
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
@@ -17,7 +18,7 @@ answer. It is whether the agent can show:
 - what the result still does not prove; and
 - whether the evaluator itself can catch a known false pass.
 
-The current harness compares a deliberately naive agent with a guarded agent across six
+The current harness compares a deliberately naive agent with a guarded agent across seven
 synthetic agent cases:
 
 1. **Tool misuse** — a plausible result comes from the wrong tool.
@@ -32,6 +33,9 @@ synthetic agent cases:
    the resulting state before reporting success. Authorization evidence must also bind to
    the protected operation and canonical action digest rather than merely appearing
    somewhere in the trace.
+7. **Evidence freshness and source authority** — a result must come from the approved
+   source and remain within the declared age window. A result that is correct but stale,
+   or current but from the wrong source, is not accepted as complete evidence.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.
@@ -117,7 +121,7 @@ requirements, and named simulator faults. Packs are data only: the loader reject
 fields and unsupported evidence types, and it never executes predicates, imports pack code,
 or discovers files outside a directory explicitly supplied by the caller.
 
-The six built-in packs are the source of truth for the reference scenarios. List and
+The seven built-in packs are the source of truth for the reference scenarios. List and
 validate them without running an agent:
 
 ```bash
@@ -284,6 +288,13 @@ uv run python tools/verify_assurance_evidence.py \
 The explicit `Agent reliability gate` job name gives repository owners a stable status
 check to require in branch protection. Branch protection is a GitHub repository setting
 and cannot be verified or changed from this checkout.
+
+The workflow also writes a GitHub Actions job summary—a rendered review panel shown with
+the workflow run—from the same paired metadata files. It shows the candidate decision,
+the expected negative-control block, Git revision, scenario-pack hash, and the limits of
+the evidence. The final mocked-provider step appends its efficiency and budget table to
+that summary. This keeps the important review evidence visible without granting the
+workflow permission to create PR comments or change repository settings.
 
 ### Exercise provider integrations without network access
 
@@ -492,7 +503,8 @@ synthetic; live cost remains an estimate and is not a billing statement.
 `TraceRecorder` is the safe integration point for an agent that can expose observable
 callbacks but should not import a provider SDK. It records tool names, result statuses,
 synthetic evidence identifiers, claim and answer classifications, abstentions,
-authorization identifiers, side-effect identifiers, and tool-output flags. It rejects
+authorization identifiers, side-effect identifiers, tool-output flags, evidence source
+identifiers, and evidence age in seconds. It rejects
 raw tool arguments, raw result payloads, free-form claim text, and free-form answer text.
 
 ```python
@@ -512,6 +524,23 @@ recorder.record_claim("claim:evidence_insufficient")
 recorder.record_abstention()
 run = recorder.finish()
 ```
+
+For source-sensitive evidence, provide metadata with the result identifier:
+
+```python
+recorder.record_tool_call("lookup_authoritative_record")
+recorder.record_tool_result(
+    "lookup_authoritative_record",
+    "ok",
+    result_id="record:authoritative:001",
+    source="authoritative-catalog",
+    age_seconds=60,
+)
+```
+
+The source and age are identifiers and numeric metadata only. They make a declared
+freshness contract enforceable; they do not prove that the source was semantically
+correct or that the age measurement came from a trusted clock.
 
 `finish()` returns the same `AdapterRun` consumed by the evaluator and replay serializer.
 The recorder is stateful, so create one recorder per scenario execution. A rejected

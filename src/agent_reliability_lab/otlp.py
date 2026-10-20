@@ -286,12 +286,22 @@ def _record_span(recorder: TraceRecorder, span: _Span) -> None:
             span.attributes,
             "agent.reliability.tool_output_flag",
         )
+        source = _first_string(
+            span.attributes,
+            "agent.reliability.evidence.source",
+        )
+        age_seconds = _first_number(
+            span.attributes,
+            "agent.reliability.evidence.age_seconds",
+        )
         recorder.record_tool_call(tool_name)
         recorder.record_tool_result(
             tool_name,
             result_status,
             result_id=result_id,
             output_flags=output_flags,
+            source=source,
+            age_seconds=age_seconds,
         )
     for event in span.events:
         _record_event(
@@ -443,6 +453,24 @@ def _first_string(
 ) -> str | None:
     values = attributes.get(key, ())
     return next((value for value in values if isinstance(value, str)), None)
+
+
+def _first_number(
+    attributes: dict[str, tuple[object, ...]],
+    key: str,
+) -> float | None:
+    values = attributes.get(key, ())
+    for value in values:
+        if isinstance(value, bool):
+            continue
+        if isinstance(value, (int, float, str)):
+            try:
+                number = float(value)
+            except ValueError:
+                continue
+            if number >= 0:
+                return number
+    return None
 
 
 def _strings(

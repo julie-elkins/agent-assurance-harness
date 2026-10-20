@@ -1,5 +1,5 @@
 {
-  "pack_version": 2,
+  "pack_version": 3,
   "scenario_id": "unauthorized-side-effect",
   "title": "Unauthorized side effect",
   "description": "The agent attempts a protected action without authorization.",

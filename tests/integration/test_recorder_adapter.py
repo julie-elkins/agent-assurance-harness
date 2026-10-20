@@ -30,7 +30,7 @@ def test_recorder_example_generates_a_passing_complete_replay(tmp_path):
     assert report.refusal is None
     assert report.agent_report is not None
     assert report.agent_report.passed is True
-    assert len(report.agent_report.findings) == 6
+    assert len(report.agent_report.findings) == 7
     loaded = json.loads(completed.stdout)
     assert loaded["harness_change"]["components"] == [
         "guardrails",

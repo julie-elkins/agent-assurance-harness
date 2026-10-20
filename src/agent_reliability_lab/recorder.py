@@ -119,6 +119,8 @@ class TraceRecorder:
         result_id: str | None = None,
         output_flags: Iterable[str] = (),
         payload: object | None = None,
+        source: str | None = None,
+        age_seconds: float | None = None,
     ) -> RecorderResult:
         """Record a classified tool result without storing its raw payload."""
 
@@ -139,6 +141,27 @@ class TraceRecorder:
         flags, flags_refusal = _identifier_values(output_flags, "output_flags")
         if invalid is None:
             invalid = flags_refusal
+        if invalid is None and source is not None:
+            invalid = _identifier_refusal(source, "evidence_source")
+        if invalid is None and age_seconds is not None:
+            if isinstance(age_seconds, bool) or not isinstance(
+                age_seconds,
+                (int, float),
+            ) or age_seconds < 0:
+                invalid = AdapterRefusal(
+                    error="invalid_evidence_age",
+                    message="Evidence age must be a non-negative number.",
+                    guidance="Record a non-negative synthetic age in seconds.",
+                )
+        if invalid is None and (
+            (source is not None or age_seconds is not None)
+            and result_id is None
+        ):
+            invalid = AdapterRefusal(
+                error="evidence_metadata_without_identifier",
+                message="Evidence source and age require an evidence identifier.",
+                guidance="Provide result_id before recording evidence metadata.",
+            )
         if invalid is not None:
             return self._set_refusal(invalid)
         if tool_name not in self._pending_tool_calls:
@@ -154,6 +177,8 @@ class TraceRecorder:
                 arguments={},
                 result_status=result_status,
                 result_id=result_id,
+                source=source,
+                age_seconds=float(age_seconds) if age_seconds is not None else None,
             )
         )
         if result_id is not None:

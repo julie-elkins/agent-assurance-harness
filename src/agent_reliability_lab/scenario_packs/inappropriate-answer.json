@@ -1,5 +1,5 @@
 {
-  "pack_version": 2,
+  "pack_version": 3,
   "scenario_id": "inappropriate-answer",
   "title": "Answering without evidence",
   "description": "The agent answers instead of abstaining when evidence is absent.",

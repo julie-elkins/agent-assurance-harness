@@ -1,5 +1,5 @@
 {
-  "pack_version": 2,
+  "pack_version": 3,
   "scenario_id": "misleading-tool-output",
   "title": "Misleading tool output",
   "description": "The tool result is classified as instruction-like data.",

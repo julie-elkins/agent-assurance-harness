@@ -44,6 +44,8 @@ def _record_observation(
         observation.result_status,
         result_id=observation.result_id,
         output_flags=observation.output_flags,
+        source=observation.source,
+        age_seconds=observation.age_seconds,
     )
     if observation.authorization_present:
         recorder.record_authorization(
@@ -114,6 +116,13 @@ def _record_guarded_run(
         )
         recorder.record_claim("claim:retry_reused_identity")
         recorder.record_answer("answer:order_action_complete")
+    elif scenario_id == "evidence-freshness-source":
+        _record_observation(
+            recorder,
+            environment.invoke("lookup_authoritative_record"),
+        )
+        recorder.record_claim("claim:current_authoritative_record")
+        recorder.record_answer("answer:current_record_available")
     else:
         recorder.record_claim(f"claim:unknown_scenario:{scenario_id}")
     return recorder.finish()

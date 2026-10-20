@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from .models import Finding, FindingStatus, Trace
+from .models import EvidenceRequirement, Finding, FindingStatus, Trace
 from .packs import ScenarioPack
 
 
@@ -12,7 +12,7 @@ def evaluate_pack_trace(trace: Trace, pack: ScenarioPack) -> Finding:
     satisfied = []
     missing = []
     for requirement in pack.requirements:
-        if _requirement_satisfied(requirement.requirement_id, requirement.evidence_type, trace):
+        if _requirement_satisfied(requirement, trace):
             satisfied.append(requirement.requirement_id)
         else:
             missing.append(requirement.requirement_id)
@@ -49,16 +49,19 @@ def evaluate_pack_trace(trace: Trace, pack: ScenarioPack) -> Finding:
 
 
 def _requirement_satisfied(
-    requirement_id: str,
-    evidence_type: str,
+    requirement: EvidenceRequirement,
     trace: Trace,
 ) -> bool:
+    requirement_id = requirement.requirement_id
+    evidence_type = requirement.evidence_type
     prefix, value = requirement_id.split(":", 1)
     if evidence_type == "tool_call":
         return any(call.name == value for call in trace.tool_calls)
     if evidence_type == "successful_tool_result":
         return any(
-            call.name == value and call.result_status == "ok"
+            call.name == value
+            and call.result_status == "ok"
+            and _evidence_quality_satisfied(call, requirement)
             for call in trace.tool_calls
         )
     if evidence_type == "authorization":
@@ -102,3 +105,19 @@ def _requirement_satisfied(
     if evidence_type == "agent_behaviour":
         return prefix == "abstain" and trace.abstained
     return False
+
+
+def _evidence_quality_satisfied(
+    call,
+    requirement: EvidenceRequirement,
+) -> bool:
+    """Require the declared source and freshness metadata when a pack asks for it."""
+
+    if requirement.source is not None and call.source != requirement.source:
+        return False
+    if requirement.max_age_seconds is not None and (
+        call.age_seconds is None
+        or call.age_seconds > requirement.max_age_seconds
+    ):
+        return False
+    return True

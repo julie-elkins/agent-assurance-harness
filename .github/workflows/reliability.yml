@@ -101,6 +101,16 @@ jobs:
           --negative-report /tmp/agent-reliability-negative-regression.json
           --negative-attestation /tmp/agent-reliability-negative-attestation.json
 
+      - name: Publish pull-request assurance summary
+        if: always()
+        run: >-
+          uv run python tools/render_assurance_summary.py
+          --positive-report /tmp/agent-reliability-adapter-regression.json
+          --positive-attestation /tmp/agent-reliability-adapter-attestation.json
+          --negative-report /tmp/agent-reliability-negative-regression.json
+          --negative-attestation /tmp/agent-reliability-negative-attestation.json
+          --output "$GITHUB_STEP_SUMMARY"
+
       - name: Upload pull-request assurance evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -201,10 +211,13 @@ jobs:
           --json
           --fail-on-findings
 
-      - name: Run mocked provider adapters
-        run: >-
-          uv run agent-reliability
-          --mock-provider all
-          --json
-          --mutations
-          --fail-on-findings
+      - name: Run mocked provider adapters and publish budget evidence
+        run: |
+          uv run agent-reliability \
+            --mock-provider all \
+            --markdown \
+            --mutations \
+            --fail-on-findings \
+            > /tmp/agent-reliability-provider-summary.md
+          cat /tmp/agent-reliability-provider-summary.md
+          cat /tmp/agent-reliability-provider-summary.md >> "$GITHUB_STEP_SUMMARY"

@@ -29,7 +29,6 @@ def test_baseline_compared_with_itself_passes(tmp_path):
     assert report.candidate_change is not None
     assert report.candidate_change.components == (
         "guardrails",
-        "skills",
         "tool_guidance",
     )
 

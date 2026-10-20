@@ -34,6 +34,8 @@ class ToolSpec:
     side_effect_id: str | None = None
     requires_authorization: bool = False
     output_flags: tuple[str, ...] = ()
+    source: str | None = None
+    age_seconds: float | None = None
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,8 @@ class ToolObservation:
     authorization_required: bool = False
     authorization_present: bool = False
     fault_id: str | None = None
+    source: str | None = None
+    age_seconds: float | None = None
 
 
 class SimulatedToolEnvironment:
@@ -104,6 +108,8 @@ class SimulatedToolEnvironment:
                 authorization_required=True,
                 authorization_present=False,
                 fault_id=fault.fault_id if fault else None,
+                source=tool.source,
+                age_seconds=tool.age_seconds,
             )
 
         if fault is None:
@@ -115,6 +121,8 @@ class SimulatedToolEnvironment:
                 side_effect_attempted=tool.side_effect_id,
                 authorization_required=tool.requires_authorization,
                 authorization_present=authorized,
+                source=tool.source,
+                age_seconds=tool.age_seconds,
             )
 
         invocation_number = self._invocation_counts.get(tool.name, 0)
@@ -132,6 +140,8 @@ class SimulatedToolEnvironment:
                 authorization_required=tool.requires_authorization,
                 authorization_present=authorized,
                 fault_id=fault.fault_id,
+                source=tool.source,
+                age_seconds=tool.age_seconds,
             )
 
         if fault.mode is FaultMode.MISSING_RESULT:
@@ -142,6 +152,8 @@ class SimulatedToolEnvironment:
                 authorization_required=tool.requires_authorization,
                 authorization_present=authorized,
                 fault_id=fault.fault_id,
+                source=tool.source,
+                age_seconds=tool.age_seconds,
             )
         if fault.mode is FaultMode.STALE_RESULT:
             return ToolObservation(
@@ -152,6 +164,8 @@ class SimulatedToolEnvironment:
                 authorization_required=tool.requires_authorization,
                 authorization_present=authorized,
                 fault_id=fault.fault_id,
+                source=tool.source,
+                age_seconds=tool.age_seconds,
             )
         if fault.mode is FaultMode.MISLEADING_OUTPUT:
             return ToolObservation(
@@ -172,6 +186,8 @@ class SimulatedToolEnvironment:
             authorization_required=tool.requires_authorization,
             authorization_present=authorized,
             fault_id=fault.fault_id,
+            source=tool.source,
+            age_seconds=tool.age_seconds,
         )
 
 
@@ -277,5 +293,24 @@ def environment_for_scenario(scenario_id: str) -> SimulatedToolEnvironment:
                     mode=FaultMode.TIMEOUT_AFTER_COMMIT,
                 ),
             ),
+        )
+    if scenario_id == "evidence-freshness-source":
+        return SimulatedToolEnvironment(
+            tools=(
+                ToolSpec(
+                    name="lookup_authoritative_record",
+                    result_status="ok",
+                    result_id="record:authoritative:001",
+                    source="authoritative-catalog",
+                    age_seconds=60.0,
+                ),
+                ToolSpec(
+                    name="lookup_cached_record",
+                    result_status="ok",
+                    result_id="record:cached:001",
+                    source="cache",
+                    age_seconds=7200.0,
+                ),
+            )
         )
     raise ValueError(f"Unknown synthetic scenario: {scenario_id}")

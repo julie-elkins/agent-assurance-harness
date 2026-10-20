@@ -41,7 +41,7 @@ from .runner import run_comparison
 from .scenarios import scenarios
 
 
-SERVER_VERSION = "0.7.0"
+SERVER_VERSION = "0.8.0"
 SERVER_INSTRUCTIONS = (
     "Use list_scenario_packs before evaluate_agent_trace or run_gated_scenario when the "
     "scenario is unknown. Use get_scenario_pack_provenance when you need the exact "
@@ -93,6 +93,8 @@ class EvidenceRequirementOutput(StrictModel):
     requirement_id: str
     description: str
     evidence_type: str
+    source: str | None = None
+    max_age_seconds: float | None = None
 
 
 class FaultOutput(StrictModel):
@@ -164,6 +166,16 @@ class ToolCallInput(StrictModel):
         default=None,
         max_length=128,
         description="Synthetic result identifier, or null when no identifier was observed.",
+    )
+    source: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Synthetic evidence source identifier, never source content.",
+    )
+    age_seconds: float | None = Field(
+        default=None,
+        ge=0,
+        description="Synthetic evidence age in seconds.",
     )
 
 
@@ -438,6 +450,8 @@ def _pack_output(pack: ScenarioPack) -> ScenarioPackOutput:
                 requirement_id=item.requirement_id,
                 description=item.description,
                 evidence_type=item.evidence_type,
+                source=item.source,
+                max_age_seconds=item.max_age_seconds,
             )
             for item in pack.requirements
         ],
@@ -462,6 +476,8 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
                 arguments={},
                 result_status=call.result_status,
                 result_id=call.result_id,
+                source=call.source,
+                age_seconds=call.age_seconds,
             )
             for call in trace.tool_calls
         ),
@@ -550,6 +566,8 @@ def _comparison_output(include_mutations: bool) -> ReferenceComparisonOutput:
                         requirement_id=item.requirement_id,
                         description=item.description,
                         evidence_type=item.evidence_type,
+                        source=item.source,
+                        max_age_seconds=item.max_age_seconds,
                     )
                     for item in contract.requirements
                 ],
@@ -582,7 +600,7 @@ def _comparison_output(include_mutations: bool) -> ReferenceComparisonOutput:
         diagnostics=_diagnostics(
             what_it_does_not_show=(
                 "It does not show live-provider behaviour, latency, cost, or reliability "
-                "outside the six synthetic scenarios."
+                "outside the seven synthetic scenarios."
             )
         ),
     )
@@ -668,7 +686,7 @@ def get_scenario_pack_provenance() -> PackProvenanceOutput:
     name="list_scenario_packs",
     title="List synthetic scenario packs",
     description=(
-        "Validate and list the six built-in synthetic scenario packs. Use this first "
+        "Validate and list the seven built-in synthetic scenario packs. Use this first "
         "when you need a scenario_id. The result includes refusals and diagnostics; "
         "an empty pack list is not evidence that all packs are valid."
     ),
@@ -807,7 +825,7 @@ def evaluate_agent_trace(
     name="run_reference_comparison",
     title="Run deterministic reference comparison",
     description=(
-        "Run the built-in naive and guarded agents against all six synthetic scenario "
+        "Run the built-in naive and guarded agents against all seven synthetic scenario "
         "packs. Set include_mutations=true to run deliberate evidence-removal checks. "
         "This never launches a caller command, reads a file path, uses credentials, or "
         "contacts a provider."

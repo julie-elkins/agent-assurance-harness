@@ -1,5 +1,5 @@
 {
-  "pack_version": 2,
+  "pack_version": 3,
   "scenario_id": "ambiguous-side-effect-retry",
   "title": "Ambiguous side-effect retry",
   "description": "A write may commit before its response times out; retrying without stable identity may duplicate the side effect.",

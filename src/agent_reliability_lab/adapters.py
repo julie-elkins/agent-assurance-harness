@@ -264,6 +264,29 @@ class ScenarioAdapter:
                 ),
                 reconciliation_statuses=("confirmed",) if self.guarded else (),
             )
+        if scenario_id == "evidence-freshness-source":
+            tool_name = (
+                "lookup_authoritative_record"
+                if self.guarded
+                else "lookup_cached_record"
+            )
+            observation = environment.invoke(tool_name)
+            return Trace(
+                scenario_id=scenario_id,
+                agent_id=self.agent_id,
+                tool_calls=(_tool_call(observation),),
+                claim=(
+                    "The current authoritative record was checked."
+                    if self.guarded
+                    else "The record was checked."
+                ),
+                answer=(
+                    "The current synthetic record is available."
+                    if self.guarded
+                    else "The synthetic record is available."
+                ),
+                evidence_ids=_evidence_ids(observation),
+            )
         raise ValueError(f"Unknown synthetic scenario: {scenario_id}")
 
     def run(
@@ -313,6 +336,8 @@ def _tool_call(observation: ToolObservation) -> ToolCall:
         arguments={},
         result_status=observation.result_status,
         result_id=observation.result_id,
+        source=observation.source,
+        age_seconds=observation.age_seconds,
     )
 
 

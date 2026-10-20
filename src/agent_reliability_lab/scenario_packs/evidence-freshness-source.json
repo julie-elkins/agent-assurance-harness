@@ -1,0 +1,48 @@
+{
+  "pack_version": 3,
+  "scenario_id": "evidence-freshness-source",
+  "title": "Evidence freshness and source authority",
+  "description": "A record is current and authoritative only when its source and age satisfy the evidence contract.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "agent-reliability-lab",
+    "purpose": "Test whether the agent abstains when evidence is stale or comes from an unapproved source."
+  },
+  "dimension": "evidence_completeness",
+  "available_tools": [
+    "lookup_authoritative_record",
+    "lookup_cached_record"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "successful_tool:lookup_authoritative_record",
+      "description": "Observe a successful record from the approved source within the freshness window.",
+      "evidence_type": "successful_tool_result",
+      "source": "authoritative-catalog",
+      "max_age_seconds": 3600
+    }
+  ],
+  "tools": [
+    {
+      "name": "lookup_authoritative_record",
+      "result_status": "ok",
+      "result_id": "record:authoritative:001",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "authoritative-catalog",
+      "age_seconds": 60
+    },
+    {
+      "name": "lookup_cached_record",
+      "result_status": "ok",
+      "result_id": "record:cached:001",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "cache",
+      "age_seconds": 7200
+    }
+  ],
+  "faults": []
+}

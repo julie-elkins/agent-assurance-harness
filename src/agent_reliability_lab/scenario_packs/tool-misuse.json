@@ -1,0 +1,37 @@
+{
+  "pack_version": 1,
+  "scenario_id": "tool-misuse",
+  "title": "Tool misuse",
+  "description": "A plausible record is returned by the wrong tool.",
+  "dimension": "task_outcome",
+  "available_tools": [
+    "lookup_policy",
+    "lookup_customer"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:lookup_policy",
+      "description": "Call the policy lookup tool for a policy question.",
+      "evidence_type": "tool_call"
+    }
+  ],
+  "tools": [
+    {
+      "name": "lookup_customer",
+      "result_status": "ok",
+      "result_id": "tool-result-002",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": []
+    },
+    {
+      "name": "lookup_policy",
+      "result_status": "not_found",
+      "result_id": "tool-result-001",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": []
+    }
+  ],
+  "faults": []
+}

@@ -60,6 +60,7 @@ python -m agent_reliability_lab
 python -m agent_reliability_lab --json
 python -m agent_reliability_lab --json --mutations
 python -m agent_reliability_lab --markdown
+python -m agent_reliability_lab --list-packs --markdown
 ```
 
 The default command reports both agents. Add `--fail-on-findings` when a caller wants the
@@ -92,6 +93,33 @@ python -m agent_reliability_lab \
 The adapter process receives only synthetic scenario metadata and the evidence contract.
 The harness does not forward the parent environment's secrets. Its timeout and response
 size limits are configurable with `--timeout-seconds` and `--max-response-bytes`.
+
+## Validate scenario packs
+
+A scenario pack is a versioned JSON test case that declares synthetic tools, evidence
+requirements, and named simulator faults. Packs are data only: the loader rejects unknown
+fields and unsupported evidence types, and it never executes predicates, imports pack code,
+or discovers files outside a directory explicitly supplied by the caller.
+
+The five built-in packs are the source of truth for the reference scenarios. List and
+validate them without running an agent:
+
+```bash
+python -m agent_reliability_lab --list-packs --json
+```
+
+To validate a separate pack directory, pass it explicitly:
+
+```bash
+python -m agent_reliability_lab \
+  --list-packs \
+  --pack-directory ./scenario-packs \
+  --markdown
+```
+
+An empty directory, unreadable JSON, invalid pack fields, or duplicate scenario IDs
+returns a structured refusal and a non-zero exit code. This keeps “nothing was checked”
+separate from “all supplied packs were valid.”
 
 ## Report contract
 

@@ -44,6 +44,19 @@ from .protocol import (
     ScenarioRequest,
     validate_adapter_run,
 )
+from .packs import (
+    PACK_VERSION,
+    PackRefusal,
+    PackResult,
+    ScenarioPack,
+    build_environment_from_pack,
+    decode_scenario_pack,
+    load_builtin_packs,
+    load_builtin_pack_results,
+    load_pack_directory,
+    load_scenario_pack,
+    request_from_pack,
+)
 from .runner import run_adapter_comparison, run_comparison
 
 __all__ = [
@@ -65,7 +78,11 @@ __all__ = [
     "FindingStatus",
     "EventType",
     "ObservableEvent",
+    "PACK_VERSION",
+    "PackRefusal",
+    "PackResult",
     "ProtocolDecodeError",
+    "ScenarioPack",
     "ScenarioRequest",
     "ScenarioAdapter",
     "SimulatedToolEnvironment",
@@ -77,6 +94,13 @@ __all__ = [
     "adapter_run_from_dict",
     "adapter_run_to_dict",
     "environment_for_scenario",
+    "build_environment_from_pack",
+    "decode_scenario_pack",
+    "load_builtin_packs",
+    "load_builtin_pack_results",
+    "load_pack_directory",
+    "load_scenario_pack",
+    "request_from_pack",
     "reference_adapters",
     "run_adapter_comparison",
     "run_comparison",

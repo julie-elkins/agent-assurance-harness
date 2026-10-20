@@ -85,6 +85,10 @@ missing, and what the result does not prove.
 - `tools/benchmark_report.py` must run only built-in synthetic adapters and emit status
   counts, scenario identifiers, hashes, and evaluator-control results. It must not emit
   findings, traces, prompts, provider output, credentials, or live-provider results.
+- `tools/conformance_report.py` must run one external JSONL adapter through every built-in
+  scenario and mutation control. Its report may contain only identifiers, counts, statuses,
+  and conformance state; never emit the adapter command, raw findings, traces, prompts,
+  credentials, or provider output.
 - Provider response fixtures under `tests/fixtures/provider_contracts/` are synthetic
   contract examples only. They must not contain raw provider output, prompts, private
   input, or credentials.

@@ -58,6 +58,7 @@ from .replay import (
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
 from .benchmark import SyntheticBenchmarkReport, run_synthetic_benchmark
+from .conformance import AdapterConformanceReport, run_adapter_conformance
 from .live import (
     LiveProviderAdapter,
     LiveProviderPolicy,
@@ -139,6 +140,7 @@ __all__ = [
     "Trace",
     "TraceRecorder",
     "SyntheticBenchmarkReport",
+    "AdapterConformanceReport",
     "LiveProviderAdapter",
     "LiveProviderPolicy",
     "MockProviderAdapter",
@@ -161,6 +163,7 @@ __all__ = [
     "run_adapter_scenario",
     "run_comparison",
     "run_synthetic_benchmark",
+    "run_adapter_conformance",
     "live_provider_adapter",
     "mock_provider_adapters",
     "translate_provider_payload",

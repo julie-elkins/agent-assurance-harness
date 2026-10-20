@@ -171,6 +171,22 @@ uv run python tools/benchmark_report.py \
 The report compares the reference and mocked adapters using status counts and hashes only.
 It is a deterministic assurance benchmark, not a live-model quality ranking.
 
+Phase 18 checks an external adapter against the public conformance contract:
+
+```bash
+uv run python tools/conformance_report.py \
+  --agent-id external \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/guarded_adapter.py \
+  --output /tmp/agent-reliability-conformance.json \
+  --fail-on-findings
+```
+
+The conformance report contains counts and statuses only; it does not expose the adapter
+command, findings, traces, prompts, credentials, or provider output.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

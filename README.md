@@ -285,6 +285,27 @@ uv run python tools/benchmark_report.py \
 
 This is a deterministic synthetic benchmark, not a live-model quality ranking.
 
+### Check an external adapter's conformance
+
+The conformance check runs one external JSONL adapter (JSON Lines: one JSON object per
+line) through all built-in scenarios and controlled mutations. It returns a machine-
+readable report with status counts only:
+
+```bash
+uv run python tools/conformance_report.py \
+  --agent-id external \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/guarded_adapter.py \
+  --output /tmp/agent-reliability-conformance.json \
+  --fail-on-findings
+```
+
+The command validates the same response boundary used by the harness, including refusal
+of unknown fields, raw payloads, missing responses, timeouts, and malformed JSON. It does
+not publish the adapter command, findings, traces, prompts, credentials, or provider text.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

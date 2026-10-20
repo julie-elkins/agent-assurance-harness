@@ -40,6 +40,17 @@ jobs:
           --output /tmp/agent-reliability-benchmark.json
           --fail-on-findings
 
+      - name: Check public adapter conformance
+        run: >-
+          uv run python tools/conformance_report.py
+          --agent-id external
+          --adapter-command uv
+          --adapter-command run
+          --adapter-command python
+          --adapter-command examples/guarded_adapter.py
+          --output /tmp/agent-reliability-conformance.json
+          --fail-on-findings
+
       - name: Run tests
         run: uv run pytest
 

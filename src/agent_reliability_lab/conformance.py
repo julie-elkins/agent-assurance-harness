@@ -1,0 +1,101 @@
+"""Conformance summaries for external JSONL adapters."""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+from .models import AgentReport, FindingStatus
+from .protocol import AgentAdapter
+from .runner import run_adapter_comparison
+
+
+@dataclass(frozen=True)
+class AdapterConformanceReport:
+    """A metadata-only result for one external adapter."""
+
+    agent_id: str
+    scenario_count: int
+    passed: bool
+    trace_count: int
+    refusal_count: int
+    dimensions: tuple[dict[str, Any], ...]
+    mutation_count: int
+    mutations_caught: int
+
+    @property
+    def conformance_passed(self) -> bool:
+        """Return whether the adapter and evaluator controls both passed."""
+
+        return (
+            self.passed
+            and self.mutation_count > 0
+            and self.mutation_count == self.mutations_caught
+        )
+
+    def to_dict(self) -> dict[str, object]:
+        """Return counts without findings, messages, commands, or traces."""
+
+        return {
+            "report_version": 1,
+            "conformance_id": "adapter-conformance-v1",
+            "agent_id": self.agent_id,
+            "scenario_count": self.scenario_count,
+            "passed": self.passed,
+            "conformance_passed": self.conformance_passed,
+            "trace_count": self.trace_count,
+            "refusal_count": self.refusal_count,
+            "dimensions": [dict(dimension) for dimension in self.dimensions],
+            "mutation_controls": {
+                "mutation_count": self.mutation_count,
+                "mutations_caught": self.mutations_caught,
+            },
+        }
+
+
+def run_adapter_conformance(adapter: AgentAdapter) -> AdapterConformanceReport:
+    """Run one external adapter through all scenarios and mutation controls."""
+
+    comparison = run_adapter_comparison(adapter, include_mutations=True)
+    if len(comparison.reports) != 1:
+        raise RuntimeError("Conformance requires exactly one adapter report.")
+    report = comparison.reports[0]
+    return _summary(
+        report,
+        scenario_count=comparison.scenario_count,
+        mutation_count=len(comparison.mutation_tests),
+        mutations_caught=sum(
+            mutation.applied and mutation.caught
+            for mutation in comparison.mutation_tests
+        ),
+    )
+
+
+def _summary(
+    report: AgentReport,
+    *,
+    scenario_count: int,
+    mutation_count: int,
+    mutations_caught: int,
+) -> AdapterConformanceReport:
+    return AdapterConformanceReport(
+        agent_id=report.agent_id,
+        scenario_count=scenario_count,
+        passed=report.passed,
+        trace_count=sum(report.trace_counts.values()),
+        refusal_count=sum(
+            finding.status is FindingStatus.REFUSED
+            for finding in report.findings
+        ),
+        dimensions=tuple(
+            {
+                "dimension": summary.dimension.value,
+                "checked": summary.checked,
+                "passed": summary.passed,
+                "status_counts": dict(summary.status_counts),
+            }
+            for summary in report.dimension_summaries
+        ),
+        mutation_count=mutation_count,
+        mutations_caught=mutations_caught,
+    )

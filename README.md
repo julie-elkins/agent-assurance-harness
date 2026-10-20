@@ -233,6 +233,25 @@ write the credential, request, response body, or model text to a replay or repor
 `--allow-network` is intentionally absent from CI; no live provider call runs in the
 repository's automated checks.
 
+### Production-readiness checks
+
+The repository has a small boundary check that scans tracked files for high-signal
+credential material and verifies that the blocking CI workflow has read-only permissions
+and no live-provider or secret access. It is a guard, not proof that every possible secret
+has been found:
+
+```bash
+uv run python tools/check_repository_boundaries.py
+uv run python tools/audit_dependencies.py
+uv run pytest
+```
+
+The same checks run in GitHub Actions before the test suite. Provider contract fixtures
+under `tests/fixtures/provider_contracts/` exercise the reviewed OpenAI-shaped and
+Anthropic-shaped response subsets without making network calls.
+
+See [SECURITY.md](SECURITY.md) for the reporting path and the limits of the live boundary.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

@@ -1,9 +1,13 @@
 import json
+from pathlib import Path
 
 from agent_reliability_lab.environment import environment_for_scenario
 from agent_reliability_lab.live import LiveProviderPolicy, live_provider_adapter
 from agent_reliability_lab.packs import load_builtin_packs, request_from_pack
 from agent_reliability_lab.providers import ProviderLimits
+
+
+FIXTURE_ROOT = Path(__file__).parents[1] / "fixtures" / "provider_contracts"
 
 
 def _policy(
@@ -37,6 +41,10 @@ def _request():
         if pack.scenario_id == "unauthorized-side-effect"
     )
     return request_from_pack(pack)
+
+
+def _provider_fixture(name: str) -> bytes:
+    return (FIXTURE_ROOT / name).read_bytes()
 
 
 def test_live_adapter_uses_synthetic_request_and_discards_credential(monkeypatch):
@@ -224,3 +232,23 @@ def test_anthropic_live_adapter_uses_approved_endpoint_and_headers(monkeypatch):
     assert observed["headers"]["x-api-key"] == "test-secret"
     assert observed["headers"]["anthropic-version"] == "2023-06-01"
     assert b"test-secret" not in observed["body"]
+
+
+def test_provider_contract_fixtures_remain_accepted(monkeypatch):
+    for provider_id, credential_name, fixture_name in (
+        ("openai", "OPENAI_API_KEY", "openai-responses-safe.json"),
+        ("anthropic", "ANTHROPIC_API_KEY", "anthropic-messages-safe.json"),
+    ):
+        monkeypatch.setenv(credential_name, "test-secret")
+        result = live_provider_adapter(
+            _policy(provider_id=provider_id),
+            transport=lambda *args, fixture_name=fixture_name: _provider_fixture(
+                fixture_name
+            ),
+        ).run(
+            _request(),
+            environment_for_scenario("unauthorized-side-effect"),
+        )
+
+        assert result.refusal is None
+        assert result.trace is not None

@@ -75,6 +75,12 @@ missing, and what the result does not prove.
   allowlist, must never retry, and must never persist raw request or response content.
 - CI must never set the live network flag or receive provider credentials. Live tests use
   injected transports rather than network access.
+- The blocking workflow must run `tools/check_repository_boundaries.py` and the
+  hash-checked `tools/audit_dependencies.py` before tests. The boundary check is
+  high-signal hygiene, not proof that every possible secret was found.
+- Provider response fixtures under `tests/fixtures/provider_contracts/` are synthetic
+  contract examples only. They must not contain raw provider output, prompts, private
+  input, or credentials.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

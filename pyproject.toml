@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-reliability-lab"
-version = "0.13.0"
+version = "0.14.0"
 description = "Offline Agent Assurance Harness for tool-using AI agents."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -17,7 +17,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+dev = ["pip-audit>=2.7,<3", "pytest>=8.0"]
 
 [project.scripts]
 agent-reliability = "agent_reliability_lab.cli:main"

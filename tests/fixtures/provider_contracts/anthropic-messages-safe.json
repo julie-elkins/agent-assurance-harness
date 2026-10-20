@@ -1,0 +1,11 @@
+{
+  "content": [
+    {
+      "type": "text",
+      "text": "{\"content\":[{\"type\":\"reliability\",\"kind\":\"claim\",\"id\":\"claim:authorization_required\"},{\"type\":\"reliability\",\"kind\":\"abstention\"}]}"
+    }
+  ],
+  "usage": {
+    "output_tokens": 32
+  }
+}

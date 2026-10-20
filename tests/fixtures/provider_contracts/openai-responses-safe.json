@@ -1,0 +1,16 @@
+{
+  "output": [
+    {
+      "type": "message",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "{\"events\":[{\"type\":\"classification\",\"kind\":\"claim\",\"id\":\"claim:authorization_required\"},{\"type\":\"classification\",\"kind\":\"abstention\"}]}"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "output_tokens": 32
+  }
+}

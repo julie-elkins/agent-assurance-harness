@@ -133,6 +133,21 @@ The live command reads only the fixed provider credential environment variable a
 only built-in synthetic identifiers. It is not run in CI, does not retry, and does not
 store raw provider requests, responses, or model text.
 
+Phase 15 adds production-readiness checks without enabling live execution in CI:
+
+```bash
+uv run python tools/check_repository_boundaries.py
+uv run python tools/audit_dependencies.py
+uv run pytest
+```
+
+The boundary check scans tracked files for high-signal credential patterns and checks that
+the blocking workflow has read-only permissions and no provider credentials or live flag.
+It is a guard, not proof that every possible secret was found. Synthetic provider
+contract fixtures exercise the reviewed OpenAI and Anthropic response subsets offline.
+See `SECURITY.md` before using the live boundary with anything other than built-in
+synthetic input.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

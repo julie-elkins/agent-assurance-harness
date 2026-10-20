@@ -51,6 +51,22 @@ jobs:
           --output /tmp/agent-reliability-conformance.json
           --fail-on-findings
 
+      - name: Generate starter custom pack
+        run: >-
+          uv run python tools/init_scenario_pack.py
+          --output /tmp/agent-reliability-custom-pack/custom.json
+
+      - name: Check custom pack conformance
+        run: >-
+          uv run python tools/custom_pack_report.py
+          --pack-directory /tmp/agent-reliability-custom-pack
+          --agent-id custom-example
+          --adapter-command uv
+          --adapter-command run
+          --adapter-command python
+          --adapter-command examples/custom_pack_adapter.py
+          --fail-on-findings
+
       - name: Run tests
         run: uv run pytest
 

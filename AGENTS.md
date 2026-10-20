@@ -92,6 +92,9 @@ missing, and what the result does not prove.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.
+- Custom packs use only the fixed declarative requirement prefixes: `tool:`,
+  `successful_tool:`, `authorization:`, `side-effect:`, `output:`, and `abstain:`.
+  Pack evaluation must never execute predicates, import pack code, or discover files.
 - Provider response fixtures under `tests/fixtures/provider_contracts/` are synthetic
   contract examples only. They must not contain raw provider output, prompts, private
   input, or credentials.

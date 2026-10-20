@@ -7,7 +7,8 @@ from typing import Any
 
 from .models import AgentReport, FindingStatus
 from .protocol import AgentAdapter
-from .runner import run_adapter_comparison
+from .packs import ScenarioPack
+from .runner import run_adapter_comparison, run_pack_comparison
 
 
 @dataclass(frozen=True)
@@ -53,6 +54,33 @@ class AdapterConformanceReport:
         }
 
 
+@dataclass(frozen=True)
+class CustomPackConformanceReport:
+    """A metadata-only conformance result for caller-supplied packs."""
+
+    agent_id: str
+    pack_ids: tuple[str, ...]
+    passed: bool
+    trace_count: int
+    refusal_count: int
+    dimensions: tuple[dict[str, Any], ...]
+
+    def to_dict(self) -> dict[str, object]:
+        """Return counts without custom pack text, findings, or traces."""
+
+        return {
+            "report_version": 1,
+            "conformance_id": "custom-pack-conformance-v1",
+            "agent_id": self.agent_id,
+            "pack_ids": list(self.pack_ids),
+            "pack_count": len(self.pack_ids),
+            "passed": self.passed,
+            "trace_count": self.trace_count,
+            "refusal_count": self.refusal_count,
+            "dimensions": [dict(dimension) for dimension in self.dimensions],
+        }
+
+
 def run_adapter_conformance(adapter: AgentAdapter) -> AdapterConformanceReport:
     """Run one external adapter through all scenarios and mutation controls."""
 
@@ -67,6 +95,35 @@ def run_adapter_conformance(adapter: AgentAdapter) -> AdapterConformanceReport:
         mutations_caught=sum(
             mutation.applied and mutation.caught
             for mutation in comparison.mutation_tests
+        ),
+    )
+
+
+def run_custom_pack_conformance(
+    adapter: AgentAdapter,
+    packs: tuple[ScenarioPack, ...],
+) -> CustomPackConformanceReport:
+    """Run one adapter against validated caller-supplied declarative packs."""
+
+    if not packs:
+        raise ValueError("Custom pack conformance requires at least one pack.")
+    report = run_pack_comparison(adapter, packs)
+    return CustomPackConformanceReport(
+        agent_id=report.agent_id,
+        pack_ids=tuple(pack.scenario_id for pack in packs),
+        passed=report.passed,
+        trace_count=sum(report.trace_counts.values()),
+        refusal_count=sum(
+            finding.status is FindingStatus.REFUSED for finding in report.findings
+        ),
+        dimensions=tuple(
+            {
+                "dimension": summary.dimension.value,
+                "checked": summary.checked,
+                "passed": summary.passed,
+                "status_counts": dict(summary.status_counts),
+            }
+            for summary in report.dimension_summaries
         ),
     )
 

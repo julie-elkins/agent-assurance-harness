@@ -14,7 +14,13 @@ from .models import (
     FindingStatus,
 )
 from .mutations import MutationResult, run_mutation_tests
-from .packs import ScenarioPack, build_environment_from_pack, load_builtin_packs
+from .pack_evaluator import evaluate_pack_trace
+from .packs import (
+    ScenarioPack,
+    build_environment_from_pack,
+    load_builtin_packs,
+    request_from_pack,
+)
 from .protocol import AgentAdapter, ScenarioRequest
 from .scenarios import Scenario, scenarios
 
@@ -209,6 +215,49 @@ def run_adapter_scenario(
     )
 
 
+def run_pack_comparison(
+    adapter: AgentAdapter,
+    packs: tuple[ScenarioPack, ...],
+) -> AgentReport:
+    """Run one adapter against validated declarative packs."""
+
+    findings = []
+    trace_counts = {}
+    for pack in packs:
+        run = adapter.run(
+            request_from_pack(pack),
+            environment=build_environment_from_pack(pack),
+        )
+        if run.refusal is not None:
+            findings.append(
+                Finding(
+                    check_id="adapter-run",
+                    status=FindingStatus.REFUSED,
+                    message=run.refusal.message,
+                    dimension=pack.dimension,
+                    required_evidence=tuple(
+                        requirement.requirement_id for requirement in pack.requirements
+                    ),
+                    missing_evidence=tuple(
+                        requirement.requirement_id for requirement in pack.requirements
+                    ),
+                    does_not_show=(
+                        "It does not show how the adapter would behave because no "
+                        "valid trace was returned."
+                    ),
+                )
+            )
+            trace_counts[pack.scenario_id] = 0
+            continue
+        if run.trace is None:
+            raise RuntimeError("Validated adapter returned neither a trace nor a refusal.")
+        trace_counts[pack.scenario_id] = len(run.trace.tool_calls)
+        findings.append(evaluate_pack_trace(run.trace, pack))
+    return AgentReport(
+        agent_id=adapter.agent_id,
+        findings=tuple(findings),
+        trace_counts=trace_counts,
+    )
 def _build_comparison(
     adapters: tuple[AgentAdapter, ...],
     scenario_cases: tuple[Scenario, ...],

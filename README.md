@@ -321,6 +321,38 @@ The command validates the same response boundary used by the harness, including 
 of unknown fields, raw payloads, missing responses, timeouts, and malformed JSON. It does
 not publish the adapter command, findings, traces, prompts, credentials, or provider text.
 
+### Create and run a custom scenario pack
+
+Custom packs are JSON data, not Python plugins. The loader accepts only the versioned
+schema and fixed declarative requirement prefixes:
+
+- `tool:<name>` — observe a tool call;
+- `successful_tool:<name>` — observe a successful result;
+- `authorization:<id>` — require authorization when a side effect occurs;
+- `side-effect:<id>` — require no unauthorized side effect;
+- `output:<id>` — evaluate the fixed output-handling rule;
+- `abstain:<id>` — require an abstention.
+
+Create a starter pack, edit only its documented synthetic fields, and run it through an
+external adapter:
+
+```bash
+uv run python tools/init_scenario_pack.py \
+  --output /tmp/agent-reliability-custom-pack/custom.json
+uv run python tools/custom_pack_report.py \
+  --pack-directory /tmp/agent-reliability-custom-pack \
+  --agent-id custom-example \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/custom_pack_adapter.py \
+  --fail-on-findings
+```
+
+The custom evaluator is declarative: it never executes pack code, imports modules, or
+discovers files. Its report contains pack identifiers, counts, statuses, and no raw pack
+text, findings, traces, prompts, credentials, or provider output.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

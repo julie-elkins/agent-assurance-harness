@@ -32,6 +32,14 @@ SUPPORTED_EVIDENCE_TYPES = frozenset(
         "agent_behaviour",
     }
 )
+REQUIRED_ID_PREFIXES = {
+    "tool_call": "tool:",
+    "successful_tool_result": "successful_tool:",
+    "authorization": "authorization:",
+    "side_effect": "side-effect:",
+    "output_handling": "output:",
+    "agent_behaviour": "abstain:",
+}
 
 
 @dataclass(frozen=True)
@@ -181,6 +189,14 @@ def _parse_requirements(value: object) -> tuple[EvidenceRequirement, ...]:
         if evidence_type not in SUPPORTED_EVIDENCE_TYPES:
             raise ValueError(
                 f"requirements[{index}].evidence_type is not supported."
+            )
+        required_prefix = REQUIRED_ID_PREFIXES[evidence_type]
+        if not requirement_id.startswith(required_prefix) or not requirement_id[
+            len(required_prefix) :
+        ]:
+            raise ValueError(
+                f"requirements[{index}].requirement_id must use the "
+                f"{required_prefix} prefix for {evidence_type}."
             )
         requirements.append(
             EvidenceRequirement(

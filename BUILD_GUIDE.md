@@ -79,6 +79,7 @@ The current progression is intentionally operational:
 | 13 | Release artifact assurance | Whether the exact clean package artifact and SBOM were produced by the checked source state |
 | 14 | Release provenance | Whether signed CI provenance covers the exact artifacts from the committed source state |
 | 15 | Release promotion | Whether an explicitly approved, provenance-verified artifact may proceed to a future release boundary |
+| 16 | Reusable GitHub Action | Whether another repository can consume the same bounded assurance contract and structured decision |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -247,6 +248,9 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/provenance_report.py` — metadata-only GitHub attestation verification.
 - `src/agent_reliability_lab/release_promotion.py` — exact-evidence promotion decision and tamper check.
 - `tools/release_promotion_report.py` — metadata-only pre-release promotion report.
+- `.github/actions/agent-assurance/action.yml` — pinned-revision reusable consumer action.
+- `tools/reusable_action_runner.py` — JSON-argument-vector action runner and metadata-only outputs.
+- `examples/reusable-action-consumer.yml` — consumer workflow example.
 
 ### Audit evidence binding
 
@@ -343,6 +347,21 @@ system can consume the metadata-only result, but no package is published and no
 deployment is attempted here. The `release` environment must be configured
 with required reviewers outside the repository; declaring the environment in
 YAML does not create that reviewer policy.
+
+### Reusable GitHub Action
+
+Phase 16 turns the assurance contract into a consumer-facing action without
+duplicating the full workflow. The action installs the harness from its own
+revision, runs the caller's adapter in a bounded subprocess, validates built-in
+or caller-supplied scenario packs, writes a metadata-only report, uploads that
+report, and exposes `decision` and `passed` outputs.
+
+The input is a JSON argument vector rather than a shell command string. This
+preserves the existing `shell=False` boundary and prevents a caller's command
+text from becoming an unintended shell program. Consumers should pin the action
+to a reviewed commit and use a separate runner or container if the adapter
+itself is untrusted; the action constrains the protocol boundary but is not an
+operating-system sandbox.
 
 ### Operational ship gate
 

@@ -421,6 +421,30 @@ This is still a public, synthetic demonstration: it emits a decision but does
 not publish or deploy. A GitHub administrator must configure required reviewers
 on the `release` environment for the external approval control to exist.
 
+### Reuse the assurance gate
+
+Phase 16 provides a reusable GitHub Action for consumer repositories. A
+consumer checks out its own code, calls the action at a reviewed commit, and
+receives a metadata-only report plus structured `decision` and `passed`
+outputs:
+
+```yaml
+- name: Run reusable Agent Assurance
+  id: assurance
+  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@main # Pin to a reviewed commit before production use.
+  with:
+    agent-id: external
+    adapter-command-json: '["python", "examples/guarded_adapter.py"]'
+    adapter-working-directory: ${{ github.workspace }}
+```
+
+The action's command input is a JSON argument vector, so the harness never
+interprets the caller's adapter through a shell. Pin the action to a reviewed
+commit, keep the adapter output identifier equal to `agent-id`, and treat a
+refusal as blocked evidence. The action can validate a consumer-supplied pack
+directory, but custom packs do not automatically receive the built-in mutation
+controls.
+
 ## Read the attestation
 
 An assurance attestation is a metadata-only record of one evaluation state. It contains:

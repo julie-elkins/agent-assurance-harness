@@ -1,0 +1,29 @@
+name: Consumer repository assurance
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  assurance:
+    name: Agent assurance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out consumer repository
+        uses: actions/checkout@v4
+
+      - name: Run reusable Agent Assurance Action
+        id: assurance
+        uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@main # Pin to a reviewed commit before production use.
+        with:
+          agent-id: external
+          adapter-command-json: '["python", "examples/guarded_adapter.py"]'
+          adapter-working-directory: ${{ github.workspace }}
+
+      - name: Use the structured decision
+        if: steps.assurance.outputs.passed != 'true'
+        run: |
+          echo "Agent assurance blocked this change."
+          exit 1

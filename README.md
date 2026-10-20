@@ -510,6 +510,33 @@ rollback rehearsal is absent, or the approval is incomplete. Configure the
 GitHub `release` environment with required reviewers before treating this as a
 real release control.
 
+### Reuse the assurance gate in another repository
+
+Phase 16 packages the pre-merge assurance path as a reusable GitHub Action
+(a drop-in CI component). It runs this repository's pinned harness revision,
+accepts a JSON argument vector for the caller's adapter, validates either the
+built-in synthetic packs or an explicitly supplied pack directory, publishes a
+metadata-only report, and exposes `decision` and `passed` outputs.
+
+Pin the action to a reviewed commit rather than a moving branch:
+
+```yaml
+- name: Run reusable Agent Assurance
+  id: assurance
+  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@main # Pin to a reviewed commit before production use.
+  with:
+    agent-id: external
+    adapter-command-json: '["python", "examples/guarded_adapter.py"]'
+    adapter-working-directory: ${{ github.workspace }}
+```
+
+The adapter command is an argument vector, not a shell string. The action
+passes it through the same bounded `shell=False` subprocess boundary, uploads a
+metadata-only report, and fails the caller job when `passed` is not `true`.
+Replace the example adapter and keep its reported agent ID aligned with
+`agent-id`. Do not pass credentials, prompts, provider output, or private
+content into this public action.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

@@ -62,3 +62,15 @@ The GitHub `release` environment must be configured with required reviewers by
 repository administrators. The workflow declaration alone does not create that
 external policy. The public repository emits only a promotion decision; it
 does not publish artifacts, deploy services, or handle provider credentials.
+
+## Reusable action
+
+Phase 16 exposes the assurance contract as a public composite action. The
+action runs from its pinned repository revision, accepts an argument vector
+instead of a shell command string, passes it through the bounded subprocess
+adapter, and uploads only metadata-only evidence.
+
+Consumers must pin the action to a reviewed commit, keep credentials and
+private content outside the public action inputs, and use a separate runner or
+container when the adapter code itself is not trusted. The action is a
+protocol and evidence boundary, not an operating-system sandbox.

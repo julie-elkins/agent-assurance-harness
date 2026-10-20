@@ -1,0 +1,93 @@
+name: Agent Assurance
+description: Run the metadata-only Agent Assurance Harness against a bounded adapter.
+inputs:
+  agent-id:
+    description: Identifier for the adapter under test.
+    required: false
+    default: external
+  adapter-command-json:
+    description: JSON array of adapter command arguments; it is never interpreted by a shell.
+    required: true
+  adapter-working-directory:
+    description: Existing working directory for the adapter process.
+    required: false
+    default: ""
+  scenario-pack-directory:
+    description: Optional caller-owned directory of validated scenario-pack JSON files.
+    required: false
+    default: ""
+  python-version:
+    description: Python version used to run the harness.
+    required: false
+    default: "3.11"
+  mutations:
+    description: Run built-in evaluator mutation controls.
+    required: false
+    default: "true"
+  fail-on-findings:
+    description: Fail the action when assurance findings or a refusal occur.
+    required: false
+    default: "true"
+  timeout-seconds:
+    description: Maximum seconds allowed for one adapter scenario.
+    required: false
+    default: "5"
+  max-response-bytes:
+    description: Maximum adapter stdout bytes accepted for one scenario.
+    required: false
+    default: "262144"
+outputs:
+  decision:
+    description: pass or blocked.
+    value: ${{ steps.run-assurance.outputs.decision }}
+  passed:
+    description: true when the assurance contract passed.
+    value: ${{ steps.run-assurance.outputs.passed }}
+runs:
+  using: composite
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v6
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install locked harness dependencies
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      run: uv sync --extra dev
+
+    - name: Run Agent Assurance Harness
+      id: run-assurance
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      env:
+        ASSURANCE_AGENT_ID: ${{ inputs.agent-id }}
+        ASSURANCE_COMMAND_JSON: ${{ inputs.adapter-command-json }}
+        ASSURANCE_ADAPTER_WORKDIR: ${{ inputs.adapter-working-directory }}
+        ASSURANCE_PACK_DIRECTORY: ${{ inputs.scenario-pack-directory }}
+        ASSURANCE_MUTATIONS: ${{ inputs.mutations }}
+        ASSURANCE_FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
+        ASSURANCE_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
+        ASSURANCE_MAX_RESPONSE_BYTES: ${{ inputs.max-response-bytes }}
+        ASSURANCE_REPORT: ${{ runner.temp }}/agent-assurance-reusable-report.json
+      run: >-
+        uv run python tools/reusable_action_runner.py
+        --agent-id "$ASSURANCE_AGENT_ID"
+        --adapter-command-json "$ASSURANCE_COMMAND_JSON"
+        --adapter-working-directory
+        "${ASSURANCE_ADAPTER_WORKDIR:-$GITHUB_WORKSPACE}"
+        --output "$ASSURANCE_REPORT"
+        --mutations "$ASSURANCE_MUTATIONS"
+        --fail-on-findings "$ASSURANCE_FAIL_ON_FINDINGS"
+        --timeout-seconds "$ASSURANCE_TIMEOUT_SECONDS"
+        --max-response-bytes "$ASSURANCE_MAX_RESPONSE_BYTES"
+        --scenario-pack-directory "$ASSURANCE_PACK_DIRECTORY"
+
+    - name: Upload metadata-only assurance report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: agent-assurance-report-${{ github.run_id }}
+        path: ${{ runner.temp }}/agent-assurance-reusable-report.json
+        if-no-files-found: error
+        retention-days: 14

@@ -15,6 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "reliability.yml"
+PUBLIC_ACTION = ROOT / ".github" / "actions" / "agent-assurance" / "action.yml"
 
 SECRET_PATTERNS = (
     re.compile(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----"),
@@ -39,6 +40,15 @@ LIVE_WORKFLOW_MARKERS = (
     "secrets.",
     "write-all",
 )
+PUBLIC_ACTION_MARKERS = (
+    "--allow-network",
+    "--live-provider",
+    "OPENAI_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "secrets.",
+    "id-token: write",
+    "attestations: write",
+)
 PUSH_PROVENANCE_JOB = "\n  release-provenance:\n"
 
 
@@ -62,6 +72,7 @@ def main() -> int:
                 break
 
     failures.extend(_workflow_failures())
+    failures.extend(_public_action_failures())
     if failures:
         print("Repository boundary check failed:", file=sys.stderr)
         for failure in failures:
@@ -172,6 +183,21 @@ def _provenance_permission_failures(workflow: str) -> list[str]:
                     f"release-promotion job is missing required control: {control}"
                 )
     return failures
+
+
+def _public_action_failures() -> list[str]:
+    try:
+        action = PUBLIC_ACTION.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return []
+    except OSError as error:
+        return [f"public action could not be read: {error}"]
+
+    return [
+        f"public action contains forbidden live or credential marker: {marker}"
+        for marker in PUBLIC_ACTION_MARKERS
+        if marker in action
+    ]
 
 
 if __name__ == "__main__":

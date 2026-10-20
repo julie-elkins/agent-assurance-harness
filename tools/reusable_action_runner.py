@@ -1,0 +1,259 @@
+"""Run the public assurance contract from the reusable GitHub Action."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+from pathlib import Path
+from typing import Any
+
+from agent_reliability_lab.pack_provenance import pack_manifest, pack_set_sha256
+from agent_reliability_lab.packs import (
+    load_builtin_packs,
+    load_pack_directory,
+)
+from agent_reliability_lab.runner import (
+    failed_checks,
+    run_adapter_comparison,
+    run_pack_comparison,
+)
+from agent_reliability_lab.external import (
+    DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    DEFAULT_MAX_MEMORY_BYTES,
+    DEFAULT_MAX_RESPONSE_BYTES,
+    DEFAULT_MAX_STDERR_BYTES,
+    SubprocessAdapter,
+)
+
+
+ACTION_REPORT_VERSION = 1
+
+
+def _bool(value: str, field: str) -> bool:
+    normalized = value.strip().lower()
+    if normalized not in {"true", "false"}:
+        raise ValueError(f"{field} must be true or false.")
+    return normalized == "true"
+
+
+def _command(value: str) -> tuple[str, ...]:
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError as error:
+        raise ValueError("adapter-command-json must be valid JSON.") from error
+    if (
+        not isinstance(parsed, list)
+        or not parsed
+        or not all(isinstance(item, str) and item for item in parsed)
+    ):
+        raise ValueError(
+            "adapter-command-json must be a non-empty JSON array of strings."
+        )
+    if len(parsed) > 64 or any(len(item) > 4096 for item in parsed):
+        raise ValueError("adapter-command-json exceeds the argument-vector limits.")
+    return tuple(parsed)
+
+
+def _load_packs(directory: Path | None):
+    if directory is None:
+        return load_builtin_packs()
+    results = load_pack_directory(directory)
+    refusals = [result.refusal for result in results if result.refusal is not None]
+    packs = tuple(result.pack for result in results if result.pack is not None)
+    if refusals or not packs:
+        raise ValueError("scenario-pack-directory did not produce valid scenario packs.")
+    return packs
+
+
+def _metadata_report(
+    *,
+    report: Any,
+    packs: tuple[Any, ...],
+    custom_packs: bool,
+) -> dict[str, object]:
+    agent_report = (
+        report.reports[0] if hasattr(report, "reports") else report
+    )
+    failed = (
+        failed_checks(report)
+        if hasattr(report, "reports")
+        else not agent_report.passed
+    )
+    return {
+        "reusable_action_version": ACTION_REPORT_VERSION,
+        "decision": "blocked" if failed else "pass",
+        "passed": not failed,
+        "agent_id": agent_report.agent_id,
+        "scenario_count": len(packs),
+        "custom_packs": custom_packs,
+        "scenario_pack_sha256": pack_set_sha256(packs),
+        "scenario_packs": [
+            pack_manifest(pack).to_dict()
+            for pack in sorted(packs, key=lambda item: item.scenario_id)
+        ],
+        "assurance": (
+            report.to_dict()
+            if hasattr(report, "reports")
+            else {"report": agent_report.to_dict()}
+        ),
+        "diagnostics": {
+            "warnings": [
+                "The action runs the caller's adapter as a bounded subprocess "
+                "with shell execution disabled.",
+                "The report contains identifiers, findings, counts, and hashes "
+                "only; adapter payloads and credentials are not exported.",
+            ],
+            "what_it_does_not_show": (
+                "It does not show prompts, raw tool payloads, provider output, "
+                "credentials, causality, or a production sandbox."
+            ),
+        },
+    }
+
+
+def _refusal(error: Exception) -> dict[str, object]:
+    return {
+        "reusable_action_version": ACTION_REPORT_VERSION,
+        "decision": "blocked",
+        "passed": False,
+        "refusal": {
+            "error": "reusable_assurance_refused",
+            "message": "The reusable assurance action could not establish a result.",
+            "guidance": "Repair the action inputs or scenario packs before retrying.",
+            "source": type(error).__name__,
+        },
+        "diagnostics": {
+            "warnings": [
+                "A refusal is a blocked result, not a passing empty result."
+            ],
+            "what_it_does_not_show": (
+                "It does not show adapter arguments, paths, prompts, credentials, "
+                "or provider output."
+            ),
+        },
+    }
+
+
+def _write_output(path: Path, data: dict[str, object]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    github_output = os.environ.get("GITHUB_OUTPUT")
+    if github_output:
+        with Path(github_output).open("a", encoding="utf-8") as stream:
+            stream.write(f"decision={data.get('decision', 'blocked')}\n")
+            stream.write(f"passed={str(data.get('passed', False)).lower()}\n")
+
+
+def _write_summary(data: dict[str, object]) -> None:
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if not summary_path:
+        return
+    assurance = data.get("assurance")
+    agent = assurance.get("report") if isinstance(assurance, dict) else None
+    if isinstance(agent, dict):
+        status = "PASS" if data.get("passed") is True else "BLOCKED"
+        lines = [
+            "# Reusable Agent Assurance",
+            "",
+            f"- **Decision:** {status}",
+            f"- **Agent:** `{data.get('agent_id', 'unknown')}`",
+            f"- **Scenarios:** {data.get('scenario_count', 0)}",
+            f"- **Scenario-pack SHA-256:** `{data.get('scenario_pack_sha256', 'unknown')}`",
+            "",
+            "The report contains metadata only; prompts, payloads, provider output, "
+            "and credentials are not exported.",
+            "",
+        ]
+    else:
+        lines = [
+            "# Reusable Agent Assurance",
+            "",
+            "- **Decision:** BLOCKED",
+            "- **Reason:** the action refused to establish a result.",
+            "",
+        ]
+    with Path(summary_path).open("a", encoding="utf-8") as stream:
+        stream.write("\n".join(lines))
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Run metadata-only assurance from the reusable GitHub Action."
+    )
+    parser.add_argument("--agent-id", required=True)
+    parser.add_argument("--adapter-command-json", required=True)
+    parser.add_argument("--adapter-working-directory", type=Path, required=True)
+    parser.add_argument("--scenario-pack-directory", default="")
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--mutations", default="true")
+    parser.add_argument("--fail-on-findings", default="true")
+    parser.add_argument(
+        "--timeout-seconds",
+        type=float,
+        default=DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    )
+    parser.add_argument(
+        "--max-response-bytes",
+        type=int,
+        default=DEFAULT_MAX_RESPONSE_BYTES,
+    )
+    parser.add_argument(
+        "--max-stderr-bytes",
+        type=int,
+        default=DEFAULT_MAX_STDERR_BYTES,
+    )
+    parser.add_argument(
+        "--max-memory-bytes",
+        type=int,
+        default=DEFAULT_MAX_MEMORY_BYTES,
+    )
+    args = parser.parse_args(argv)
+
+    fail_on_findings = True
+    refused = False
+    try:
+        command = _command(args.adapter_command_json)
+        mutations = _bool(args.mutations, "mutations")
+        fail_on_findings = _bool(args.fail_on_findings, "fail-on-findings")
+        if not args.adapter_working_directory.is_dir():
+            raise ValueError("adapter-working-directory must be an existing directory.")
+        pack_directory = (
+            Path(args.scenario_pack_directory)
+            if args.scenario_pack_directory
+            else None
+        )
+        packs = _load_packs(pack_directory)
+        adapter = SubprocessAdapter(
+            agent_id=args.agent_id,
+            command=command,
+            timeout_seconds=args.timeout_seconds,
+            max_response_bytes=args.max_response_bytes,
+            max_stderr_bytes=args.max_stderr_bytes,
+            max_memory_bytes=args.max_memory_bytes,
+            working_directory=args.adapter_working_directory,
+        )
+        if pack_directory is None:
+            report = run_adapter_comparison(adapter, include_mutations=mutations)
+        else:
+            if mutations:
+                raise ValueError(
+                    "mutations must be false when scenario-pack-directory is supplied."
+                )
+            report = run_pack_comparison(adapter, packs)
+        data = _metadata_report(
+            report=report,
+            packs=packs,
+            custom_packs=pack_directory is not None,
+        )
+    except (OSError, RuntimeError, TypeError, ValueError) as error:
+        data = _refusal(error)
+        refused = True
+
+    _write_output(args.output, data)
+    _write_summary(data)
+    return int(refused or (fail_on_findings and data.get("passed") is not True))
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

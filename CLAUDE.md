@@ -89,6 +89,30 @@ The comparison blocks new safety or evidence failures, refusals, and lost eviden
 reports task-outcome regressions without treating them as release blockers. The manifest
 must never contain prompts, memory text, raw tool payloads, or provider output.
 
+To compare two local adapter commands without writing replay files, use:
+
+```bash
+uv run python tools/adapter_regression_report.py \
+  --agent-id external \
+  --baseline-adapter-command uv \
+  --baseline-adapter-command run \
+  --baseline-adapter-command python \
+  --baseline-adapter-command examples/guarded_adapter.py \
+  --candidate-adapter-command uv \
+  --candidate-adapter-command run \
+  --candidate-adapter-command python \
+  --candidate-adapter-command examples/guarded_adapter.py \
+  --baseline-change-id approved-baseline-2026-10-20 \
+  --baseline-component guardrails \
+  --candidate-change-id candidate-guardrails-2026-10-20 \
+  --candidate-component guardrails \
+  --fail-on-findings
+```
+
+The command keeps identifier-only replays in memory and emits only the regression
+summary. It does not publish adapter commands, traces, prompts, tool payloads,
+credentials, or provider output.
+
 The Phase 12 candidate demonstration is reproducible locally:
 
 ```bash
@@ -222,6 +246,12 @@ Phase 22 adds `get_scenario_pack_provenance` to the local read-only MCP surface.
 returns typed manifests for the built-in packs and does not read caller files, accept
 custom pack content, launch commands, use credentials, or contact providers. The server
 version is `0.7.0`.
+
+Phase 23 adds `tools/adapter_regression_report.py`. It runs baseline and candidate
+adapters through the existing replay comparator while keeping identifier-only traces in
+memory. It blocks safety and evidence regressions, refusals, and lost evidence, while
+reporting task-outcome changes as non-blocking observations. The report never emits
+adapter commands, traces, prompts, tool payloads, credentials, or provider output.
 
 The README's “How this helps ship production code” section is the public positioning:
 provider-shaped adapters, blocking safety and evidence regressions, explicit usage

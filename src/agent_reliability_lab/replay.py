@@ -21,8 +21,12 @@ from typing import Any
 
 from .external import ProtocolDecodeError, adapter_run_from_dict
 from .models import AgentReport, Finding, FindingStatus
-from .packs import load_builtin_packs
-from .protocol import AdapterRun
+from .packs import (
+    build_environment_from_pack,
+    load_builtin_packs,
+    request_from_pack,
+)
+from .protocol import AdapterRun, AgentAdapter
 from .scenarios import scenarios
 
 
@@ -345,6 +349,31 @@ def _refused_finding(pack, message: str) -> Finding:
         required_evidence=required,
         missing_evidence=required,
         does_not_show="It does not show agent behaviour because the replay response was refused.",
+    )
+
+
+def run_adapter_replay(
+    adapter: AgentAdapter,
+    *,
+    harness_change: HarnessChangeManifest,
+) -> ReplayFile:
+    """Run one adapter across the built-in packs and keep the replay in memory."""
+
+    cases = tuple(
+        ReplayCase(
+            scenario_id=pack.scenario_id,
+            response=adapter.run(
+                request_from_pack(pack),
+                environment=build_environment_from_pack(pack),
+            ),
+        )
+        for pack in load_builtin_packs()
+    )
+    return ReplayFile(
+        replay_version=REPLAY_VERSION,
+        agent_id=adapter.agent_id,
+        cases=cases,
+        harness_change=harness_change,
     )
 
 

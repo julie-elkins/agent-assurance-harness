@@ -1,7 +1,13 @@
 import json
 from pathlib import Path
 
-from agent_reliability_lab.replay import load_replay_file, run_replay_file
+from agent_reliability_lab.adapters import reference_adapters
+from agent_reliability_lab.replay import (
+    HarnessChangeManifest,
+    load_replay_file,
+    run_adapter_replay,
+    run_replay_file,
+)
 
 
 REPLAY_PATH = Path(__file__).parents[2] / "examples" / "traces" / "guarded.json"
@@ -14,6 +20,21 @@ def test_guarded_fixture_replays_as_passing():
     assert report.agent_report is not None
     assert report.agent_report.passed is True
     assert len(report.agent_report.findings) == 5
+
+
+def test_adapter_replay_covers_all_builtin_scenarios_in_memory():
+    replay = run_adapter_replay(
+        reference_adapters()[1],
+        harness_change=HarnessChangeManifest(
+            change_id="candidate-guardrails-2026-10-20",
+            components=("guardrails",),
+        ),
+    )
+
+    assert len(replay.cases) == 5
+    assert replay.harness_change is not None
+    assert replay.harness_change.components == ("guardrails",)
+    assert all(case.response.trace is not None for case in replay.cases)
 
 
 def test_mutated_replay_fails_the_gate(tmp_path):

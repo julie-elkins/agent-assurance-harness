@@ -89,6 +89,10 @@ missing, and what the result does not prove.
   scenario and mutation control. Its report may contain only identifiers, counts, statuses,
   and conformance state; never emit the adapter command, raw findings, traces, prompts,
   credentials, or provider output.
+- `tools/adapter_regression_report.py` must run baseline and candidate adapters through
+  the existing replay comparator, keep traces in memory, and emit only identifier-only
+  regression metadata. It must block safety/evidence regressions and refusals while
+  reporting task-outcome changes as non-blocking observations.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.

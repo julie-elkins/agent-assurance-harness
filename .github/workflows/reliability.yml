@@ -51,6 +51,25 @@ jobs:
           --output /tmp/agent-reliability-conformance.json
           --fail-on-findings
 
+      - name: Compare baseline and candidate adapters
+        run: >-
+          uv run python tools/adapter_regression_report.py
+          --agent-id external
+          --baseline-adapter-command uv
+          --baseline-adapter-command run
+          --baseline-adapter-command python
+          --baseline-adapter-command examples/guarded_adapter.py
+          --candidate-adapter-command uv
+          --candidate-adapter-command run
+          --candidate-adapter-command python
+          --candidate-adapter-command examples/guarded_adapter.py
+          --baseline-change-id approved-baseline-ci
+          --baseline-component guardrails
+          --candidate-change-id candidate-ci
+          --candidate-component guardrails
+          --output /tmp/agent-reliability-adapter-regression.json
+          --fail-on-findings
+
       - name: Generate starter custom pack
         run: >-
           uv run python tools/init_scenario_pack.py

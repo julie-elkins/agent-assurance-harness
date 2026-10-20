@@ -194,6 +194,34 @@ a task-quality change should not be hidden inside a composite score or allowed t
 safety regression. The manifest accepts only component identifiers; it must not contain
 prompts, memory text, tool payloads, or provider output.
 
+### Compare two adapter commands through the regression gate
+
+The adapter regression command runs both a baseline and candidate JSONL adapter across
+all built-in packs, keeps their identifier-only replays in memory, and sends only the
+regression summary to stdout or an explicitly named output file:
+
+```bash
+uv run python tools/adapter_regression_report.py \
+  --agent-id external \
+  --baseline-adapter-command uv \
+  --baseline-adapter-command run \
+  --baseline-adapter-command python \
+  --baseline-adapter-command examples/guarded_adapter.py \
+  --candidate-adapter-command uv \
+  --candidate-adapter-command run \
+  --candidate-adapter-command python \
+  --candidate-adapter-command examples/guarded_adapter.py \
+  --baseline-change-id approved-baseline-2026-10-20 \
+  --baseline-component guardrails \
+  --candidate-change-id candidate-guardrails-2026-10-20 \
+  --candidate-component guardrails \
+  --fail-on-findings
+```
+
+The command blocks safety and evidence regressions, refusals, and lost evidence. It
+reports task-outcome changes as non-blocking observations. It does not emit adapter
+commands, traces, prompts, tool payloads, credentials, or provider output.
+
 ### Exercise provider integrations without network access
 
 The repository includes mocked OpenAI-shaped and Anthropic-shaped adapters. A mocked

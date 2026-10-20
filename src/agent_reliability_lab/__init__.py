@@ -54,6 +54,7 @@ from .replay import (
     ReplayLoadResult,
     ReplayReport,
     ReplayRefusal,
+    run_adapter_replay,
     run_replay,
     run_replay_file,
 )
@@ -193,6 +194,7 @@ __all__ = [
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_replay_file",
+    "run_adapter_replay",
     "run_replay",
     "load_otlp_file",
     "otlp_to_replay",

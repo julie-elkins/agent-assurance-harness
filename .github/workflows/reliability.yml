@@ -34,6 +34,12 @@ jobs:
           --sbom-output /tmp/agent-reliability-runtime-sbom.json
           --manifest-output /tmp/agent-reliability-release-manifest.json
 
+      - name: Generate synthetic benchmark report
+        run: >-
+          uv run python tools/benchmark_report.py
+          --output /tmp/agent-reliability-benchmark.json
+          --fail-on-findings
+
       - name: Run tests
         run: uv run pytest
 

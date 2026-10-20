@@ -160,6 +160,17 @@ The manifest contains package, commit, scenario-pack, artifact, and assurance-ou
 hashes plus a dirty-checkout indicator; it does not contain traces, prompts, credentials,
 or model text.
 
+Phase 17 generates the public synthetic benchmark:
+
+```bash
+uv run python tools/benchmark_report.py \
+  --output /tmp/agent-reliability-benchmark.json \
+  --fail-on-findings
+```
+
+The report compares the reference and mocked adapters using status counts and hashes only.
+It is a deterministic assurance benchmark, not a live-model quality ranking.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

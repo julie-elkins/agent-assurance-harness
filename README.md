@@ -269,6 +269,22 @@ uv run python tools/release_check.py \
 The manifest records whether the checkout was dirty (had uncommitted changes), so a
 release reviewer can distinguish the committed source state from local edits.
 
+### Generate the public synthetic benchmark
+
+The benchmark compares the naive and guarded reference agents with both mocked provider
+adapters. It publishes only status counts, scenario identifiers, evaluator-control
+results, and hashes. The `--fail-on-findings` option treats guarded-path regressions as a
+release failure while allowing the deliberately naive control to remain a visible
+negative control:
+
+```bash
+uv run python tools/benchmark_report.py \
+  --output /tmp/agent-reliability-benchmark.json \
+  --fail-on-findings
+```
+
+This is a deterministic synthetic benchmark, not a live-model quality ranking.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

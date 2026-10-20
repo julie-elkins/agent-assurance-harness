@@ -82,6 +82,9 @@ missing, and what the result does not prove.
   clean environment, compare its synthetic assurance output with the source checkout,
   and emit only hashes and package metadata. Its SBOM output is written only to a path
   explicitly supplied by the caller.
+- `tools/benchmark_report.py` must run only built-in synthetic adapters and emit status
+  counts, scenario identifiers, hashes, and evaluator-control results. It must not emit
+  findings, traces, prompts, provider output, credentials, or live-provider results.
 - Provider response fixtures under `tests/fixtures/provider_contracts/` are synthetic
   contract examples only. They must not contain raw provider output, prompts, private
   input, or credentials.

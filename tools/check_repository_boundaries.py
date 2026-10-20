@@ -38,8 +38,8 @@ LIVE_WORKFLOW_MARKERS = (
     "ANTHROPIC_API_KEY",
     "secrets.",
     "write-all",
-    "id-token: write",
 )
+PUSH_PROVENANCE_JOB = "\n  release-provenance:\n"
 
 
 def main() -> int:
@@ -107,8 +107,47 @@ def _workflow_failures() -> list[str]:
             failures.append(
                 f"blocking workflow contains forbidden live or elevated marker: {marker}"
             )
+    failures.extend(_provenance_permission_failures(workflow))
     if "permissions:" not in workflow or "contents: read" not in workflow:
         failures.append("blocking workflow must declare permissions: contents: read")
+    return failures
+
+
+def _provenance_permission_failures(workflow: str) -> list[str]:
+    """Allow signing permissions only in the explicitly trusted push job."""
+
+    main_workflow, separator, provenance_job = workflow.partition(PUSH_PROVENANCE_JOB)
+    elevated_markers = ("id-token: write", "attestations: write")
+    failures = [
+        (
+            "blocking workflow grants release-signing permissions outside "
+            "the release-provenance job"
+        )
+        for marker in elevated_markers
+        if marker in main_workflow
+    ]
+
+    if not separator:
+        if any(marker in workflow for marker in elevated_markers):
+            failures.append(
+                "blocking workflow has release-signing permissions but no "
+                "release-provenance job"
+            )
+        return failures
+
+    required_controls = (
+        "if: github.event_name == 'push' && github.ref == 'refs/heads/main'",
+        "needs: reliability",
+        "permissions:",
+        "contents: read",
+        "id-token: write",
+        "attestations: write",
+    )
+    for control in required_controls:
+        if control not in provenance_job:
+            failures.append(
+                f"release-provenance job is missing required control: {control}"
+            )
     return failures
 
 

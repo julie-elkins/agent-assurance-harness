@@ -77,6 +77,7 @@ The current progression is intentionally operational:
 | 11 | Provider contract drift | Whether reviewed provider response shapes remain accepted and unsafe changes are refused |
 | 12 | Rollback rehearsal | Whether a controlled artifact failure can be detected and restored without external side effects |
 | 13 | Release artifact assurance | Whether the exact clean package artifact and SBOM were produced by the checked source state |
+| 14 | Release provenance | Whether signed CI provenance covers the exact artifacts from the committed source state |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -241,6 +242,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `examples/rollback-plan.json` — strict no-network, no-write rollback rehearsal policy.
 - `tools/rollback_rehearsal.py` — metadata-only rollback rehearsal report.
 - `tools/release_check.py` — clean source/wheel parity, dependency SBOM, and release manifest.
+- `src/agent_reliability_lab/provenance.py` — signed artifact-subject verification records.
+- `tools/provenance_report.py` — metadata-only GitHub attestation verification.
 
 ### Audit evidence binding
 
@@ -308,6 +311,21 @@ The gate also requires a clean checkout, the current Git revision and package
 version, successful parity checks, a persisted SBOM, and non-empty scenario
 pack fingerprints. It does not sign or publish the artifact and cannot prove
 that a deployment system accepted it; those are separate delivery controls.
+
+### Release provenance
+
+Phase 14 adds a push-only provenance gate after the read-only assurance job.
+The workflow uses `actions/attest@v4` to create signed provenance for the
+source distribution and wheel, then `gh attestation verify` checks the exact
+local SHA-256 subjects, SLSA provenance predicate, repository, signer
+workflow, and source commit.
+
+The attestation permissions are scoped to the separate push job. Pull-request
+runs do not receive `id-token: write` or `attestations: write`, because an
+untrusted change must not receive authority to create release identity
+evidence. The resulting report is metadata-only. It proves build identity,
+not deployment health, package correctness, or acceptance by a deployment
+system.
 
 ### Operational ship gate
 

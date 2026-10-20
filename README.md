@@ -449,6 +449,35 @@ publish the package, sign it, or claim that a deployment target accepted it;
 the control proves that the reviewed release artifact is the one produced by
 the checked build.
 
+### Verify tamper-evident release provenance
+
+Phase 14 adds signed release provenance after a push to `main`. Provenance is
+a signed statement that binds an artifact to the workflow and source commit
+that produced it. The workflow uses GitHub's attestation action with
+write-capable identity permissions only on the push path; pull requests keep
+the read-only assurance path because untrusted changes must not receive
+release-signing authority.
+
+CI attests the source distribution and wheel, then verifies each exact
+artifact hash with the GitHub CLI:
+
+```bash
+uv run python tools/provenance_report.py \
+  --artifact-directory /tmp/agent-reliability-release-artifacts \
+  --repository julie-elkins/agent-assurance-harness \
+  --signer-workflow github.com/julie-elkins/agent-assurance-harness/.github/workflows/reliability.yml \
+  --source-digest GIT_COMMIT \
+  --output /tmp/agent-reliability-provenance.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The report contains artifact names, SHA-256 values, verification state, and
+the declared signer identity only. It does not contain attestation bundles,
+certificates, credentials, prompts, provider output, or artifact contents.
+Successful provenance proves how the artifact was built; it does not prove
+deployment health or package suitability.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

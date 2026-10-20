@@ -6,9 +6,11 @@ Agent Reliability Lab is a public, synthetic demonstration. The repository must 
 contain unpublished exam material, candidate data, private prompts, raw provider output,
 credentials, customer data, or copied internal logs.
 
-The default CI workflow is offline with respect to model providers. It has read-only
-repository permissions, receives no provider credentials, and must not enable the live
-provider flag.
+The default pull-request CI job is offline with respect to model providers. It has
+read-only repository permissions, receives no provider credentials, and must not enable
+the live provider flag. A separate push-only job has the minimum GitHub permissions
+needed to create release provenance attestations; it runs only after the read-only job
+passes and does not receive provider credentials.
 
 ## Live-provider boundary
 

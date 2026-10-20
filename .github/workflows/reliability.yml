@@ -35,6 +35,7 @@ jobs:
           uv run python tools/release_check.py
           --sbom-output /tmp/agent-reliability-runtime-sbom.json
           --manifest-output /tmp/agent-reliability-release-manifest.json
+          --artifact-output /tmp/agent-reliability-release-artifacts
 
       - name: Generate synthetic benchmark report
         run: >-
@@ -212,6 +213,7 @@ jobs:
             /tmp/agent-reliability-provider-contract.json
             /tmp/agent-reliability-release-manifest.json
             /tmp/agent-reliability-runtime-sbom.json
+            /tmp/agent-reliability-release-artifacts/*
             /tmp/agent-reliability-rollback.json
             /tmp/agent-reliability-ship-gate.json
           if-no-files-found: error
@@ -303,3 +305,70 @@ jobs:
           /tmp/candidate-replay.json
           --json
           --fail-on-findings
+
+  release-provenance:
+    name: Release provenance gate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: reliability
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install locked dependencies
+        run: uv sync --extra dev
+
+      - name: Build release artifacts
+        run: >-
+          uv run python tools/release_check.py
+          --sbom-output /tmp/agent-reliability-runtime-sbom.json
+          --manifest-output /tmp/agent-reliability-release-manifest.json
+          --artifact-output /tmp/agent-reliability-release-artifacts
+
+      - name: Generate release provenance attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: /tmp/agent-reliability-release-artifacts/*
+
+      - name: Generate release SBOM attestation
+        uses: actions/attest@v4
+        with:
+          subject-path: /tmp/agent-reliability-release-artifacts/*
+          sbom-path: /tmp/agent-reliability-runtime-sbom.json
+
+      - name: Verify release provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: >-
+          uv run python tools/provenance_report.py
+          --artifact-directory /tmp/agent-reliability-release-artifacts
+          --repository "$GITHUB_REPOSITORY"
+          --signer-workflow
+          "github.com/$GITHUB_REPOSITORY/.github/workflows/reliability.yml"
+          --source-digest "$GITHUB_SHA"
+          --output /tmp/agent-reliability-provenance.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release provenance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-release-provenance-${{ github.run_id }}
+          path: |
+            /tmp/agent-reliability-provenance.json
+            /tmp/agent-reliability-release-manifest.json
+            /tmp/agent-reliability-runtime-sbom.json
+            /tmp/agent-reliability-release-artifacts/*
+          if-no-files-found: error
+          retention-days: 14

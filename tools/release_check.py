@@ -6,6 +6,7 @@ import argparse
 import hashlib
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -37,11 +38,17 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Optional path for the metadata-only release manifest.",
     )
+    parser.add_argument(
+        "--artifact-output",
+        type=Path,
+        help="Optional directory where the built source distribution and wheel are copied.",
+    )
     args = parser.parse_args(argv)
 
     try:
         manifest = _run_release_check(
             sbom_output=args.sbom_output,
+            artifact_output=args.artifact_output,
         )
     except (OSError, subprocess.CalledProcessError, ValueError) as error:
         print(f"Release check failed: {error}", file=sys.stderr)
@@ -55,7 +62,11 @@ def main(argv: list[str] | None = None) -> int:
     return 0
 
 
-def _run_release_check(*, sbom_output: Path | None) -> dict[str, object]:
+def _run_release_check(
+    *,
+    sbom_output: Path | None,
+    artifact_output: Path | None,
+) -> dict[str, object]:
     package_version = _package_version()
     git_commit, working_tree_dirty = _git_state()
     with tempfile.TemporaryDirectory(prefix="agent-reliability-release-") as directory:
@@ -71,6 +82,13 @@ def _run_release_check(*, sbom_output: Path | None) -> dict[str, object]:
         )
         wheel = _only_file(distribution_directory, "*.whl")
         source_distribution = _only_file(distribution_directory, "*.tar.gz")
+        artifact_names: list[str] = []
+        if artifact_output is not None:
+            artifact_output.mkdir(parents=True, exist_ok=True)
+            for artifact in (source_distribution, wheel):
+                destination = artifact_output / artifact.name
+                shutil.copy2(artifact, destination)
+                artifact_names.append(artifact.name)
 
         runtime_requirements = workspace / "runtime-requirements.txt"
         exported = _run(
@@ -168,6 +186,8 @@ def _run_release_check(*, sbom_output: Path | None) -> dict[str, object]:
                 "wheel_sha256": _sha256(wheel),
                 "source_distribution_sha256": _sha256(source_distribution),
             },
+            "artifact_names": artifact_names,
+            "artifact_output_persisted": artifact_output is not None,
             "scenario_pack_sha256": {
                 path.name: _sha256(path)
                 for path in sorted(

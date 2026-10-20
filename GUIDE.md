@@ -367,6 +367,30 @@ The ship gate also requires the build to identify the current Git revision and
 package version, and records the artifact hashes in audit evidence. This does
 not sign the package, publish it, or prove deployment health.
 
+### Verify release provenance after merge
+
+Release provenance is the signed identity of the build that produced an
+artifact. Phase 14 runs this check only after a push to `main`: pull requests
+remain read-only, while the trusted branch receives the minimum permissions
+needed to create and verify attestations.
+
+The workflow attests the source distribution and wheel, then verifies their
+exact local SHA-256 values against the signed subjects and requires the
+configured workflow and source commit:
+
+```bash
+uv run python tools/provenance_report.py \
+  --artifact-directory /tmp/agent-reliability-release-artifacts \
+  --repository julie-elkins/agent-assurance-harness \
+  --signer-workflow github.com/julie-elkins/agent-assurance-harness/.github/workflows/reliability.yml \
+  --source-digest GIT_COMMIT \
+  --fail-on-findings
+```
+
+This is a build-identity control, not a deployment-health check. A passing
+report proves that the reviewed package files were covered by a verified
+attestation; it does not prove that a deployment target accepted or ran them.
+
 ## Read the attestation
 
 An assurance attestation is a metadata-only record of one evaluation state. It contains:

@@ -48,6 +48,7 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
     negative_regression = tmp_path / "negative-regression.json"
     negative_golden = tmp_path / "negative-golden.json"
     provider_assurance = tmp_path / "provider-assurance.json"
+    provider_contract = tmp_path / "provider-contract.json"
     output = tmp_path / "ship-gate.json"
     git_commit, package_version = _current_identity()
     golden_manifest = json.loads(GOLDEN_MANIFEST.read_text(encoding="utf-8"))
@@ -106,6 +107,20 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
         ),
         encoding="utf-8",
     )
+    provider_contract.write_text(
+        json.dumps(
+            {
+                "provider_contract_version": 1,
+                "passed": True,
+                "contracts": [
+                    {"provider_id": "openai"},
+                    {"provider_id": "anthropic"},
+                ],
+                "negative_controls": [{"caught": True}],
+            }
+        ),
+        encoding="utf-8",
+    )
     command = [
         sys.executable,
         str(TOOL),
@@ -121,6 +136,8 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
         str(negative_golden),
         "--provider-assurance",
         str(provider_assurance),
+        "--provider-contract",
+        str(provider_contract),
         "--output",
         str(output),
         "--fail-on-block",

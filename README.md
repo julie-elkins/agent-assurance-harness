@@ -388,6 +388,22 @@ It passes only when both provider-shaped adapters pass the shared evaluator,
 credential values remain unobserved, and the deliberate over-budget control is
 caught. The ship gate blocks if this report is missing or fails.
 
+### Detect provider contract drift
+
+The contract drift gate fingerprints the reviewed response shapes and requires
+the safe extractor and translator to accept the positive fixtures. It also
+requires negative fixtures containing raw provider text or missing fields to be
+refused:
+
+```bash
+uv run python tools/provider_contract_report.py \
+  --output /tmp/agent-reliability-provider-contract.json \
+  --fail-on-drift
+```
+
+This is an offline contract check. It does not contact a provider, read a
+credential, or claim that a live provider is available.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

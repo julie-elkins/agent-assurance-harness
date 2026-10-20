@@ -85,6 +85,7 @@ from .pack_provenance import (
 from .live import (
     LiveProviderAdapter,
     LiveProviderPolicy,
+    extract_provider_payload,
     live_provider_adapter,
 )
 from .providers import (
@@ -101,6 +102,15 @@ from .provider_assurance import (
     ProviderNegativeControl,
     ProviderResult,
     run_provider_assurance,
+)
+from .provider_contract import (
+    PROVIDER_CONTRACT_VERSION,
+    ProviderContract,
+    ProviderContractNegativeControl,
+    ProviderContractReport,
+    ProviderContractResult,
+    load_provider_contract_manifest,
+    run_provider_contract_assurance,
 )
 from .regression import (
     RegressionFinding,
@@ -195,6 +205,7 @@ __all__ = [
     "CustomPackConformanceReport",
     "LiveProviderAdapter",
     "LiveProviderPolicy",
+    "extract_provider_payload",
     "MockProviderAdapter",
     "ProviderLimits",
     "ProviderPolicy",
@@ -202,6 +213,11 @@ __all__ = [
     "ProviderAssuranceReport",
     "ProviderNegativeControl",
     "ProviderResult",
+    "PROVIDER_CONTRACT_VERSION",
+    "ProviderContract",
+    "ProviderContractNegativeControl",
+    "ProviderContractReport",
+    "ProviderContractResult",
     "all_evaluator_failures_caught",
     "adapter_run_from_dict",
     "adapter_run_to_dict",
@@ -230,6 +246,8 @@ __all__ = [
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_provider_assurance",
+    "load_provider_contract_manifest",
+    "run_provider_contract_assurance",
     "run_replay_file",
     "run_adapter_replay",
     "run_replay",

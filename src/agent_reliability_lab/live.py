@@ -243,6 +243,15 @@ def live_provider_adapter(
     return LiveProviderAdapter(policy=policy, transport=transport)
 
 
+def extract_provider_payload(
+    provider_id: str,
+    response: object,
+) -> dict[str, object]:
+    """Extract the reviewed structured payload without reading credentials."""
+
+    return _extract_model_payload(provider_id, response)
+
+
 def _request_body(
     policy: LiveProviderPolicy,
     request: ScenarioRequest,

@@ -35,6 +35,12 @@
       "blocking": true
     },
     {
+      "check_id": "provider-contract-drift",
+      "report_kind": "provider-contract",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "audit-evidence-integrity",
       "report_kind": "audit",
       "expected": "match",

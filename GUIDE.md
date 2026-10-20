@@ -369,6 +369,21 @@ uv run python tools/provider_assurance_report.py \
   --fail-on-findings
 ```
 
+Phase 11 adds a separate provider contract drift check. Contract drift means
+the external response shape changes in a way that can break extraction or
+normalization. The checked-in manifest fingerprints the reviewed fixture shape,
+and negative fixtures prove that raw text and missing required fields are
+refused:
+
+```bash
+uv run python tools/provider_contract_report.py \
+  --output /tmp/agent-reliability-provider-contract.json \
+  --fail-on-drift
+```
+
+This remains offline and credential-free. It proves the reviewed response
+contract, not live provider availability or model quality.
+
 ## Extend the harness safely
 
 When adding a capability, use this order:

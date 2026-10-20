@@ -1,0 +1,29 @@
+{
+  "provider_contract_version": 1,
+  "contracts": [
+    {
+      "provider_id": "openai",
+      "fixture": "openai-responses-safe.json",
+      "fixture_sha256": "e33895de8f305cabe809f46314c720d9922935ef6c264896c95388478f594d29",
+      "shape_sha256": "9c23a3f771d1da9ed8aeba2a2b90e3a2c3c73a78e48cf2dc9c611fbeb5f78bd6"
+    },
+    {
+      "provider_id": "anthropic",
+      "fixture": "anthropic-messages-safe.json",
+      "fixture_sha256": "b3c14281e58e8692131e0f2623914fab733e5cbc09ddd5bab89fccbe65371b3b",
+      "shape_sha256": "4d5ab9a908dcebeec06a2614301cef7582591630fcf159ac1f8b99ba3af82590"
+    }
+  ],
+  "negative_controls": [
+    {
+      "provider_id": "openai",
+      "fixture": "openai-responses-raw-text.json",
+      "expected_error": "provider_response_refused"
+    },
+    {
+      "provider_id": "anthropic",
+      "fixture": "anthropic-messages-missing-content.json",
+      "expected_error": "provider_response_refused"
+    }
+  ]
+}

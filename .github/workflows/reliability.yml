@@ -139,6 +139,14 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run provider contract drift gate
+        run: >-
+          uv run python tools/provider_contract_report.py
+          --output /tmp/agent-reliability-provider-contract.json
+          --markdown
+          --fail-on-drift
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Evaluate operational ship gate
         run: >-
           uv run python tools/ship_gate_report.py
@@ -148,6 +156,7 @@ jobs:
           --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json
           --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
           --provider-assurance /tmp/agent-reliability-provider-assurance.json
+          --provider-contract /tmp/agent-reliability-provider-contract.json
           --output /tmp/agent-reliability-ship-gate.json
           --fail-on-block
 
@@ -171,6 +180,7 @@ jobs:
           --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json
           --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
           --provider-assurance /tmp/agent-reliability-provider-assurance.json
+          --provider-contract /tmp/agent-reliability-provider-contract.json
           --output /tmp/agent-reliability-ship-gate.json
           --markdown >> "$GITHUB_STEP_SUMMARY"
 
@@ -187,6 +197,7 @@ jobs:
             /tmp/agent-reliability-golden-trace.json
             /tmp/agent-reliability-golden-negative.json
             /tmp/agent-reliability-provider-assurance.json
+            /tmp/agent-reliability-provider-contract.json
             /tmp/agent-reliability-ship-gate.json
           if-no-files-found: error
           retention-days: 14

@@ -1,0 +1,48 @@
+name: Agent reliability gate
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  reliability:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install locked dependencies
+        run: uv sync --extra dev
+
+      - name: Run tests
+        run: uv run pytest
+
+      - name: Validate scenario packs
+        run: uv run agent-reliability --list-packs --json
+
+      - name: Replay guarded synthetic traces
+        run: >-
+          uv run agent-reliability
+          --replay-file examples/traces/guarded.json
+          --json
+          --fail-on-findings
+
+      - name: Run guarded external adapter
+        run: >-
+          uv run agent-reliability
+          --adapter-check
+          --adapter-command uv
+          --adapter-command run
+          --adapter-command python
+          --adapter-command examples/guarded_adapter.py
+          --json
+          --mutations
+          --fail-on-findings

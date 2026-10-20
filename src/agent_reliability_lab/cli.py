@@ -13,6 +13,7 @@ from .external import (
     SubprocessAdapter,
 )
 from .packs import load_builtin_pack_results, load_pack_directory
+from .replay import run_replay_file
 from .runner import failed_checks, run_adapter_comparison, run_comparison
 
 
@@ -75,6 +76,11 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Directory of JSON scenario packs used with --list-packs.",
     )
+    parser.add_argument(
+        "--replay-file",
+        type=Path,
+        help="Replay one complete identifier-only adapter response file.",
+    )
     return parser
 
 
@@ -82,6 +88,43 @@ def main(argv: list[str] | None = None) -> int:
     """Run the CLI and return a process exit code."""
 
     args = build_parser().parse_args(argv)
+    if args.replay_file is not None:
+        if (
+            args.list_packs
+            or args.pack_directory is not None
+            or args.adapter_check
+            or args.adapter_command
+            or args.mutations
+        ):
+            print(
+                "--replay-file cannot be combined with pack listing, adapter, or mutation options.",
+                file=sys.stderr,
+            )
+            return 2
+        report = run_replay_file(args.replay_file)
+        if args.json:
+            print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+        elif args.markdown:
+            print(report.to_markdown())
+        elif report.refusal is not None:
+            print(
+                f"[{report.refusal.error}] {report.refusal.source}: "
+                f"{report.refusal.message}"
+            )
+        else:
+            assert report.agent_report is not None
+            outcome = "PASS" if report.agent_report.passed else "FINDINGS"
+            print(f"replay {report.agent_report.agent_id}: {outcome}")
+            for finding in report.agent_report.findings:
+                print(
+                    f"  [{finding.status.value}] {finding.check_id}: "
+                    f"{finding.message}"
+                )
+        if report.refusal is not None:
+            return 1
+        if args.fail_on_findings and report.failed:
+            return 1
+        return 0
     if args.list_packs:
         if args.adapter_check or args.adapter_command:
             print("--list-packs cannot be combined with --adapter-check.", file=sys.stderr)

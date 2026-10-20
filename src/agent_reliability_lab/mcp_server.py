@@ -40,7 +40,7 @@ from .runner import run_comparison
 from .scenarios import scenarios
 
 
-SERVER_VERSION = "0.5.0"
+SERVER_VERSION = "0.6.0"
 SERVER_INSTRUCTIONS = (
     "Use list_scenario_packs before evaluate_agent_trace or run_gated_scenario when the "
     "scenario is unknown. "

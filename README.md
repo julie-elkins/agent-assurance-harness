@@ -121,6 +121,27 @@ An empty directory, unreadable JSON, invalid pack fields, or duplicate scenario 
 returns a structured refusal and a non-zero exit code. This keeps “nothing was checked”
 separate from “all supplied packs were valid.”
 
+## Replay traces and block regressions
+
+A replay file is a versioned JSON record of one adapter's identifier-only responses for
+the complete built-in scenario set. It contains tool names, result classifications,
+synthetic identifiers, and observable event summaries—not prompts, hidden reasoning, or
+raw tool payloads.
+
+Replay the checked-in guarded fixture locally:
+
+```bash
+uv run agent-reliability \
+  --replay-file examples/traces/guarded.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The command refuses missing, duplicate, unknown, or malformed scenarios. Add
+`--fail-on-findings` in automation so a failed or refused finding returns a non-zero exit
+code. The repository's GitHub Actions workflow runs tests, validates packs, replays the
+guarded fixture, and runs the guarded external adapter.
+
 ## Use it as an MCP server
 
 The repository also exposes a small local MCP server (Model Context Protocol server: a
@@ -220,7 +241,9 @@ This phase is deterministic and offline. It does not measure live model behaviou
 provider differences, latency, cost, or multi-agent coordination. The MCP server is local
 and read-only; there is no hosted dashboard, leaderboard, authentication, or production
 integration. A passing guarded baseline proves only that these synthetic contracts
-distinguish the planted failures; it does not establish general agent reliability.
+distinguish the planted failures; it does not establish general agent reliability. CI
+proves only that the checked-in synthetic fixture and adapter continue to satisfy the
+current contracts; it does not prove a live agent will emit the same trace.
 
 ## Licence
 

@@ -125,7 +125,7 @@ def test_stdio_client_sees_initialization_surface_and_tool_result():
     initialization, tools, result = anyio.run(run_client)
 
     assert initialization.server_info.name == "agent-reliability-lab"
-    assert initialization.server_info.version == "0.5.0"
+    assert initialization.server_info.version == "0.6.0"
     assert "list_scenario_packs" in initialization.instructions
     assert [tool.name for tool in tools.tools] == [
         "list_scenario_packs",

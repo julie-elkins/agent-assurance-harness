@@ -55,3 +55,20 @@ uv run agent-reliability --list-packs --json
 The stdio client test in `tests/unit/test_mcp_server.py` is the required transport check.
 In-process calls alone are insufficient because they cannot verify initialization metadata,
 transport separation, or the served output schema.
+
+## Replay and CI
+
+The checked-in replay fixture is `examples/traces/guarded.json`. A replay file is a
+versioned collection of identifier-only adapter responses covering exactly all five
+scenario packs. Run it with:
+
+```bash
+uv run agent-reliability \
+  --replay-file examples/traces/guarded.json \
+  --json \
+  --fail-on-findings
+```
+
+Do not add prompts, hidden reasoning, raw tool arguments, raw tool results, credentials,
+or live traces to a replay file. The GitHub Actions workflow is the delivery gate for
+tests, pack validation, replay, and the guarded external adapter.

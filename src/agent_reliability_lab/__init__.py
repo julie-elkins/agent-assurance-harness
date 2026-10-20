@@ -44,6 +44,14 @@ from .protocol import (
     ScenarioRequest,
     validate_adapter_run,
 )
+from .replay import (
+    REPLAY_VERSION,
+    ReplayFile,
+    ReplayLoadResult,
+    ReplayReport,
+    ReplayRefusal,
+    run_replay_file,
+)
 from .packs import (
     PACK_VERSION,
     PackRefusal,
@@ -82,6 +90,11 @@ __all__ = [
     "PackRefusal",
     "PackResult",
     "ProtocolDecodeError",
+    "REPLAY_VERSION",
+    "ReplayFile",
+    "ReplayLoadResult",
+    "ReplayReport",
+    "ReplayRefusal",
     "ScenarioPack",
     "ScenarioRequest",
     "ScenarioAdapter",
@@ -104,6 +117,7 @@ __all__ = [
     "reference_adapters",
     "run_adapter_comparison",
     "run_comparison",
+    "run_replay_file",
     "run_evaluator_validity",
     "scenario_request_from_dict",
     "scenario_request_to_dict",

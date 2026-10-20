@@ -47,6 +47,8 @@ missing, and what the result does not prove.
   built-in synthetic packs and identifier-only traces.
 - The evidence gate must decide before an action is accepted; a blocked synthetic
   side-effect path must not call the simulated environment.
+- Replay files must cover exactly the built-in scenario-pack set and may contain only
+  identifier-only adapter responses; missing coverage is a refusal.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

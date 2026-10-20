@@ -5,7 +5,9 @@ act, abstain, and report honestly.
 
 Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
 then read [Building the Agent Assurance Harness](BUILD_GUIDE.md) for the design rationale
-and extension path. This README remains the full command reference and feature history.
+and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIVERY_STANDARD.md)
+defines the delivery controls to apply to future builds. This README remains the full
+command reference and feature history.
 
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
@@ -209,6 +211,7 @@ uv run python tools/ship_gate_report.py \
   --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
   --provider-assurance /tmp/agent-reliability-provider-assurance.json \
   --provider-contract /tmp/agent-reliability-provider-contract.json \
+  --release-artifact /tmp/agent-reliability-release-manifest.json \
   --rollback-rehearsal /tmp/agent-reliability-rollback.json \
   --fail-on-block
 ```
@@ -426,6 +429,25 @@ temporary paths, file contents, prompts, provider output, or credentials. A
 passing rehearsal is evidence that this repository's artifact can be restored
 in a disposable local environment; it is not a deployment rollback or a
 production health check.
+
+### Bind the release artifact to the ship gate
+
+The release-artifact check consumes the metadata-only manifest from
+`tools/release_check.py`. It requires a clean checkout, the expected package
+identity, successful source-versus-wheel assurance, a persisted SBOM, and
+SHA-256 fingerprints for the source distribution, wheel, SBOM, and scenario
+packs:
+
+```bash
+uv run python tools/release_check.py \
+  --sbom-output /tmp/agent-reliability-runtime-sbom.json \
+  --manifest-output /tmp/agent-reliability-release-manifest.json
+```
+
+The ship gate records those artifact hashes in its audit evidence. It does not
+publish the package, sign it, or claim that a deployment target accepted it;
+the control proves that the reviewed release artifact is the one produced by
+the checked build.
 
 ### Run one bounded live synthetic scenario
 

@@ -165,6 +165,7 @@ jobs:
           --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
           --provider-assurance /tmp/agent-reliability-provider-assurance.json
           --provider-contract /tmp/agent-reliability-provider-contract.json
+          --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
           --fail-on-block
@@ -190,6 +191,7 @@ jobs:
           --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
           --provider-assurance /tmp/agent-reliability-provider-assurance.json
           --provider-contract /tmp/agent-reliability-provider-contract.json
+          --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
           --markdown >> "$GITHUB_STEP_SUMMARY"
@@ -208,6 +210,8 @@ jobs:
             /tmp/agent-reliability-golden-negative.json
             /tmp/agent-reliability-provider-assurance.json
             /tmp/agent-reliability-provider-contract.json
+            /tmp/agent-reliability-release-manifest.json
+            /tmp/agent-reliability-runtime-sbom.json
             /tmp/agent-reliability-rollback.json
             /tmp/agent-reliability-ship-gate.json
           if-no-files-found: error

@@ -9,6 +9,11 @@ from which a generated manual could be assembled, so `README.md` remains the com
 reference, `BUILD_GUIDE.md` explains the design decisions, and the implementation remains
 the source of truth. A documentation test checks that the files named here still exist.
 
+The reusable delivery-path standard lives in
+`PRODUCTION_DELIVERY_STANDARD.md`. This guide stays specific to operating this
+harness; the standard is for deciding whether future builds can reach
+production safely.
+
 ## What this project does
 
 The Agent Assurance Harness tests whether a tool-using AI agent has enough observable
@@ -303,6 +308,7 @@ uv run python tools/ship_gate_report.py \
   --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
   --provider-assurance /tmp/agent-reliability-provider-assurance.json \
   --provider-contract /tmp/agent-reliability-provider-contract.json \
+  --release-artifact /tmp/agent-reliability-release-manifest.json \
   --rollback-rehearsal /tmp/agent-reliability-rollback.json \
   --fail-on-block
 ```
@@ -342,6 +348,24 @@ be false. The rehearsal never modifies the checkout or calls a deployment
 system. Its report contains only hashes, identifiers, booleans, and bounded
 timing. A pass means the local artifact restoration path worked; it does not
 prove a real deployment, database, queue, or provider session could roll back.
+
+### Bind the release artifact to the decision
+
+The release-artifact check consumes the manifest produced by
+`tools/release_check.py`. A release artifact is the built package that could
+be shipped; the check requires its source distribution and wheel to have
+matched synthetic assurance output, its SBOM (software bill of materials, the
+dependency inventory) to be persisted, and its hashes to be present:
+
+```bash
+uv run python tools/release_check.py \
+  --sbom-output /tmp/agent-reliability-runtime-sbom.json \
+  --manifest-output /tmp/agent-reliability-release-manifest.json
+```
+
+The ship gate also requires the build to identify the current Git revision and
+package version, and records the artifact hashes in audit evidence. This does
+not sign the package, publish it, or prove deployment health.
 
 ## Read the attestation
 

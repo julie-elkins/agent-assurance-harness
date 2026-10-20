@@ -3,6 +3,9 @@
 This document explains the engineering judgment behind the Agent Assurance Harness.
 `GUIDE.md` explains how to operate and review the repository; this file explains how to
 extend it without weakening the assurance boundary.
+`PRODUCTION_DELIVERY_STANDARD.md` is the reusable, technology-neutral standard for
+deciding whether a future build can reach production through an observable and
+recoverable delivery path.
 
 The project exists because a green test can still be misleading. An agent may use the
 wrong tool, skip a required check, answer without usable evidence, retry a protected write
@@ -73,6 +76,7 @@ The current progression is intentionally operational:
 | 10 | Provider adapter assurance | Whether provider-shaped adapters use the shared gate, preserve credential boundaries, and enforce budget refusals |
 | 11 | Provider contract drift | Whether reviewed provider response shapes remain accepted and unsafe changes are refused |
 | 12 | Rollback rehearsal | Whether a controlled artifact failure can be detected and restored without external side effects |
+| 13 | Release artifact assurance | Whether the exact clean package artifact and SBOM were produced by the checked source state |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -211,6 +215,7 @@ The harness can support that path, but its synthetic gate does not replace those
 
 - `GUIDE.md` — operator and reviewer path.
 - `BUILD_GUIDE.md` — design rationale and extension path.
+- `PRODUCTION_DELIVERY_STANDARD.md` — reusable production-delivery controls for future builds.
 - `src/agent_reliability_lab/models.py` — immutable trace and evidence records.
 - `src/agent_reliability_lab/scenarios.py` — Python parity controls and reference agents.
 - `src/agent_reliability_lab/scenario_packs/` — validated declarative synthetic packs.
@@ -235,6 +240,7 @@ The harness can support that path, but its synthetic gate does not replace those
 - `src/agent_reliability_lab/rollback_rehearsal.py` — disposable artifact failure and restoration rehearsal.
 - `examples/rollback-plan.json` — strict no-network, no-write rollback rehearsal policy.
 - `tools/rollback_rehearsal.py` — metadata-only rollback rehearsal report.
+- `tools/release_check.py` — clean source/wheel parity, dependency SBOM, and release manifest.
 
 ### Audit evidence binding
 
@@ -288,6 +294,20 @@ modify the checkout, run `git revert`, contact a deployment target, or inspect
 external state. That keeps the public CI control safe and deterministic, but
 the cost is material: it cannot prove that a production database, queue,
 provider session, or other stateful dependency would recover.
+
+### Release artifact assurance
+
+Phase 13 makes the release build part of the blocking ship decision. The
+existing release check already builds a source distribution and wheel,
+installs the wheel into a clean environment, compares its synthetic assurance
+output with the source checkout, and generates a runtime SBOM. This phase
+adds a strict release-artifact observation to the ship gate and binds the
+source distribution, wheel, and SBOM SHA-256 values to the audit record.
+
+The gate also requires a clean checkout, the current Git revision and package
+version, successful parity checks, a persisted SBOM, and non-empty scenario
+pack fingerprints. It does not sign or publish the artifact and cannot prove
+that a deployment system accepted it; those are separate delivery controls.
 
 ### Operational ship gate
 

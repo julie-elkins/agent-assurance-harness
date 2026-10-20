@@ -153,7 +153,9 @@ def _run_release_check(*, sbom_output: Path | None) -> dict[str, object]:
 
         sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
         return {
+            "release_artifact_version": 1,
             "manifest_version": 1,
+            "passed": True,
             "package": "agent-reliability-lab",
             "package_version": package_version,
             "git_commit": git_commit,

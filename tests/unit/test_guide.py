@@ -4,6 +4,7 @@ from pathlib import Path
 REPOSITORY = Path(__file__).parents[2]
 GUIDE = REPOSITORY / "GUIDE.md"
 BUILD_GUIDE = REPOSITORY / "BUILD_GUIDE.md"
+DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
 
 
 def test_guide_exists_and_local_references_are_present():
@@ -19,6 +20,9 @@ def test_guide_exists_and_local_references_are_present():
     assert "# Building the Agent Assurance Harness" in build_guide
     assert "How to add a control" in build_guide
     assert "Costs if wrong:" in build_guide
+    standard = DELIVERY_STANDARD.read_text(encoding="utf-8")
+    assert "# Production Delivery Standard" in standard
+    assert "The ten controls" in standard
 
     for relative_path in (
         "README.md",

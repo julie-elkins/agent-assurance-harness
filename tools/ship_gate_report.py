@@ -65,6 +65,7 @@ def _audit_observation(
     regression_path: Path | None,
     golden_path: Path | None,
     rollback_path: Path | None,
+    release_path: Path | None,
 ) -> tuple[CheckObservation, dict[str, str]]:
     """Bind report identifiers to the current checkout and baseline manifest."""
 
@@ -73,6 +74,7 @@ def _audit_observation(
     regression = _read_object(regression_path) if regression_path else {}
     golden = _read_object(golden_path) if golden_path else {}
     rollback = _read_object(rollback_path) if rollback_path else {}
+    release = _read_object(release_path) if release_path else {}
     attestation = regression.get("assurance_attestation")
     if not isinstance(attestation, dict):
         reasons.append("assurance-attestation-missing")
@@ -85,6 +87,10 @@ def _audit_observation(
     if not isinstance(recovery, dict):
         reasons.append("rollback-recovery-missing")
         recovery = {}
+    release_artifacts = release.get("artifacts")
+    if not isinstance(release_artifacts, dict):
+        reasons.append("release-artifacts-missing")
+        release_artifacts = {}
 
     observed = {
         "git-commit": attestation.get("git_commit"),
@@ -92,6 +98,11 @@ def _audit_observation(
         "scenario-pack-sha256": attestation.get("pack_set_sha256"),
         "golden-trace-sha256": golden.get("candidate_trace_sha256"),
         "rollback-artifact-sha256": recovery.get("restored_tree_sha256"),
+        "source-distribution-sha256": release_artifacts.get(
+            "source_distribution_sha256"
+        ),
+        "wheel-sha256": release_artifacts.get("wheel_sha256"),
+        "sbom-sha256": release.get("sbom_sha256"),
     }
     for field, value in observed.items():
         safe = _safe_value(value)
@@ -110,6 +121,10 @@ def _audit_observation(
         reasons.append("git-commit-mismatch")
     if values.get("package-version") != current_package_version:
         reasons.append("package-version-mismatch")
+    if _safe_value(release.get("git_commit")) != current_git_commit:
+        reasons.append("release-git-commit-mismatch")
+    if _safe_value(release.get("package_version")) != current_package_version:
+        reasons.append("release-package-version-mismatch")
     if values.get("scenario-pack-sha256") != _safe_value(
         manifest.get("pack_set_sha256")
     ):
@@ -122,6 +137,13 @@ def _audit_observation(
         recovery.get("original_tree_sha256")
     ):
         reasons.append("rollback-artifact-mismatch")
+    for field in (
+        "source-distribution-sha256",
+        "wheel-sha256",
+        "sbom-sha256",
+    ):
+        if _sha256_value(values.get(field)) is None:
+            reasons.append(f"{field}-invalid")
 
     return CheckObservation(
         check_id,
@@ -252,6 +274,62 @@ def _provider_contract_observation(
     )
 
 
+def _release_artifact_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    artifacts = report.get("artifacts")
+    checks = report.get("checks")
+    scenario_hashes = report.get("scenario_pack_sha256")
+    required_checks = {
+        "source_and_artifact_synthetic_cli_match",
+        "runtime_dependency_sbom_generated",
+    }
+    artifact_hashes_valid = (
+        isinstance(artifacts, dict)
+        and _sha256_value(artifacts.get("wheel_sha256")) is not None
+        and _sha256_value(artifacts.get("source_distribution_sha256")) is not None
+    )
+    scenario_hashes_valid = (
+        isinstance(scenario_hashes, dict)
+        and bool(scenario_hashes)
+        and all(_sha256_value(value) is not None for value in scenario_hashes.values())
+    )
+    try:
+        identity_matches = (
+            _safe_value(report.get("git_commit")) == _git_commit()
+            and _safe_value(report.get("package_version")) == _package_version()
+        )
+    except (OSError, subprocess.SubprocessError, KeyError, TypeError):
+        identity_matches = False
+    passed = (
+        expected == "pass"
+        and report.get("release_artifact_version") == 1
+        and report.get("manifest_version") == 1
+        and report.get("passed") is True
+        and report.get("package") == "agent-reliability-lab"
+        and identity_matches
+        and report.get("working_tree_dirty") is False
+        and isinstance(checks, list)
+        and required_checks.issubset(set(checks))
+        and artifact_hashes_valid
+        and _sha256_value(report.get("assurance_output_sha256")) is not None
+        and _sha256_value(report.get("sbom_sha256")) is not None
+        and report.get("sbom_persisted") is True
+        and isinstance(report.get("sbom_component_count"), int)
+        and report.get("sbom_component_count") > 0
+        and scenario_hashes_valid
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "release-artifact-invalid",
+    )
+
+
 def _rollback_observation(
     check_id: str,
     path: Path,
@@ -332,6 +410,12 @@ def _observations(
                 path,
                 expected=check.expected,
             )
+        elif check.report_kind == "release-artifact":
+            observations[check.check_id] = _release_artifact_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
         elif check.report_kind == "rollback":
             observations[check.check_id] = _rollback_observation(
                 check.check_id,
@@ -390,6 +474,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--golden-trace-negative-control", type=Path)
     parser.add_argument("--provider-assurance", type=Path)
     parser.add_argument("--provider-contract", type=Path)
+    parser.add_argument("--release-artifact", type=Path)
     parser.add_argument("--rollback-rehearsal", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown", action="store_true")
@@ -403,6 +488,7 @@ def main(argv: list[str] | None = None) -> int:
         "golden-trace-negative-control": args.golden_trace_negative_control,
         "provider-adapter-assurance": args.provider_assurance,
         "provider-contract-drift": args.provider_contract,
+        "release-artifact-integrity": args.release_artifact,
         "rollback-rehearsal": args.rollback_rehearsal,
     }
     paths = {key: value for key, value in paths.items() if value is not None}
@@ -421,6 +507,7 @@ def main(argv: list[str] | None = None) -> int:
             args.adapter_regression_positive,
             args.golden_trace_positive,
             args.rollback_rehearsal,
+            args.release_artifact,
         )
         observations = _observations(manifest, paths, audit_observation)
         audit_values["decision"] = "pending"

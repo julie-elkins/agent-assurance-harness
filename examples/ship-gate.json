@@ -41,6 +41,12 @@
       "blocking": true
     },
     {
+      "check_id": "release-artifact-integrity",
+      "report_kind": "release-artifact",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "rollback-rehearsal",
       "report_kind": "rollback",
       "expected": "pass",
@@ -82,6 +88,9 @@
       "package-version",
       "scenario-pack-sha256",
       "golden-trace-sha256",
+      "source-distribution-sha256",
+      "wheel-sha256",
+      "sbom-sha256",
       "rollback-artifact-sha256",
       "decision"
     ],

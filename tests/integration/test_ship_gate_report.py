@@ -49,6 +49,7 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
     negative_golden = tmp_path / "negative-golden.json"
     provider_assurance = tmp_path / "provider-assurance.json"
     provider_contract = tmp_path / "provider-contract.json"
+    release_artifact = tmp_path / "release-manifest.json"
     rollback_rehearsal = tmp_path / "rollback-rehearsal.json"
     output = tmp_path / "ship-gate.json"
     git_commit, package_version = _current_identity()
@@ -122,6 +123,33 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
         ),
         encoding="utf-8",
     )
+    release_artifact.write_text(
+        json.dumps(
+            {
+                "release_artifact_version": 1,
+                "manifest_version": 1,
+                "passed": True,
+                "package": "agent-reliability-lab",
+                "package_version": package_version,
+                "git_commit": git_commit,
+                "working_tree_dirty": False,
+                "checks": [
+                    "source_and_artifact_synthetic_cli_match",
+                    "runtime_dependency_sbom_generated",
+                ],
+                "artifacts": {
+                    "source_distribution_sha256": "d" * 64,
+                    "wheel_sha256": "e" * 64,
+                },
+                "assurance_output_sha256": "1" * 64,
+                "sbom_sha256": "f" * 64,
+                "sbom_component_count": 28,
+                "sbom_persisted": True,
+                "scenario_pack_sha256": {"synthetic.json": "2" * 64},
+            }
+        ),
+        encoding="utf-8",
+    )
     rollback_rehearsal.write_text(
         json.dumps(
             {
@@ -166,6 +194,8 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
         str(provider_assurance),
         "--provider-contract",
         str(provider_contract),
+        "--release-artifact",
+        str(release_artifact),
         "--rollback-rehearsal",
         str(rollback_rehearsal),
         "--output",

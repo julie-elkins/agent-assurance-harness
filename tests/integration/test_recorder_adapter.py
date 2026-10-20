@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +31,11 @@ def test_recorder_example_generates_a_passing_complete_replay(tmp_path):
     assert report.agent_report is not None
     assert report.agent_report.passed is True
     assert len(report.agent_report.findings) == 5
+    loaded = json.loads(completed.stdout)
+    assert loaded["harness_change"]["components"] == [
+        "guardrails",
+        "tool_guidance",
+    ]
 
 
 def test_recorder_example_passes_the_subprocess_adapter_boundary():

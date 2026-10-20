@@ -17,7 +17,12 @@ from agent_reliability_lab.external import (
 )
 from agent_reliability_lab.protocol import AdapterRun, ScenarioRequest
 from agent_reliability_lab.recorder import TraceRecorder
-from agent_reliability_lab.replay import REPLAY_VERSION, ReplayCase, ReplayFile
+from agent_reliability_lab.replay import (
+    REPLAY_VERSION,
+    HarnessChangeManifest,
+    ReplayCase,
+    ReplayFile,
+)
 from agent_reliability_lab.scenarios import scenarios
 
 
@@ -102,6 +107,10 @@ def _replay_file() -> ReplayFile:
         replay_version=REPLAY_VERSION,
         agent_id=AGENT_ID,
         cases=cases,
+        harness_change=HarnessChangeManifest(
+            change_id="synthetic-recorder-baseline",
+            components=("guardrails", "tool_guidance"),
+        ),
     )
 
 

@@ -14,6 +14,7 @@ Design rules:
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,17 @@ from .scenarios import scenarios
 
 
 REPLAY_VERSION = 1
+HARNESS_COMPONENTS = (
+    "system_prompt",
+    "guardrails",
+    "memory",
+    "tool_guidance",
+    "subagents",
+    "skills",
+    "scripts",
+    "plugins",
+)
+_IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
 
 
 @dataclass(frozen=True)
@@ -57,19 +69,36 @@ class ReplayCase:
 
 
 @dataclass(frozen=True)
+class HarnessChangeManifest:
+    """Identifier-only metadata describing the harness under evaluation."""
+
+    change_id: str
+    components: tuple[str, ...]
+
+    def to_dict(self) -> dict[str, object]:
+        """Return the safe manifest shape without prompts or configuration text."""
+
+        return {
+            "change_id": self.change_id,
+            "components": list(self.components),
+        }
+
+
+@dataclass(frozen=True)
 class ReplayFile:
     """A versioned collection of responses from one synthetic agent."""
 
     replay_version: int
     agent_id: str
     cases: tuple[ReplayCase, ...]
+    harness_change: HarnessChangeManifest | None = None
 
     def to_dict(self) -> dict[str, object]:
         """Return the strict JSON shape used by replay files."""
 
         from .external import adapter_run_to_dict
 
-        return {
+        result: dict[str, object] = {
             "replay_version": self.replay_version,
             "agent_id": self.agent_id,
             "runs": [
@@ -80,6 +109,9 @@ class ReplayFile:
                 for case in self.cases
             ],
         }
+        if self.harness_change is not None:
+            result["harness_change"] = self.harness_change.to_dict()
+        return result
 
 
 @dataclass(frozen=True)
@@ -181,15 +213,63 @@ def _required_string(value: object, context: str) -> str:
     return value
 
 
+def _identifier(value: object, context: str) -> str:
+    result = _required_string(value, context)
+    if _IDENTIFIER.fullmatch(result) is None:
+        raise ValueError(f"{context} must contain identifier characters only.")
+    return result
+
+
+def _parse_harness_change(value: object) -> HarnessChangeManifest:
+    data = _object(value, "harness_change")
+    _keys(data, {"change_id", "components"}, "harness_change")
+    change_id = _identifier(data.get("change_id"), "harness_change.change_id")
+    raw_components = data.get("components")
+    if not isinstance(raw_components, list) or not raw_components:
+        raise ValueError(
+            "harness_change.components must be a non-empty list."
+        )
+    components = []
+    seen: set[str] = set()
+    for index, component in enumerate(raw_components):
+        component_id = _identifier(
+            component,
+            f"harness_change.components[{index}]",
+        )
+        if component_id not in HARNESS_COMPONENTS:
+            raise ValueError(
+                f"harness_change.components[{index}] is not a supported component."
+            )
+        if component_id in seen:
+            raise ValueError(
+                f"harness_change.components contains duplicate component {component_id}."
+            )
+        seen.add(component_id)
+        components.append(component_id)
+    return HarnessChangeManifest(
+        change_id=change_id,
+        components=tuple(components),
+    )
+
+
 def _parse_replay(value: object) -> ReplayFile:
     data = _object(value, "replay")
-    _keys(data, {"replay_version", "agent_id", "runs"}, "replay")
+    _keys(
+        data,
+        {"replay_version", "agent_id", "runs", "harness_change"},
+        "replay",
+    )
     if data.get("replay_version") != REPLAY_VERSION:
         raise ValueError("replay_version is not supported.")
     agent_id = _required_string(data.get("agent_id"), "agent_id")
     raw_runs = data.get("runs")
     if not isinstance(raw_runs, list) or not raw_runs:
         raise ValueError("runs must be a non-empty list.")
+    harness_change = (
+        _parse_harness_change(data["harness_change"])
+        if "harness_change" in data
+        else None
+    )
 
     cases = []
     seen_ids: set[str] = set()
@@ -225,6 +305,7 @@ def _parse_replay(value: object) -> ReplayFile:
         replay_version=REPLAY_VERSION,
         agent_id=agent_id,
         cases=tuple(cases),
+        harness_change=harness_change,
     )
 
 

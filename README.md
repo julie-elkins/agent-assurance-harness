@@ -142,6 +142,35 @@ The command refuses missing, duplicate, unknown, or malformed scenarios. Add
 code. The repository's GitHub Actions workflow runs tests, validates packs, replays the
 guarded fixture, and runs the guarded external adapter.
 
+### Compare a changed harness with its approved baseline
+
+Harness²-style workflows can change the surrounding harness—such as guardrails, skills,
+memory, or tool guidance—without changing model weights. This repository can gate that
+change without importing prompts or raw traces. Add an identifier-only `harness_change`
+manifest to each replay:
+
+```json
+"harness_change": {
+  "change_id": "candidate-guardrails-2026-10-20",
+  "components": ["guardrails"]
+}
+```
+
+Then compare the approved baseline with the candidate:
+
+```bash
+uv run agent-reliability \
+  --compare-replay examples/traces/guarded.json ./candidate.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The gate blocks new failures, refusals, and lost evidence in safety or evidence
+dimensions. Task-outcome regressions remain visible as non-blocking observations, because
+a task-quality change should not be hidden inside a composite score or allowed to offset a
+safety regression. The manifest accepts only component identifiers; it must not contain
+prompts, memory text, tool payloads, or provider output.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

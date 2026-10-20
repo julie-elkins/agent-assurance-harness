@@ -78,3 +78,12 @@ jobs:
           --otlp-file examples/traces/otel-guarded.json
           --json
           --fail-on-findings
+
+      - name: Compare approved harness baseline
+        run: >-
+          uv run agent-reliability
+          --compare-replay
+          examples/traces/guarded.json
+          examples/traces/guarded.json
+          --json
+          --fail-on-findings

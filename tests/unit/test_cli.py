@@ -61,3 +61,26 @@ def test_replay_file_refusal_has_nonzero_exit(tmp_path, capsys):
 
     assert exit_code == 1
     assert data["refusal"]["error"] == "invalid_replay_file"
+
+
+def test_compare_replay_passes_with_fail_on_findings(capsys):
+    replay_path = (
+        Path(__file__).parents[2] / "examples" / "traces" / "guarded.json"
+    )
+
+    exit_code = main(
+        [
+            "--compare-replay",
+            str(replay_path),
+            str(replay_path),
+            "--json",
+            "--fail-on-findings",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert data["passed"] is True
+    assert data["findings"] == []

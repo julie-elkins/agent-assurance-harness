@@ -45,7 +45,9 @@ from .protocol import (
     validate_adapter_run,
 )
 from .replay import (
+    HARNESS_COMPONENTS,
     REPLAY_VERSION,
+    HarnessChangeManifest,
     ReplayFile,
     ReplayLoadResult,
     ReplayReport,
@@ -55,6 +57,12 @@ from .replay import (
 )
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
+from .regression import (
+    RegressionFinding,
+    RegressionReport,
+    compare_replay_files,
+    compare_replays,
+)
 from .packs import (
     PACK_VERSION,
     PackRefusal,
@@ -88,6 +96,8 @@ __all__ = [
     "Finding",
     "FindingStatus",
     "EventType",
+    "HARNESS_COMPONENTS",
+    "HarnessChangeManifest",
     "ObservableEvent",
     "PACK_VERSION",
     "PackRefusal",
@@ -126,6 +136,10 @@ __all__ = [
     "run_replay",
     "load_otlp_file",
     "otlp_to_replay",
+    "RegressionFinding",
+    "RegressionReport",
+    "compare_replay_files",
+    "compare_replays",
     "run_evaluator_validity",
     "scenario_request_from_dict",
     "scenario_request_to_dict",

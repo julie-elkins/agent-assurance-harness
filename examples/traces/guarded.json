@@ -1,6 +1,14 @@
 {
   "replay_version": 1,
   "agent_id": "external",
+  "harness_change": {
+    "change_id": "approved-baseline-2026-10-20",
+    "components": [
+      "guardrails",
+      "skills",
+      "tool_guidance"
+    ]
+  },
   "runs": [
     {
       "scenario_id": "tool-misuse",

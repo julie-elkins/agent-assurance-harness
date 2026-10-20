@@ -73,6 +73,20 @@ Do not add prompts, hidden reasoning, raw tool arguments, raw tool results, cred
 or live traces to a replay file. The GitHub Actions workflow is the delivery gate for
 tests, pack validation, replay, and the guarded external adapter.
 
+To compare a candidate harness with the approved baseline, add an identifier-only
+`harness_change` manifest naming the change ID and changed components, then run:
+
+```bash
+uv run agent-reliability \
+  --compare-replay examples/traces/guarded.json ./candidate.json \
+  --json \
+  --fail-on-findings
+```
+
+The comparison blocks new safety or evidence failures, refusals, and lost evidence. It
+reports task-outcome regressions without treating them as release blockers. The manifest
+must never contain prompts, memory text, raw tool payloads, or provider output.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

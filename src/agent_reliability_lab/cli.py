@@ -15,6 +15,7 @@ from .external import (
 from .packs import load_builtin_pack_results, load_pack_directory
 from .otlp import load_otlp_file
 from .replay import REPLAY_VERSION, ReplayReport, run_replay, run_replay_file
+from .regression import RegressionReport, compare_replay_files
 from .runner import failed_checks, run_adapter_comparison, run_comparison
 
 
@@ -87,6 +88,13 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         help="Import and evaluate one local identifier-only OTLP/JSON trace export.",
     )
+    parser.add_argument(
+        "--compare-replay",
+        nargs=2,
+        metavar=("BASELINE", "CANDIDATE"),
+        type=Path,
+        help="Compare a baseline replay with a candidate harness replay.",
+    )
     return parser
 
 
@@ -111,10 +119,57 @@ def _print_replay_report(report: ReplayReport, args: argparse.Namespace) -> None
             )
 
 
+def _print_regression_report(
+    report: RegressionReport,
+    args: argparse.Namespace,
+) -> None:
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    elif args.markdown:
+        print(report.to_markdown())
+    elif report.refusal is not None:
+        print(
+            f"[{report.refusal.error}] {report.refusal.source}: "
+            f"{report.refusal.message}"
+        )
+    else:
+        outcome = "PASS" if not report.failed else "BLOCKED"
+        print(f"harness regression: {outcome}")
+        for finding in report.findings:
+            gate = "blocking" if finding.blocking else "observation"
+            print(
+                f"  [{gate}] {finding.scenario_id}/{finding.check_id}: "
+                f"{finding.message}"
+            )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI and return a process exit code."""
 
     args = build_parser().parse_args(argv)
+    if args.compare_replay is not None:
+        if (
+            args.replay_file is not None
+            or args.otlp_file is not None
+            or args.list_packs
+            or args.pack_directory is not None
+            or args.adapter_check
+            or args.adapter_command
+            or args.mutations
+        ):
+            print(
+                "--compare-replay cannot be combined with another trace input, "
+                "pack listing, adapter, or mutation options.",
+                file=sys.stderr,
+            )
+            return 2
+        report = compare_replay_files(*args.compare_replay)
+        _print_regression_report(report, args)
+        if report.refusal is not None:
+            return 1
+        if args.fail_on_findings and report.failed:
+            return 1
+        return 0
     if args.replay_file is not None or args.otlp_file is not None:
         if (
             args.replay_file is not None

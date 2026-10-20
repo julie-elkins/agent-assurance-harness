@@ -58,6 +58,12 @@ missing, and what the result does not prove.
 - `examples/traces/otel-guarded.json` is a synthetic OTLP fixture. The OTLP importer
   must refuse known content-bearing attributes and must never copy raw attribute values
   into reports, logs, fixtures, or errors.
+- Replay comparisons require an identifier-only `harness_change` manifest. It may name
+  only the change ID and one or more supported harness components; prompts, memory text,
+  tool payloads, and provider output are forbidden.
+- A harness regression gate blocks new failures, refusals, and evidence loss in safety or
+  evidence dimensions. Task-outcome regressions are reported as observations rather than
+  silently folded into a score.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

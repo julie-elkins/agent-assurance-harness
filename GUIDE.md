@@ -253,6 +253,33 @@ The negative control uses `examples/regressed_adapter.py` and must be run with
 regression. That proves enforcement of the current contract; it does not measure live
 model quality.
 
+### Use a Golden Trace for observable drift
+
+A Golden Trace is one approved successful run whose canonical evidence becomes a
+regression baseline. It catches evidence drift that can leave evaluator status unchanged,
+such as a different result identifier, source, freshness age, or authorization binding.
+
+Run the checked-in synthetic baseline against the guarded adapter:
+
+```bash
+uv run python tools/golden_trace_report.py \
+  --golden-replay examples/traces/guarded.json \
+  --golden-manifest examples/traces/golden-manifest.json \
+  --agent-id external \
+  --candidate-adapter-command uv \
+  --candidate-adapter-command run \
+  --candidate-adapter-command python \
+  --candidate-adapter-command examples/guarded_adapter.py \
+  --candidate-change-id candidate-golden \
+  --candidate-component guardrails \
+  --fail-on-drift
+```
+
+The baseline manifest contains only hashes and counts. The digest excludes free-form
+claim and answer wording but includes the identifier-only evidence fields that the
+evaluator uses. A changed Golden Trace blocks until the baseline is intentionally
+reviewed and refreshed; refreshing it is an approval action, not an automatic test fix.
+
 ## Read the attestation
 
 An assurance attestation is a metadata-only record of one evaluation state. It contains:

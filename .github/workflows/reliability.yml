@@ -53,6 +53,35 @@ jobs:
           --output /tmp/agent-reliability-conformance.json
           --fail-on-findings
 
+      - name: Compare candidate with Golden Trace
+        run: >-
+          uv run python tools/golden_trace_report.py
+          --golden-replay examples/traces/guarded.json
+          --golden-manifest examples/traces/golden-manifest.json
+          --agent-id external
+          --candidate-adapter-command uv
+          --candidate-adapter-command run
+          --candidate-adapter-command python
+          --candidate-adapter-command examples/guarded_adapter.py
+          --candidate-change-id candidate-golden-ci
+          --candidate-component guardrails
+          --output /tmp/agent-reliability-golden-trace.json
+          --fail-on-drift
+
+      - name: Prove Golden Trace gate catches drift
+        run: >-
+          uv run python tools/golden_trace_report.py
+          --golden-replay examples/traces/guarded.json
+          --golden-manifest examples/traces/golden-manifest.json
+          --agent-id external
+          --candidate-adapter-command uv
+          --candidate-adapter-command run
+          --candidate-adapter-command python
+          --candidate-adapter-command examples/regressed_adapter.py
+          --candidate-change-id candidate-golden-negative-control
+          --candidate-component guardrails
+          --expect-drift
+
       - name: Compare baseline and candidate adapters
         run: >-
           uv run python tools/adapter_regression_report.py

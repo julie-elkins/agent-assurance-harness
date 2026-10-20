@@ -101,6 +101,17 @@ from .regression import (
     compare_replay_files,
     compare_replays,
 )
+from .golden_trace import (
+    GOLDEN_TRACE_VERSION,
+    GoldenTraceDrift,
+    GoldenTraceManifest,
+    GoldenTraceReport,
+    build_golden_manifest,
+    compare_golden_trace,
+    golden_trace_sha256,
+    load_golden_manifest,
+    load_replay_for_golden,
+)
 from .packs import (
     PACK_VERSION,
     PackMetadata,
@@ -216,6 +227,15 @@ __all__ = [
     "RegressionReport",
     "compare_replay_files",
     "compare_replays",
+    "GOLDEN_TRACE_VERSION",
+    "GoldenTraceDrift",
+    "GoldenTraceManifest",
+    "GoldenTraceReport",
+    "build_golden_manifest",
+    "compare_golden_trace",
+    "golden_trace_sha256",
+    "load_golden_manifest",
+    "load_replay_for_golden",
     "run_evaluator_validity",
     "scenario_request_from_dict",
     "scenario_request_to_dict",

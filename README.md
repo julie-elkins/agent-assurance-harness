@@ -162,6 +162,36 @@ The command refuses missing, duplicate, unknown, or malformed scenarios. Add
 code. The repository's GitHub Actions workflow runs tests, validates packs, replays the
 guarded fixture, and runs the guarded external adapter.
 
+### Compare against a Golden Trace
+
+A Golden Trace is one approved successful run whose canonical evidence becomes a
+regression baseline. Unlike a status-only comparison, this check catches a changed tool
+result identifier, source, age, authorization binding, or other observable evidence even
+when the evaluator still reports `completed`.
+
+The checked-in baseline is synthetic and contains no prompts, raw tool results, or
+provider output. Its companion manifest stores only the scenario count, pack-set hash,
+and Golden Trace digest:
+
+```bash
+uv run python tools/golden_trace_report.py \
+  --golden-replay examples/traces/guarded.json \
+  --golden-manifest examples/traces/golden-manifest.json \
+  --agent-id external \
+  --candidate-adapter-command uv \
+  --candidate-adapter-command run \
+  --candidate-adapter-command python \
+  --candidate-adapter-command examples/guarded_adapter.py \
+  --candidate-change-id candidate-golden \
+  --candidate-component guardrails \
+  --fail-on-drift
+```
+
+The gate blocks drift until a reviewer deliberately refreshes the baseline and its
+manifest. The digest intentionally excludes free-form claim and answer wording, because
+wording changes are not automatically evidence regressions. It does include the
+identifier-only evidence that the evaluator relies on.
+
 ### Compare a changed harness with its approved baseline
 
 Harness²-style workflows can change the surrounding harness—such as guardrails, skills,

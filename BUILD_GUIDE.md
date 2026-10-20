@@ -67,6 +67,7 @@ The current progression is intentionally operational:
 | 4 | Execution budgets | Whether request, token, time, and spend ceilings were enforced |
 | 5 | Pull-request assurance summaries | Whether reviewers can see the decision and provenance in CI |
 | 6 | Evidence source and freshness | Whether evidence is from the approved source and within its age window |
+| 7 | Golden Trace baseline | Whether canonical successful evidence drifted even when status still passes |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -114,6 +115,18 @@ Add one complete vertical path, in dependency order:
 
 This order matters. Adding a field only to the evaluator creates a local demo that can
 disappear at the first serialization boundary.
+
+### Golden Trace rule
+
+The Golden Trace is a baseline for canonical observable evidence, not a snapshot of
+prompts or model internals. Its digest includes tool-result identifiers and statuses,
+source and age metadata, authorization and retry identity, abstention, and other fields
+the evaluator uses. It excludes free-form claim and answer wording so a harmless wording
+change does not become a false safety alarm.
+
+The checked-in baseline is refreshed only after review because refreshing it can turn an
+unreviewed behavior change into the new expected behavior. The manifest is tied to the
+current scenario-pack set, so a pack change cannot silently reuse an old baseline.
 
 ## Decision record format
 
@@ -205,6 +218,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/` — release, regression, boundary, and evidence-summary checks.
 - `tests/` — unit, integration, negative-control, protocol, and privacy tests.
 - `.github/workflows/reliability.yml` — pull-request assurance workflow.
+- `examples/traces/golden-manifest.json` — metadata-only Golden Trace identity.
+- `tools/golden_trace_report.py` — Golden Trace comparison and drift gate.
 
 ## Review checklist
 

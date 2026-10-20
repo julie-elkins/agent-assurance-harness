@@ -29,6 +29,8 @@ def test_guide_exists_and_local_references_are_present():
         "examples",
         "tools",
         "tools/render_assurance_summary.py",
+        "tools/golden_trace_report.py",
+        "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",
     ):
         assert (REPOSITORY / relative_path).exists(), relative_path

@@ -187,6 +187,10 @@ uv run python tools/conformance_report.py \
 The conformance report contains counts and statuses only; it does not expose the adapter
 command, findings, traces, prompts, credentials, or provider output.
 
+Phase 19 hardens external adapter execution with process-group termination, bounded
+diagnostics, optional working-directory control, and best-effort Unix CPU/address-space
+limits. This is not a network sandbox; use an OS or container boundary for hostile code.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

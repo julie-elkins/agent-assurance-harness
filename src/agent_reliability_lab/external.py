@@ -1,4 +1,4 @@
-"""Subprocess adapter and strict JSONL protocol handling.
+"""Subprocess adapter safety boundary and strict JSONL protocol handling.
 
 Design rules:
 
@@ -6,7 +6,9 @@ Design rules:
 2. The child receives a minimal environment and synthetic request metadata only.
 3. stdout is a one-response protocol channel; stderr is diagnostics and never enters the
    report.
-4. Decode and validation failures become structured refusals instead of exceptions.
+4. The child runs in a separate process group with bounded output and best-effort Unix
+   resource limits.
+5. Decode and validation failures become structured refusals instead of exceptions.
 """
 
 from __future__ import annotations
@@ -14,9 +16,11 @@ from __future__ import annotations
 import json
 import os
 import selectors
+import signal
 import subprocess
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from .models import (
@@ -41,6 +45,12 @@ DEFAULT_ADAPTER_TIMEOUT_SECONDS = 5.0
 # MODELLING ASSUMPTION: 256 KiB is enough for identifier-only traces while rejecting
 # accidental payload dumps. Increase only after measuring a real protocol need.
 DEFAULT_MAX_RESPONSE_BYTES = 262_144
+# MODELLING ASSUMPTION: diagnostics are not part of the response protocol. Keep a
+# bounded pipe so an adapter cannot fill memory with stderr while stdout is valid.
+DEFAULT_MAX_STDERR_BYTES = 65_536
+# MODELLING ASSUMPTION: this is a local safety ceiling, not a production sizing target.
+# The caller can lower it for a constrained conformance run.
+DEFAULT_MAX_MEMORY_BYTES = 512 * 1024 * 1024
 
 
 class ProtocolDecodeError(ValueError):
@@ -315,9 +325,54 @@ def _safe_environment() -> dict[str, str]:
     }
 
 
+def _process_group_options(
+    *,
+    timeout_seconds: float,
+    max_memory_bytes: int,
+) -> dict[str, Any]:
+    """Return platform-specific process-group and best-effort resource controls."""
+
+    if os.name == "posix":
+        options: dict[str, Any] = {"start_new_session": True}
+        try:
+            import resource
+        except ImportError:
+            return options
+
+        def limit_resources() -> None:
+            try:
+                cpu_seconds = max(1, int(timeout_seconds) + 1)
+                resource.setrlimit(
+                    resource.RLIMIT_CPU,
+                    (cpu_seconds, cpu_seconds),
+                )
+                resource.setrlimit(
+                    resource.RLIMIT_AS,
+                    (max_memory_bytes, max_memory_bytes),
+                )
+            except (OSError, ValueError):
+                # The parent still has the wall-clock and output ceilings.
+                pass
+
+        options["preexec_fn"] = limit_resources
+        return options
+    creation_flags = getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0)
+    return {"creationflags": creation_flags}
+
+
 def _terminate(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is None:
-        process.kill()
+    """Terminate the whole adapter process group where the platform supports it."""
+
+    try:
+        if os.name == "posix":
+            # start_new_session=True makes the adapter PID its process-group ID.
+            # Killing the group also stops descendants that inherited the protocol pipes.
+            os.killpg(process.pid, signal.SIGKILL)
+        elif process.poll() is None:
+            process.kill()
+    except (OSError, ProcessLookupError):
+        if process.poll() is None:
+            process.kill()
     try:
         process.wait(timeout=1)
     except subprocess.TimeoutExpired:
@@ -330,8 +385,9 @@ def _collect_output(
     *,
     timeout_seconds: float,
     max_response_bytes: int,
+    max_stderr_bytes: int,
 ) -> tuple[bytes, int] | AdapterRefusal:
-    """Collect stdout/stderr without allowing stdout to exceed its configured cap."""
+    """Collect output without allowing either pipe to exceed its configured cap."""
 
     assert process.stdin is not None
     assert process.stdout is not None
@@ -350,6 +406,7 @@ def _collect_output(
     selector.register(process.stdout, selectors.EVENT_READ, "stdout")
     selector.register(process.stderr, selectors.EVENT_READ, "stderr")
     stdout = bytearray()
+    stderr_size = 0
     started = time.monotonic()
     try:
         while selector.get_map():
@@ -385,6 +442,15 @@ def _collect_output(
                             message="The adapter response exceeded the configured size limit.",
                             guidance="Return only the identifier-only adapter response, not raw payloads.",
                         )
+                else:
+                    stderr_size += len(chunk)
+                    if stderr_size > max_stderr_bytes:
+                        _terminate(process)
+                        return AdapterRefusal(
+                            error="diagnostics_too_large",
+                            message="The adapter diagnostics exceeded the configured size limit.",
+                            guidance="Keep diagnostics concise and emit only the protocol response on stdout.",
+                        )
         return bytes(stdout), process.wait()
     finally:
         selector.close()
@@ -398,6 +464,9 @@ class SubprocessAdapter:
     command: tuple[str, ...]
     timeout_seconds: float = DEFAULT_ADAPTER_TIMEOUT_SECONDS
     max_response_bytes: int = DEFAULT_MAX_RESPONSE_BYTES
+    max_stderr_bytes: int = DEFAULT_MAX_STDERR_BYTES
+    max_memory_bytes: int = DEFAULT_MAX_MEMORY_BYTES
+    working_directory: Path | None = None
 
     def run(
         self,
@@ -431,15 +500,49 @@ class SubprocessAdapter:
                     guidance="Set a positive response limit for the identifier-only protocol.",
                 )
             )
-        try:
-            process = subprocess.Popen(
-                list(self.command),
-                stdin=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                env=_safe_environment(),
-                shell=False,
+        if self.max_stderr_bytes <= 0:
+            return AdapterRun(
+                refusal=AdapterRefusal(
+                    error="invalid_stderr_limit",
+                    message="The adapter diagnostics limit must be greater than zero.",
+                    guidance="Set a positive stderr limit for the local process boundary.",
+                )
             )
+        if self.max_memory_bytes <= 0:
+            return AdapterRun(
+                refusal=AdapterRefusal(
+                    error="invalid_memory_limit",
+                    message="The adapter memory limit must be greater than zero.",
+                    guidance="Set a positive memory limit for the local process boundary.",
+                )
+            )
+        if self.working_directory is not None:
+            try:
+                valid_working_directory = self.working_directory.is_dir()
+            except OSError:
+                valid_working_directory = False
+            if not valid_working_directory:
+                return AdapterRun(
+                    refusal=AdapterRefusal(
+                        error="invalid_working_directory",
+                        message="The adapter working directory is not a readable directory.",
+                        guidance="Provide an existing local directory for the adapter process.",
+                    )
+                )
+        try:
+            launch_options: dict[str, Any] = {
+                "stdin": subprocess.PIPE,
+                "stdout": subprocess.PIPE,
+                "stderr": subprocess.PIPE,
+                "env": _safe_environment(),
+                "shell": False,
+                "cwd": self.working_directory,
+            }
+            launch_options.update(_process_group_options(
+                timeout_seconds=self.timeout_seconds,
+                max_memory_bytes=self.max_memory_bytes,
+            ))
+            process = subprocess.Popen(list(self.command), **launch_options)
         except OSError:
             return AdapterRun(
                 refusal=AdapterRefusal(
@@ -459,6 +562,7 @@ class SubprocessAdapter:
             ).encode(),
             timeout_seconds=self.timeout_seconds,
             max_response_bytes=self.max_response_bytes,
+            max_stderr_bytes=self.max_stderr_bytes,
         )
         if isinstance(collected, AdapterRefusal):
             return AdapterRun(refusal=collected)

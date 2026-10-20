@@ -27,7 +27,9 @@ from .evaluators import (
 )
 from .external import (
     DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    DEFAULT_MAX_MEMORY_BYTES,
     DEFAULT_MAX_RESPONSE_BYTES,
+    DEFAULT_MAX_STDERR_BYTES,
     ProtocolDecodeError,
     SubprocessAdapter,
     adapter_run_from_dict,
@@ -107,6 +109,8 @@ __all__ = [
     "DimensionSummary",
     "DEFAULT_ADAPTER_TIMEOUT_SECONDS",
     "DEFAULT_MAX_RESPONSE_BYTES",
+    "DEFAULT_MAX_STDERR_BYTES",
+    "DEFAULT_MAX_MEMORY_BYTES",
     "EvidenceContract",
     "EvidenceRequirement",
     "FaultInjection",

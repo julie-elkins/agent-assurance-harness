@@ -1,6 +1,10 @@
 import json
+import os
 import sys
+import time
 from pathlib import Path
+
+import pytest
 
 from agent_reliability_lab.environment import environment_for_scenario
 from agent_reliability_lab.external import (
@@ -141,6 +145,92 @@ def test_subprocess_adapter_caps_stdout_before_parsing():
     assert result.trace is None
     assert result.refusal is not None
     assert result.refusal.error == "response_too_large"
+
+
+def test_subprocess_adapter_caps_stderr_without_echoing_diagnostics():
+    adapter = SubprocessAdapter(
+        agent_id="external",
+        command=(
+            sys.executable,
+            "-c",
+            "import sys; sys.stderr.write('x' * 1000); sys.stderr.flush()",
+        ),
+        max_stderr_bytes=64,
+    )
+
+    result = adapter.run(
+        _request(),
+        environment=environment_for_scenario("tool-misuse"),
+    )
+
+    assert result.trace is None
+    assert result.refusal is not None
+    assert result.refusal.error == "diagnostics_too_large"
+    assert "x" * 20 not in result.refusal.message
+
+
+def test_subprocess_adapter_rejects_invalid_sandbox_limits():
+    for kwargs, error in (
+        ({"max_stderr_bytes": 0}, "invalid_stderr_limit"),
+        ({"max_memory_bytes": 0}, "invalid_memory_limit"),
+    ):
+        result = SubprocessAdapter(
+            agent_id="external",
+            command=(sys.executable, "-c", "pass"),
+            **kwargs,
+        ).run(
+            _request(),
+            environment=environment_for_scenario("tool-misuse"),
+        )
+
+        assert result.refusal is not None
+        assert result.refusal.error == error
+
+
+def test_subprocess_adapter_uses_explicit_working_directory(tmp_path):
+    script = (
+        "import json, os; "
+        f"error = 'cwd-ok' if os.getcwd() == {str(tmp_path)!r} else 'cwd-bad'; "
+        "print(json.dumps({'refusal': {'error': error, 'message': 'm', 'guidance': 'g'}}))"
+    )
+    result = SubprocessAdapter(
+        agent_id="external",
+        command=(sys.executable, "-c", script),
+        working_directory=tmp_path,
+    ).run(
+        _request(),
+        environment=environment_for_scenario("tool-misuse"),
+    )
+
+    assert result.refusal is not None
+    assert result.refusal.error == "cwd-ok"
+
+
+@pytest.mark.skipif(os.name != "posix", reason="process groups differ on Windows")
+def test_subprocess_adapter_terminates_descendants_on_timeout(tmp_path):
+    marker = tmp_path / "descendant-survived"
+    child_code = (
+        "import sys, time; time.sleep(0.4); "
+        "open(sys.argv[1], 'w', encoding='utf-8').write('alive')"
+    )
+    parent_code = (
+        "import subprocess, sys, time; "
+        f"subprocess.Popen([sys.executable, '-c', {child_code!r}, {str(marker)!r}]); "
+        "time.sleep(2)"
+    )
+    result = SubprocessAdapter(
+        agent_id="external",
+        command=(sys.executable, "-c", parent_code),
+        timeout_seconds=0.05,
+    ).run(
+        _request(),
+        environment=environment_for_scenario("tool-misuse"),
+    )
+
+    time.sleep(0.6)
+    assert result.refusal is not None
+    assert result.refusal.error == "adapter_timeout"
+    assert not marker.exists()
 
 
 def test_subprocess_adapter_refuses_empty_output():

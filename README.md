@@ -92,7 +92,14 @@ python -m agent_reliability_lab \
 
 The adapter process receives only synthetic scenario metadata and the evidence contract.
 The harness does not forward the parent environment's secrets. Its timeout and response
-size limits are configurable with `--timeout-seconds` and `--max-response-bytes`.
+size limits are configurable with `--timeout-seconds` and `--max-response-bytes`. The
+adapter boundary also supports `--max-stderr-bytes`, `--max-memory-bytes`, and
+`--adapter-working-directory`; a timed-out process group and its descendants are
+terminated together.
+
+These are process-safety controls, not a complete network sandbox. The adapter command is
+still code the caller chose to run, so use a separate OS/container boundary for
+untrusted code that must not access the network or host filesystem.
 
 ## Validate scenario packs
 
@@ -284,6 +291,14 @@ uv run python tools/benchmark_report.py \
 ```
 
 This is a deterministic synthetic benchmark, not a live-model quality ranking.
+
+### Adapter process safety
+
+Phase 19 hardens the subprocess boundary used by external adapters. It keeps the
+environment minimal, uses `shell=False`, starts a separate process group, caps stdout and
+stderr, validates an optional working directory, and applies best-effort CPU/address-space
+limits on Unix. When a timeout or output cap fires, the process group is terminated so a
+descendant cannot keep the protocol pipe or work running.
 
 ### Check an external adapter's conformance
 

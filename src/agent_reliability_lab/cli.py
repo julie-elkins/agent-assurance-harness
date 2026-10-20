@@ -9,7 +9,9 @@ from pathlib import Path
 
 from .external import (
     DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    DEFAULT_MAX_MEMORY_BYTES,
     DEFAULT_MAX_RESPONSE_BYTES,
+    DEFAULT_MAX_STDERR_BYTES,
     SubprocessAdapter,
 )
 from .live import LiveProviderPolicy, live_provider_adapter
@@ -75,6 +77,23 @@ def build_parser() -> argparse.ArgumentParser:
         type=int,
         default=DEFAULT_MAX_RESPONSE_BYTES,
         help="Maximum stdout bytes accepted from one adapter scenario run.",
+    )
+    parser.add_argument(
+        "--max-stderr-bytes",
+        type=int,
+        default=None,
+        help="Maximum stderr bytes accepted from one adapter scenario run.",
+    )
+    parser.add_argument(
+        "--max-memory-bytes",
+        type=int,
+        default=None,
+        help="Best-effort adapter address-space ceiling on supported platforms.",
+    )
+    parser.add_argument(
+        "--adapter-working-directory",
+        type=Path,
+        help="Existing directory in which the adapter process should run.",
     )
     parser.add_argument(
         "--list-packs",
@@ -218,6 +237,9 @@ def main(argv: list[str] | None = None) -> int:
             or args.mutations
             or args.mock_provider is not None
             or args.live_provider is not None
+            or args.max_stderr_bytes is not None
+            or args.max_memory_bytes is not None
+            or args.adapter_working_directory is not None
         ):
             print(
                 "--compare-replay cannot be combined with another trace input, "
@@ -244,6 +266,9 @@ def main(argv: list[str] | None = None) -> int:
             or args.mutations
             or args.mock_provider is not None
             or args.live_provider is not None
+            or args.max_stderr_bytes is not None
+            or args.max_memory_bytes is not None
+            or args.adapter_working_directory is not None
         ):
             print(
                 "Trace input cannot be combined with another trace input, pack listing, "
@@ -301,6 +326,9 @@ def main(argv: list[str] | None = None) -> int:
             or args.adapter_command
             or args.mutations
             or args.mock_provider is not None
+            or args.max_stderr_bytes is not None
+            or args.max_memory_bytes is not None
+            or args.adapter_working_directory is not None
         ):
             print(
                 "--live-provider cannot be combined with pack listing, adapter, "
@@ -345,6 +373,9 @@ def main(argv: list[str] | None = None) -> int:
             or args.adapter_check
             or args.adapter_command
             or args.live_provider is not None
+            or args.max_stderr_bytes is not None
+            or args.max_memory_bytes is not None
+            or args.adapter_working_directory is not None
         ):
             print(
                 "--mock-provider cannot be combined with pack listing or adapter options.",
@@ -360,7 +391,13 @@ def main(argv: list[str] | None = None) -> int:
             return 1
         return 0
     if args.list_packs:
-        if args.adapter_check or args.adapter_command:
+        if (
+            args.adapter_check
+            or args.adapter_command
+            or args.max_stderr_bytes is not None
+            or args.max_memory_bytes is not None
+            or args.adapter_working_directory is not None
+        ):
             print("--list-packs cannot be combined with --adapter-check.", file=sys.stderr)
             return 2
         results = (
@@ -408,15 +445,31 @@ def main(argv: list[str] | None = None) -> int:
             command=tuple(args.adapter_command),
             timeout_seconds=args.timeout_seconds,
             max_response_bytes=args.max_response_bytes,
+            max_stderr_bytes=(
+                args.max_stderr_bytes
+                if args.max_stderr_bytes is not None
+                else DEFAULT_MAX_STDERR_BYTES
+            ),
+            max_memory_bytes=(
+                args.max_memory_bytes
+                if args.max_memory_bytes is not None
+                else DEFAULT_MAX_MEMORY_BYTES
+            ),
+            working_directory=args.adapter_working_directory,
         )
         report = run_adapter_comparison(
             adapter,
             include_mutations=args.mutations,
         )
     else:
-        if args.adapter_command:
+        if (
+            args.adapter_command
+            or args.max_stderr_bytes is not None
+            or args.max_memory_bytes is not None
+            or args.adapter_working_directory is not None
+        ):
             print(
-                "--adapter-command is only valid with --adapter-check.",
+                "Adapter process options are only valid with --adapter-check.",
                 file=sys.stderr,
             )
             return 2

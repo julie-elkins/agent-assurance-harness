@@ -9,7 +9,9 @@ from pathlib import Path
 from agent_reliability_lab.conformance import run_adapter_conformance
 from agent_reliability_lab.external import (
     DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    DEFAULT_MAX_MEMORY_BYTES,
     DEFAULT_MAX_RESPONSE_BYTES,
+    DEFAULT_MAX_STDERR_BYTES,
     SubprocessAdapter,
 )
 
@@ -35,6 +37,17 @@ def main(argv: list[str] | None = None) -> int:
         type=int,
         default=DEFAULT_MAX_RESPONSE_BYTES,
     )
+    parser.add_argument(
+        "--max-stderr-bytes",
+        type=int,
+        default=DEFAULT_MAX_STDERR_BYTES,
+    )
+    parser.add_argument(
+        "--max-memory-bytes",
+        type=int,
+        default=DEFAULT_MAX_MEMORY_BYTES,
+    )
+    parser.add_argument("--adapter-working-directory", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument(
         "--fail-on-findings",
@@ -49,6 +62,9 @@ def main(argv: list[str] | None = None) -> int:
             command=tuple(args.adapter_command),
             timeout_seconds=args.timeout_seconds,
             max_response_bytes=args.max_response_bytes,
+            max_stderr_bytes=args.max_stderr_bytes,
+            max_memory_bytes=args.max_memory_bytes,
+            working_directory=args.adapter_working_directory,
         )
     )
     serialized = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"

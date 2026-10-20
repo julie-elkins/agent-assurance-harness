@@ -95,6 +95,9 @@ missing, and what the result does not prove.
 - Custom packs use only the fixed declarative requirement prefixes: `tool:`,
   `successful_tool:`, `authorization:`, `side-effect:`, `output:`, and `abstain:`.
   Pack evaluation must never execute predicates, import pack code, or discover files.
+  Every pack must declare `metadata.data_class: "synthetic"`, an owner, and a purpose.
+  Custom reports must include the canonical pack fingerprint and harness version without
+  emitting pack contents.
 - Provider response fixtures under `tests/fixtures/provider_contracts/` are synthetic
   contract examples only. They must not contain raw provider output, prompts, private
   input, or credentials.

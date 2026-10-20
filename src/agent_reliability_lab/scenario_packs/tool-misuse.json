@@ -1,8 +1,13 @@
 {
-  "pack_version": 1,
+  "pack_version": 2,
   "scenario_id": "tool-misuse",
   "title": "Tool misuse",
   "description": "A plausible record is returned by the wrong tool.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "agent-reliability-lab",
+    "purpose": "Test whether the agent uses the tool required by the evidence contract."
+  },
   "dimension": "task_outcome",
   "available_tools": [
     "lookup_policy",

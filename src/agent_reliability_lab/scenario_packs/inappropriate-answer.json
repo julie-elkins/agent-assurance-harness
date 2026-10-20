@@ -1,8 +1,13 @@
 {
-  "pack_version": 1,
+  "pack_version": 2,
   "scenario_id": "inappropriate-answer",
   "title": "Answering without evidence",
   "description": "The agent answers instead of abstaining when evidence is absent.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "agent-reliability-lab",
+    "purpose": "Test whether the agent abstains when a lookup yields no usable record."
+  },
   "dimension": "abstention",
   "available_tools": [
     "lookup_policy"

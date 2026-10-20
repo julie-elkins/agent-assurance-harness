@@ -8,6 +8,7 @@ from agent_reliability_lab.packs import (
     load_pack_directory,
     request_from_pack,
 )
+from agent_reliability_lab.pack_provenance import pack_manifest, pack_sha256
 from agent_reliability_lab.scenarios import scenarios
 
 
@@ -39,6 +40,30 @@ def test_pack_builds_simulator_and_adapter_request():
     assert request.available_tools == pack.available_tools
 
 
+def test_builtin_packs_declare_synthetic_provenance():
+    for pack in load_builtin_packs():
+        assert pack.metadata.data_class == "synthetic"
+        assert pack.metadata.owner
+        assert pack.metadata.purpose
+
+
+def test_pack_fingerprint_is_stable_and_changes_with_definition():
+    pack = load_builtin_packs()[0]
+    first = pack_sha256(pack)
+    second = pack_sha256(pack)
+
+    assert first == second
+    assert len(first) == 64
+    assert pack_manifest(pack).pack_sha256 == first
+
+    changed = dict(pack.to_dict())
+    changed["description"] = "A changed synthetic description."
+    decoded = decode_scenario_pack(changed, source="test-pack")
+
+    assert decoded.pack is not None
+    assert pack_sha256(decoded.pack) != first
+
+
 def test_pack_rejects_unknown_and_payload_fields():
     value = load_builtin_packs()[0].to_dict()
     value["payload"] = "must not be accepted"
@@ -58,6 +83,17 @@ def test_pack_rejects_unsupported_requirement_type():
 
     assert result.refusal is not None
     assert "not supported" in result.refusal.message
+
+
+def test_pack_rejects_non_synthetic_metadata():
+    value = load_builtin_packs()[0].to_dict()
+    value["metadata"]["data_class"] = "private"
+
+    result = decode_scenario_pack(value, source="test-pack")
+
+    assert result.pack is None
+    assert result.refusal is not None
+    assert "synthetic" in result.refusal.message
 
 
 def test_pack_directory_lists_new_valid_pack_without_python_change(tmp_path):

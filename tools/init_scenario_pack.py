@@ -8,10 +8,15 @@ from pathlib import Path
 
 
 STARTER_PACK = {
-    "pack_version": 1,
+    "pack_version": 2,
     "scenario_id": "custom-scenario",
     "title": "Custom synthetic scenario",
     "description": "Replace this description with a synthetic scenario purpose.",
+    "metadata": {
+        "data_class": "synthetic",
+        "owner": "custom-pack-author",
+        "purpose": "Replace with the synthetic assurance question this pack tests.",
+    },
     "dimension": "evidence_completeness",
     "available_tools": ["lookup_record"],
     "requirements": [

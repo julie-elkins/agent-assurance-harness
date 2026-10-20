@@ -1,6 +1,7 @@
-# Agent Reliability Lab
+# Agent Assurance Harness
 
-An offline Agent Assurance Harness for testing tool-using AI agents.
+A provider-neutral harness for testing whether tool-using AI agents have the evidence to
+act, abstain, and report honestly.
 
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
@@ -350,8 +351,31 @@ uv run python tools/custom_pack_report.py \
 ```
 
 The custom evaluator is declarative: it never executes pack code, imports modules, or
-discovers files. Its report contains pack identifiers, counts, statuses, and no raw pack
-text, findings, traces, prompts, credentials, or provider output.
+discovers files. Each validated pack also carries synthetic provenance metadata, and the
+report includes its canonical SHA-256 fingerprint and harness version. A fingerprint
+identifies the exact pack definition that was evaluated; it does not prove that the pack
+is a good or realistic test. The report still contains no raw pack text, findings, traces,
+prompts, credentials, or provider output.
+
+## How this helps ship production code
+
+The harness provides a repeatable pre-release assurance gate for tool-using agents:
+
+- Tests OpenAI-shaped and Anthropic-shaped adapters through the same evidence contract and
+  conformance checks used by the release workflow.
+- Blocks CI on regressions involving evidence completeness, abstention, authorization,
+  side-effect safety, or privacy-boundary violations.
+- Requires explicit request, output-token, timeout, and estimated-spend ceilings for
+  bounded live synthetic runs.
+- Verifies that credentials are referenced by approved environment-variable names without
+  storing or emitting credential values.
+- Produces identifier-only reports that can be reviewed without exposing prompts, tool
+  payloads, model output, or credentials.
+- Gives CI a repeatable safety check before merge and release, when repository branch
+  protection requires the workflow to pass.
+
+The provider-shaped tests run offline. Live provider execution is local-only, explicitly
+opted in, synthetic-input-only, and not part of CI.
 
 ## Record a provider-neutral trace
 

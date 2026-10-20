@@ -544,7 +544,7 @@ def _gated_output(run: GatedRun) -> GatedScenarioOutput:
 
 server = MCPServer(
     name="agent-reliability-lab",
-    title="Agent Reliability Lab",
+    title="Agent Assurance Harness",
     description="Read-only tools for evaluating synthetic agent evidence contracts.",
     version=SERVER_VERSION,
     instructions=SERVER_INSTRUCTIONS,

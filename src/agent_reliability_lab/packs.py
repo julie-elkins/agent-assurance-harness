@@ -21,7 +21,7 @@ from .models import AssuranceDimension, EvidenceContract, EvidenceRequirement
 from .protocol import ScenarioRequest
 
 
-PACK_VERSION = 1
+PACK_VERSION = 2
 SUPPORTED_EVIDENCE_TYPES = frozenset(
     {
         "tool_call",
@@ -71,6 +71,24 @@ class PackResult:
 
 
 @dataclass(frozen=True)
+class PackMetadata:
+    """Required provenance metadata for one public synthetic pack."""
+
+    owner: str
+    purpose: str
+    data_class: str
+
+    def to_dict(self) -> dict[str, str]:
+        """Return metadata without content-bearing scenario data."""
+
+        return {
+            "owner": self.owner,
+            "purpose": self.purpose,
+            "data_class": self.data_class,
+        }
+
+
+@dataclass(frozen=True)
 class ScenarioPack:
     """A versioned synthetic scenario contract and simulator definition."""
 
@@ -78,6 +96,7 @@ class ScenarioPack:
     scenario_id: str
     title: str
     description: str
+    metadata: PackMetadata
     dimension: AssuranceDimension
     available_tools: tuple[str, ...]
     requirements: tuple[EvidenceRequirement, ...]
@@ -101,6 +120,7 @@ class ScenarioPack:
             "scenario_id": self.scenario_id,
             "title": self.title,
             "description": self.description,
+            "metadata": self.metadata.to_dict(),
             "dimension": self.dimension.value,
             "available_tools": list(self.available_tools),
             "requirements": [
@@ -161,6 +181,19 @@ def _parse_dimension(value: object) -> AssuranceDimension:
         return AssuranceDimension(_required_string(value, "dimension"))
     except ValueError as error:
         raise ValueError("dimension is not a supported assurance dimension.") from error
+
+
+def _parse_metadata(value: object) -> PackMetadata:
+    data = _object(value, "metadata")
+    _keys(data, {"owner", "purpose", "data_class"}, "metadata")
+    data_class = _required_string(data.get("data_class"), "metadata.data_class")
+    if data_class != "synthetic":
+        raise ValueError("metadata.data_class must be synthetic.")
+    return PackMetadata(
+        owner=_required_string(data.get("owner"), "metadata.owner"),
+        purpose=_required_string(data.get("purpose"), "metadata.purpose"),
+        data_class=data_class,
+    )
 
 
 def _parse_requirements(value: object) -> tuple[EvidenceRequirement, ...]:
@@ -310,6 +343,7 @@ def _parse_pack(value: object) -> ScenarioPack:
             "scenario_id",
             "title",
             "description",
+            "metadata",
             "dimension",
             "available_tools",
             "requirements",
@@ -332,6 +366,7 @@ def _parse_pack(value: object) -> ScenarioPack:
         scenario_id=_required_string(data.get("scenario_id"), "scenario_id"),
         title=_required_string(data.get("title"), "title"),
         description=_required_string(data.get("description"), "description"),
+        metadata=_parse_metadata(data.get("metadata")),
         dimension=_parse_dimension(data.get("dimension")),
         available_tools=available_tools,
         requirements=requirements,

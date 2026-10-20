@@ -42,8 +42,8 @@ def main(argv: list[str] | None = None) -> int:
     packs = tuple(result.pack for result in results if result.pack is not None)
     if refusals:
         report: dict[str, object] = {
-            "report_version": 1,
-            "conformance_id": "custom-pack-conformance-v1",
+            "report_version": 2,
+            "conformance_id": "custom-pack-conformance-v2",
             "pack_count": 0,
             "passed": False,
             "refusals": refusals,

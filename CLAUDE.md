@@ -1,4 +1,4 @@
-# Agent Reliability Lab
+# Agent Assurance Harness
 
 ## What this repository does
 
@@ -207,7 +207,14 @@ uv run python tools/custom_pack_report.py \
 ```
 
 Pack evaluation uses fixed requirement prefixes and never executes pack code or discovers
-files. The custom report contains counts and statuses only.
+files. Every pack declares synthetic provenance metadata, and the custom report includes
+the canonical SHA-256 pack fingerprint and harness version alongside counts and statuses.
+The fingerprint identifies the evaluated definition; it does not establish pack quality.
+
+The README's “How this helps ship production code” section is the public positioning:
+provider-shaped adapters, blocking safety and evidence regressions, explicit usage
+ceilings, credential-name validation, privacy-preserving reports, and repeatable CI gates.
+It must distinguish offline provider-shaped tests from the separately bounded local live path.
 
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns

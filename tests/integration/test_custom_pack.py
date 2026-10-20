@@ -24,10 +24,15 @@ class CustomPackAdapter:
 
 def _pack_value():
     return {
-        "pack_version": 1,
+        "pack_version": 2,
         "scenario_id": "custom-pack",
         "title": "Custom pack",
         "description": "Synthetic custom pack.",
+        "metadata": {
+            "data_class": "synthetic",
+            "owner": "test-owner",
+            "purpose": "Test custom pack conformance.",
+        },
         "dimension": "evidence_completeness",
         "available_tools": ["lookup_record"],
         "requirements": [
@@ -65,6 +70,10 @@ def test_custom_pack_runs_through_declarative_conformance():
     assert report.passed
     assert report.to_dict()["pack_ids"] == ["custom-pack"]
     assert report.to_dict()["refusal_count"] == 0
+    manifest = report.to_dict()["pack_manifests"][0]
+    assert manifest["scenario_id"] == "custom-pack"
+    assert manifest["data_class"] == "synthetic"
+    assert len(manifest["pack_sha256"]) == 64
 
 
 def test_custom_pack_rejects_requirement_prefix_mismatch():

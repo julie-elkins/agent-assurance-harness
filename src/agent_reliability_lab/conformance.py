@@ -8,6 +8,7 @@ from typing import Any
 from .models import AgentReport, FindingStatus
 from .protocol import AgentAdapter
 from .packs import ScenarioPack
+from .pack_provenance import pack_manifest
 from .runner import run_adapter_comparison, run_pack_comparison
 
 
@@ -64,13 +65,14 @@ class CustomPackConformanceReport:
     trace_count: int
     refusal_count: int
     dimensions: tuple[dict[str, Any], ...]
+    pack_manifests: tuple[dict[str, object], ...]
 
     def to_dict(self) -> dict[str, object]:
         """Return counts without custom pack text, findings, or traces."""
 
         return {
-            "report_version": 1,
-            "conformance_id": "custom-pack-conformance-v1",
+            "report_version": 2,
+            "conformance_id": "custom-pack-conformance-v2",
             "agent_id": self.agent_id,
             "pack_ids": list(self.pack_ids),
             "pack_count": len(self.pack_ids),
@@ -78,6 +80,7 @@ class CustomPackConformanceReport:
             "trace_count": self.trace_count,
             "refusal_count": self.refusal_count,
             "dimensions": [dict(dimension) for dimension in self.dimensions],
+            "pack_manifests": [dict(manifest) for manifest in self.pack_manifests],
         }
 
 
@@ -124,6 +127,10 @@ def run_custom_pack_conformance(
                 "status_counts": dict(summary.status_counts),
             }
             for summary in report.dimension_summaries
+        ),
+        pack_manifests=tuple(
+            pack_manifest(pack).to_dict()
+            for pack in packs
         ),
     )
 

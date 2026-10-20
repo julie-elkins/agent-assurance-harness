@@ -67,6 +67,12 @@ from .conformance import (
     run_custom_pack_conformance,
 )
 from .pack_evaluator import evaluate_pack_trace
+from .pack_provenance import (
+    PACK_HASH_ALGORITHM,
+    PackManifest,
+    pack_manifest,
+    pack_sha256,
+)
 from .live import (
     LiveProviderAdapter,
     LiveProviderPolicy,
@@ -88,6 +94,7 @@ from .regression import (
 )
 from .packs import (
     PACK_VERSION,
+    PackMetadata,
     PackRefusal,
     PackResult,
     ScenarioPack,
@@ -131,6 +138,9 @@ __all__ = [
     "HarnessChangeManifest",
     "ObservableEvent",
     "PACK_VERSION",
+    "PACK_HASH_ALGORITHM",
+    "PackManifest",
+    "PackMetadata",
     "PackRefusal",
     "PackResult",
     "ProtocolDecodeError",
@@ -176,6 +186,8 @@ __all__ = [
     "run_synthetic_benchmark",
     "run_adapter_conformance",
     "run_custom_pack_conformance",
+    "pack_manifest",
+    "pack_sha256",
     "evaluate_pack_trace",
     "live_provider_adapter",
     "mock_provider_adapters",

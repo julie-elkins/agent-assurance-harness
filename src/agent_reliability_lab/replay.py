@@ -279,13 +279,17 @@ def run_replay_file(path: Path) -> ReplayReport:
             refusal=loaded.refusal,
         )
     assert loaded.replay is not None
-    replay = loaded.replay
+    return run_replay(loaded.replay, source=str(path))
+
+
+def run_replay(replay: ReplayFile, *, source: str) -> ReplayReport:
+    """Evaluate an already-normalized replay without writing it to disk."""
 
     try:
         packs = load_builtin_packs()
     except RuntimeError as error:
         return ReplayReport(
-            source=str(path),
+            source=source,
             replay_version=replay.replay_version,
             expected_scenario_count=0,
             refusal=ReplayRefusal(
@@ -307,7 +311,7 @@ def run_replay_file(path: Path) -> ReplayReport:
         if extra:
             details.append(f"unknown scenario IDs: {', '.join(extra)}")
         return ReplayReport(
-            source=str(path),
+            source=source,
             replay_version=replay.replay_version,
             expected_scenario_count=len(expected_ids),
             refusal=ReplayRefusal(
@@ -316,7 +320,7 @@ def run_replay_file(path: Path) -> ReplayReport:
                 + "; ".join(details)
                 + ".",
                 guidance="Replay one response for every listed scenario_id and no others.",
-                source=str(path),
+                source=source,
             ),
         )
 
@@ -324,7 +328,7 @@ def run_replay_file(path: Path) -> ReplayReport:
     missing_controls = sorted(expected_ids - set(scenarios_by_id))
     if missing_controls:
         return ReplayReport(
-            source=str(path),
+            source=source,
             replay_version=replay.replay_version,
             expected_scenario_count=len(expected_ids),
             refusal=ReplayRefusal(
@@ -335,7 +339,7 @@ def run_replay_file(path: Path) -> ReplayReport:
                     + "."
                 ),
                 guidance="Restore the matching reference scenario before replaying traces.",
-                source=str(path),
+                source=source,
             ),
         )
     findings = []
@@ -352,7 +356,7 @@ def run_replay_file(path: Path) -> ReplayReport:
         trace_counts[case.scenario_id] = len(response.trace.tool_calls)
         findings.append(scenario.evaluate(response.trace, pack.contract))
     return ReplayReport(
-        source=str(path),
+        source=source,
         replay_version=replay.replay_version,
         expected_scenario_count=len(expected_ids),
         agent_report=AgentReport(

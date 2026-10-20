@@ -189,6 +189,27 @@ The integration test runs both the generated replay and the JSONL adapter throug
 harness. This proves the example is connected to evaluation; it does not claim that a
 live model provider will emit complete events.
 
+## Import a local OpenTelemetry trace
+
+OpenTelemetry Protocol (OTLP) is the vendor-neutral JSON and binary envelope used to
+export telemetry. The bridge accepts a strict local subset of OTLP/JSON and recognizes
+GenAI `execute_tool` spans. It also accepts the documented `agent.reliability.*` events
+for claims, answers, abstentions, authorization, side effects, and output flags.
+The field mapping follows the [OTLP specification](https://opentelemetry.io/docs/specs/otlp/)
+and the [OpenTelemetry GenAI span conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md).
+
+```bash
+uv run agent-reliability \
+  --otlp-file examples/traces/otel-guarded.json \
+  --json \
+  --fail-on-findings
+```
+
+The privacy gate refuses known content-bearing attributes, including messages, tool
+arguments, tool results, tool definitions, retrieval queries, and retrieved documents.
+It emits only the existing identifier-only replay report. This is a local file importer,
+not an OTLP collector or network service.
+
 ## Use it as an MCP server
 
 The repository also exposes a small local MCP server (Model Context Protocol server: a

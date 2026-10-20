@@ -71,3 +71,10 @@ jobs:
           --json
           --mutations
           --fail-on-findings
+
+      - name: Import synthetic OTLP trace
+        run: >-
+          uv run agent-reliability
+          --otlp-file examples/traces/otel-guarded.json
+          --json
+          --fail-on-findings

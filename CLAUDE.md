@@ -80,3 +80,7 @@ answers.
 
 The executable integration reference is `examples/recorder_adapter.py`. CI generates
 and replays its output, then runs it through the subprocess JSONL adapter boundary.
+
+`--otlp-file` imports only the strict local OTLP/JSON subset represented by
+`examples/traces/otel-guarded.json`. Known content-bearing GenAI attributes are refused;
+the importer does not run a collector, accept network input, or store raw span content.

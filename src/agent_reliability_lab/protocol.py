@@ -28,6 +28,7 @@ class EventType(str, Enum):
     ABSTENTION = "abstention"
     SIDE_EFFECT = "side_effect"
     AUTHORIZATION = "authorization"
+    TOOL_OUTPUT_FLAG = "tool_output_flag"
 
 
 @dataclass(frozen=True)

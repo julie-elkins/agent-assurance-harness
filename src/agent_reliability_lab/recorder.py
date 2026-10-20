@@ -246,6 +246,18 @@ class TraceRecorder:
         self._side_effects.append(side_effect_id)
         return self._event(EventType.SIDE_EFFECT, side_effect_id)
 
+    def record_tool_output_flag(self, flag_id: str) -> RecorderResult:
+        """Record a classified tool-output flag without recording output content."""
+
+        blocked = self._blocked()
+        if blocked is not None:
+            return blocked
+        invalid = _identifier_refusal(flag_id, "tool_output_flag")
+        if invalid is not None:
+            return self._set_refusal(invalid)
+        _append_unique(self._tool_output_flags, flag_id)
+        return self._event(EventType.TOOL_OUTPUT_FLAG, flag_id)
+
     def finish(self) -> AdapterRun:
         """Return the accepted run or a structured refusal."""
 

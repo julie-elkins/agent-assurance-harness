@@ -50,8 +50,10 @@ from .replay import (
     ReplayLoadResult,
     ReplayReport,
     ReplayRefusal,
+    run_replay,
     run_replay_file,
 )
+from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
 from .packs import (
     PACK_VERSION,
@@ -121,6 +123,9 @@ __all__ = [
     "run_adapter_comparison",
     "run_comparison",
     "run_replay_file",
+    "run_replay",
+    "load_otlp_file",
+    "otlp_to_replay",
     "run_evaluator_validity",
     "scenario_request_from_dict",
     "scenario_request_to_dict",

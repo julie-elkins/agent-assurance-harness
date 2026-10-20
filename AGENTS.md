@@ -55,6 +55,9 @@ missing, and what the result does not prove.
 - `examples/recorder_adapter.py` is the synthetic integration reference. Its stdout is
   either the JSONL adapter protocol or a replay file; diagnostics must not be printed
   there.
+- `examples/traces/otel-guarded.json` is a synthetic OTLP fixture. The OTLP importer
+  must refuse known content-bearing attributes and must never copy raw attribute values
+  into reports, logs, fixtures, or errors.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

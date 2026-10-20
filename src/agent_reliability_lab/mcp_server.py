@@ -31,6 +31,7 @@ from .packs import (
     load_builtin_pack_results,
     load_builtin_packs,
 )
+from .pack_provenance import pack_manifest
 from .gate import (
     GateDecision,
     GatedRun,
@@ -40,10 +41,11 @@ from .runner import run_comparison
 from .scenarios import scenarios
 
 
-SERVER_VERSION = "0.6.0"
+SERVER_VERSION = "0.7.0"
 SERVER_INSTRUCTIONS = (
     "Use list_scenario_packs before evaluate_agent_trace or run_gated_scenario when the "
-    "scenario is unknown. "
+    "scenario is unknown. Use get_scenario_pack_provenance when you need the exact "
+    "validated pack identity. "
     "Submit identifier-only synthetic traces; tool arguments and raw payloads are not "
     "accepted. Read diagnostics and what_it_does_not_show before treating a result as "
     "evidence. A blocked gated action must not be retried without satisfying its missing "
@@ -112,6 +114,29 @@ class ScenarioPackOutput(StrictModel):
     available_tools: list[str]
     requirements: list[EvidenceRequirementOutput]
     faults: list[FaultOutput]
+
+
+class PackManifestOutput(StrictModel):
+    """Provenance for one validated built-in pack."""
+
+    scenario_id: str
+    pack_version: int
+    pack_sha256: str = Field(
+        description="SHA-256 fingerprint of the canonical validated pack definition."
+    )
+    pack_hash_algorithm: str
+    harness_version: str
+    owner: str
+    purpose: str
+    data_class: str
+
+
+class PackProvenanceOutput(StrictModel):
+    """Result of reading built-in pack provenance."""
+
+    manifests: list[PackManifestOutput]
+    refusals: list[RefusalOutput]
+    diagnostics: DiagnosticsOutput
 
 
 class ListScenarioPacksOutput(StrictModel):
@@ -549,6 +574,42 @@ server = MCPServer(
     version=SERVER_VERSION,
     instructions=SERVER_INSTRUCTIONS,
 )
+
+
+@server.tool(
+    name="get_scenario_pack_provenance",
+    title="Get built-in pack provenance",
+    description=(
+        "Return the validated identity of every built-in synthetic scenario pack, "
+        "including its schema version, canonical SHA-256 fingerprint, harness version, "
+        "owner, purpose, and synthetic data class. This is read-only metadata; it does "
+        "not read caller files, accept custom pack content, or prove pack quality."
+    ),
+    annotations=_READ_ONLY,
+    structured_output=True,
+)
+def get_scenario_pack_provenance() -> PackProvenanceOutput:
+    """Return built-in pack identity without reading external data."""
+
+    results = load_builtin_pack_results()
+    return PackProvenanceOutput(
+        manifests=[
+            PackManifestOutput(**pack_manifest(result.pack).to_dict())
+            for result in results
+            if result.pack is not None
+        ],
+        refusals=[
+            RefusalOutput(**result.refusal.to_dict())
+            for result in results
+            if result.refusal is not None
+        ],
+        diagnostics=_diagnostics(
+            what_it_does_not_show=(
+                "It does not show that the pack is realistic, complete, or valid "
+                "against live agent behaviour."
+            )
+        ),
+    )
 
 
 @server.tool(

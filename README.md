@@ -448,9 +448,11 @@ not an OTLP collector or network service.
 ## Use it as an MCP server
 
 The repository also exposes a small local MCP server (Model Context Protocol server: a
-typed tool interface that an AI client can call). It has three read-only tools:
+typed tool interface that an AI client can call). It has five read-only tools:
 
 - `list_scenario_packs` validates and lists the built-in synthetic packs.
+- `get_scenario_pack_provenance` returns the validated version, SHA-256 fingerprint,
+  harness version, owner, purpose, and synthetic data class for each built-in pack.
 - `evaluate_agent_trace` evaluates one identifier-only trace against one pack.
 - `run_reference_comparison` runs the deterministic naive and guarded agents.
 - `run_gated_scenario` runs a synthetic profile through the before-action evidence gate.
@@ -464,6 +466,11 @@ uv run agent-reliability-mcp
 The server never launches a caller command, reads a caller-supplied file path, uses
 credentials, contacts a provider, or writes external state. Its results include typed
 findings, structured refusals, diagnostics, and `what_it_does_not_show`.
+
+Call `get_scenario_pack_provenance` when a report needs to identify exactly which
+validated pack definition was used. The fingerprint identifies pack contents; it does not
+establish realism, coverage, model quality, or live-agent reliability. Custom packs remain
+CLI-only so the MCP server does not become a file reader or code-execution surface.
 
 A real client call has this shape:
 

@@ -16,6 +16,7 @@ def test_tool_surface_is_narrow_typed_and_read_only():
     names = [tool.name for tool in tools]
 
     assert names == [
+        "get_scenario_pack_provenance",
         "list_scenario_packs",
         "evaluate_agent_trace",
         "run_reference_comparison",
@@ -36,6 +37,7 @@ def test_tool_surface_is_narrow_typed_and_read_only():
 def test_in_process_tools_return_structured_results():
     async def call_tools():
         packs = await server.call_tool("list_scenario_packs", {})
+        provenance = await server.call_tool("get_scenario_pack_provenance", {})
         comparison = await server.call_tool(
             "run_reference_comparison",
             {"include_mutations": True},
@@ -66,12 +68,19 @@ def test_in_process_tools_return_structured_results():
                 "agent_profile": "guarded",
             },
         )
-        return packs, comparison, evaluated, blocked, allowed
+        return packs, provenance, comparison, evaluated, blocked, allowed
 
-    packs, comparison, evaluated, blocked, allowed = anyio.run(call_tools)
+    packs, provenance, comparison, evaluated, blocked, allowed = anyio.run(call_tools)
 
     assert packs.is_error is False
     assert len(packs.structured_content["packs"]) == 5
+    assert provenance.is_error is False
+    assert len(provenance.structured_content["manifests"]) == 5
+    assert all(
+        manifest["data_class"] == "synthetic"
+        and len(manifest["pack_sha256"]) == 64
+        for manifest in provenance.structured_content["manifests"]
+    )
     assert comparison.is_error is False
     assert comparison.structured_content["scenario_count"] == 5
     assert all(item["caught"] for item in comparison.structured_content["mutation_tests"])
@@ -125,9 +134,10 @@ def test_stdio_client_sees_initialization_surface_and_tool_result():
     initialization, tools, result = anyio.run(run_client)
 
     assert initialization.server_info.name == "agent-reliability-lab"
-    assert initialization.server_info.version == "0.6.0"
+    assert initialization.server_info.version == "0.7.0"
     assert "list_scenario_packs" in initialization.instructions
     assert [tool.name for tool in tools.tools] == [
+        "get_scenario_pack_provenance",
         "list_scenario_packs",
         "evaluate_agent_trace",
         "run_reference_comparison",

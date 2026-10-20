@@ -16,12 +16,14 @@ Start it with:
 uv run agent-reliability-mcp
 ```
 
-The server exposes exactly three tools:
+The server exposes exactly five tools:
 
 1. `list_scenario_packs` — call first when the scenario identifier is unknown.
-2. `evaluate_agent_trace` — submit one identifier-only synthetic trace for evaluation.
-3. `run_reference_comparison` — run the built-in naive and guarded reference agents.
-4. `run_gated_scenario` — run a naive or guarded profile through the before-action gate.
+2. `get_scenario_pack_provenance` — return version, hash, owner, purpose, and synthetic
+   data class for each built-in pack.
+3. `evaluate_agent_trace` — submit one identifier-only synthetic trace for evaluation.
+4. `run_reference_comparison` — run the built-in naive and guarded reference agents.
+5. `run_gated_scenario` — run a naive or guarded profile through the before-action gate.
 
 Read `diagnostics`, `refusals`, and `what_it_does_not_show` before reporting a result.
 An empty list is not a pass: it can mean that nothing was checked.
@@ -210,6 +212,16 @@ Pack evaluation uses fixed requirement prefixes and never executes pack code or 
 files. Every pack declares synthetic provenance metadata, and the custom report includes
 the canonical SHA-256 pack fingerprint and harness version alongside counts and statuses.
 The fingerprint identifies the evaluated definition; it does not establish pack quality.
+
+Phase 21 adds the same provenance contract to the built-in pack identity. The package
+and CLI identifiers remain stable; only the public display title changed to Agent
+Assurance Harness. Custom packs remain outside the MCP server and are run through the
+explicit CLI path.
+
+Phase 22 adds `get_scenario_pack_provenance` to the local read-only MCP surface. It
+returns typed manifests for the built-in packs and does not read caller files, accept
+custom pack content, launch commands, use credentials, or contact providers. The server
+version is `0.7.0`.
 
 The README's “How this helps ship production code” section is the public positioning:
 provider-shaped adapters, blocking safety and evidence regressions, explicit usage

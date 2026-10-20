@@ -13,12 +13,18 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the parser without reading files or making network calls."""
 
     parser = argparse.ArgumentParser(
-        description="Run the offline Agent Reliability Lab scenarios."
+        description="Run the offline Agent Assurance Harness scenarios."
     )
-    parser.add_argument(
+    output_group = parser.add_mutually_exclusive_group()
+    output_group.add_argument(
         "--json",
         action="store_true",
         help="Emit the structured report as JSON to stdout.",
+    )
+    output_group.add_argument(
+        "--markdown",
+        action="store_true",
+        help="Emit a Markdown summary to stdout.",
     )
     parser.add_argument(
         "--fail-on-findings",
@@ -40,6 +46,8 @@ def main(argv: list[str] | None = None) -> int:
     report = run_comparison(include_mutations=args.mutations)
     if args.json:
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    elif args.markdown:
+        print(report.to_markdown())
     else:
         for agent_report in report.reports:
             outcome = "PASS" if agent_report.passed else "FINDINGS"

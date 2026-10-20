@@ -4,12 +4,12 @@ from agent_reliability_lab.runner import failed_checks, run_comparison
 def test_comparison_keeps_baseline_failure_visible():
     report = run_comparison()
 
-    assert report.scenario_count == 3
-    assert len(report.contracts) == 3
+    assert report.scenario_count == 5
+    assert len(report.contracts) == 5
     assert [item.agent_id for item in report.reports] == ["naive", "guarded"]
     assert report.reports[0].passed is False
     assert report.reports[1].passed is True
-    assert failed_checks(report) == 3
+    assert failed_checks(report) == 5
 
 
 def test_each_guarded_scenario_has_evidence():
@@ -27,3 +27,11 @@ def test_mutation_option_reports_evaluator_checks():
     assert len(report.mutation_tests) == 3
     assert all(mutation.applied for mutation in report.mutation_tests)
     assert all(mutation.caught for mutation in report.mutation_tests)
+
+
+def test_markdown_summary_keeps_dimensions_separate():
+    summary = run_comparison().to_markdown()
+
+    assert "## Assurance dimensions" in summary
+    assert "`evidence_completeness`" in summary
+    assert "## Evaluator validity" in summary

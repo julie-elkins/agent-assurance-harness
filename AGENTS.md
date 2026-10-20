@@ -2,9 +2,10 @@
 
 ## Purpose
 
-This repository is a public, synthetic demonstration of evidence-contract testing for
+This repository is a public, synthetic demonstration of an Agent Assurance Harness for
 tool-using AI agents. An evidence contract is the observable evidence required before an
-agent claim can pass.
+agent claim can pass. An adapter is a small connector that runs an agent through the
+harness without changing the evidence contract.
 
 ## Data boundary
 
@@ -34,9 +35,12 @@ missing, and what the result does not prove.
 
 ## Development
 
-- Keep the first milestone offline and provider-neutral.
+- Keep the harness offline and provider-neutral until an adapter contract and spend stop
+  condition exist.
 - Use synthetic fixtures only.
 - Do not add a provider SDK until an adapter contract and spend stop condition exist.
+- Keep the simulated environment's side effects synthetic; it has no external write
+  surface.
 - Do not print raw payloads in logs or exception messages.
 - Use `logging` to stderr if logging is added; stdout is reserved for JSON CLI output.
 - Record non-obvious decisions in the build record under `~/.codex/plans/`.
@@ -47,6 +51,7 @@ The CLI may write only:
 
 1. JSON results to stdout when requested.
 2. Human-readable diagnostics to stderr.
-3. Local files explicitly named by the caller with a future output option.
+3. Markdown summaries to stdout when requested.
+4. Local files explicitly named by the caller with a future output option.
 
 It must not write to external services, publish reports, or send telemetry.

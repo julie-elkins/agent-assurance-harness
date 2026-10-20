@@ -304,12 +304,22 @@ class TraceCountOutput(StrictModel):
     count: int
 
 
+class ExecutionBudgetOutput(StrictModel):
+    """Metadata-only usage and ceilings for one bounded execution."""
+
+    scenario_id: str
+    usage: dict[str, int | float]
+    limits: dict[str, int | float]
+    within_limits: bool
+
+
 class AgentReportOutput(StrictModel):
     """One agent's complete typed report."""
 
     agent_id: str
     passed: bool
     trace_counts: list[TraceCountOutput]
+    execution_budgets: list[ExecutionBudgetOutput]
     dimensions: list[DimensionSummaryOutput]
     findings: list[FindingOutput]
 
@@ -503,6 +513,13 @@ def _agent_report_output(report: AgentReport) -> AgentReportOutput:
         trace_counts=[
             TraceCountOutput(scenario_id=scenario_id, count=count)
             for scenario_id, count in sorted(report.trace_counts.items())
+        ],
+        execution_budgets=[
+            ExecutionBudgetOutput(
+                scenario_id=scenario_id,
+                **budget.to_dict(),
+            )
+            for scenario_id, budget in sorted(report.execution_budgets.items())
         ],
         dimensions=[
             DimensionSummaryOutput(

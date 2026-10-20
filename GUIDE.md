@@ -141,6 +141,28 @@ blocker.
 It remains a release assurance layer, not a substitute for integration tests, deployment
 controls, monitoring, incident response, or live-model evaluation.
 
+## Make efficiency enforceable
+
+The mocked provider path now reports an execution budget: numeric usage plus the explicit
+ceilings checked against it. This makes cost and latency controls reviewable without
+exporting provider content.
+
+The report shows, per scenario:
+
+- request count against `max_requests`;
+- output tokens against `max_output_tokens`;
+- elapsed seconds against `max_elapsed_seconds`; and
+- estimated spend against `max_estimated_cost_usd`.
+
+`within_limits` is the machine-readable decision. If a provider run exceeds a ceiling,
+the harness returns a structured refusal and retains the measured usage and applied limit
+as metadata. That distinction matters because “blocked by the budget” is enforceable
+evidence; “provider failed” does not explain whether the guard actually ran.
+
+The values in the mocked adapter are synthetic fixtures, not a live invoice or a claim
+about model performance. Live provider use remains separately opted in, bounded, and
+outside CI.
+
 ## The assurance dimensions
 
 The harness reports separate dimensions instead of collapsing them into a composite trust

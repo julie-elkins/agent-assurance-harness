@@ -20,6 +20,23 @@ def test_both_mocked_providers_pass_through_the_shared_assurance_path():
     assert all(item.passed for item in report.reports)
     assert report.mutation_tests
     assert all(item.caught for item in report.mutation_tests)
+    for item in report.reports:
+        budget = item.execution_budgets["tool-misuse"]
+        assert budget.to_dict() == {
+            "usage": {
+                "requests": 1,
+                "output_tokens": 64,
+                "elapsed_seconds": 0.01,
+                "estimated_cost_usd": 0.001,
+            },
+            "limits": {
+                "max_requests": 1,
+                "max_output_tokens": 256,
+                "max_elapsed_seconds": 5.0,
+                "max_estimated_cost_usd": 0.01,
+            },
+            "within_limits": True,
+        }
 
 
 def test_openai_raw_content_is_refused_without_echoing_the_value():
@@ -93,6 +110,10 @@ def test_provider_limits_refuse_excess_synthetic_usage():
     finding = report.reports[0].findings[0]
     assert finding.status.value == "refused"
     assert "output_tokens" in finding.message
+    budget = report.reports[0].execution_budgets["inappropriate-answer"]
+    assert budget.output_tokens == 64
+    assert budget.max_output_tokens == 1
+    assert budget.within_limits is False
 
 
 def test_live_policy_is_disabled_without_a_separate_live_gate():

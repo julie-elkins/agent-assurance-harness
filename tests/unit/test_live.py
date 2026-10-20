@@ -93,6 +93,10 @@ def test_live_adapter_uses_synthetic_request_and_discards_credential(monkeypatch
 
     assert result.refusal is None
     assert result.trace is not None
+    assert result.execution_budget is not None
+    assert result.execution_budget.output_tokens == 32
+    assert result.execution_budget.max_output_tokens == 64
+    assert result.execution_budget.within_limits is True
     assert result.trace.agent_id == "openai-live"
     assert observed["url"] == "https://api.openai.com/v1/responses"
     assert observed["headers"]["Authorization"] == "Bearer test-secret"
@@ -252,3 +256,5 @@ def test_provider_contract_fixtures_remain_accepted(monkeypatch):
 
         assert result.refusal is None
         assert result.trace is not None
+        assert result.execution_budget is not None
+        assert result.execution_budget.within_limits is True

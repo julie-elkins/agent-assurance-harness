@@ -86,6 +86,38 @@ class ComparisonReport:
                     f"{summary.passed} | {counts} |"
                 )
             lines.append("")
+        budget_reports = [
+            report for report in self.reports if report.execution_budgets
+        ]
+        if budget_reports:
+            lines.extend(["## Efficiency and budget", ""])
+            lines.append(
+                "Usage is metadata-only; provider content, prompts, credentials, and "
+                "raw responses are not included."
+            )
+            lines.append("")
+            for report in budget_reports:
+                lines.extend([f"### `{report.agent_id}`", ""])
+                lines.extend(
+                    [
+                        "| Scenario | Requests | Output tokens | Elapsed seconds | "
+                        "Estimated cost (USD) | Within limits |",
+                        "| --- | ---: | ---: | ---: | ---: | --- |",
+                    ]
+                )
+                for scenario_id, budget in sorted(
+                    report.execution_budgets.items()
+                ):
+                    lines.append(
+                        f"| `{scenario_id}` | {budget.requests} / "
+                        f"{budget.max_requests} | {budget.output_tokens} / "
+                        f"{budget.max_output_tokens} | {budget.elapsed_seconds} / "
+                        f"{budget.max_elapsed_seconds} | "
+                        f"{budget.estimated_cost_usd} / "
+                        f"{budget.max_estimated_cost_usd} | "
+                        f"{budget.within_limits} |"
+                    )
+                lines.append("")
         lines.extend(["## Evaluator validity", ""])
         for result in self.evaluator_validity:
             outcome = "CAUGHT" if result.caught else "MISSED"
@@ -103,6 +135,7 @@ def _run_agent(
 ) -> AgentReport:
     findings = []
     trace_counts = {}
+    execution_budgets = {}
     for scenario in scenario_cases:
         pack = scenario_packs[scenario.scenario_id]
         request = ScenarioRequest(
@@ -115,6 +148,8 @@ def _run_agent(
             request,
             environment=build_environment_from_pack(pack),
         )
+        if run.execution_budget is not None:
+            execution_budgets[scenario.scenario_id] = run.execution_budget
         if run.refusal is not None:
             finding = Finding(
                 check_id="adapter-run",
@@ -144,6 +179,7 @@ def _run_agent(
         agent_id=adapter.agent_id,
         findings=tuple(findings),
         trace_counts=trace_counts,
+        execution_budgets=execution_budgets,
     )
 
 
@@ -223,11 +259,14 @@ def run_pack_comparison(
 
     findings = []
     trace_counts = {}
+    execution_budgets = {}
     for pack in packs:
         run = adapter.run(
             request_from_pack(pack),
             environment=build_environment_from_pack(pack),
         )
+        if run.execution_budget is not None:
+            execution_budgets[pack.scenario_id] = run.execution_budget
         if run.refusal is not None:
             findings.append(
                 Finding(
@@ -257,6 +296,7 @@ def run_pack_comparison(
         agent_id=adapter.agent_id,
         findings=tuple(findings),
         trace_counts=trace_counts,
+        execution_budgets=execution_budgets,
     )
 def _build_comparison(
     adapters: tuple[AgentAdapter, ...],

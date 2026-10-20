@@ -11,7 +11,7 @@ Design rules:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from .adapters import ScenarioAdapter
@@ -21,6 +21,7 @@ from .protocol import (
     AdapterRun,
     ScenarioRequest,
 )
+from .models import ExecutionBudget
 from .recorder import TraceRecorder
 from .scenarios import scenarios
 
@@ -52,6 +53,23 @@ class ProviderLimits:
     max_output_tokens: int
     max_elapsed_seconds: float
     max_estimated_cost_usd: float
+
+    def execution_budget(
+        self,
+        usage: dict[str, int | float],
+    ) -> ExecutionBudget:
+        """Bind measured usage to the exact ceilings used for the check."""
+
+        return ExecutionBudget(
+            requests=int(usage["requests"]),
+            output_tokens=int(usage["output_tokens"]),
+            elapsed_seconds=float(usage["elapsed_seconds"]),
+            estimated_cost_usd=float(usage["estimated_cost_usd"]),
+            max_requests=self.max_requests,
+            max_output_tokens=self.max_output_tokens,
+            max_elapsed_seconds=self.max_elapsed_seconds,
+            max_estimated_cost_usd=self.max_estimated_cost_usd,
+        )
 
     def validate(self) -> AdapterRefusal | None:
         """Return a refusal when a limit is missing or non-positive."""
@@ -202,15 +220,20 @@ class MockProviderAdapter:
         )
         try:
             usage = _parse_usage(payload.get("usage"))
+            execution_budget = self.policy.limits.execution_budget(usage)
             refusal = self.policy.limits.check_usage(usage)
             if refusal is not None:
-                return AdapterRun(refusal=refusal)
-            return translate_provider_payload(
+                return AdapterRun(
+                    refusal=refusal,
+                    execution_budget=execution_budget,
+                )
+            translated = translate_provider_payload(
                 self.provider_id,
                 payload,
                 scenario_id=request.scenario_id,
                 agent_id=self.agent_id,
             )
+            return replace(translated, execution_budget=execution_budget)
         except ProviderPayloadError as error:
             return AdapterRun(
                 refusal=AdapterRefusal(

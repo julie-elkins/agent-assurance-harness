@@ -16,7 +16,7 @@ import os
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 
 from .environment import SimulatedToolEnvironment
@@ -204,20 +204,25 @@ class LiveProviderAdapter:
                 elapsed_seconds=elapsed_seconds,
                 estimated_cost_usd=self.policy.estimated_cost_usd_per_request,
             )
+            execution_budget = self.policy.limits.execution_budget(usage)
             refusal = self.policy.limits.check_usage(usage)
             if refusal is not None:
-                return AdapterRun(refusal=refusal)
+                return AdapterRun(
+                    refusal=refusal,
+                    execution_budget=execution_budget,
+                )
             safe_payload = _combine_payload(
                 self.policy.provider_id,
                 model_payload,
                 usage,
             )
-            return translate_provider_payload(
+            translated = translate_provider_payload(
                 self.policy.provider_id,
                 safe_payload,
                 scenario_id=request.scenario_id,
                 agent_id=self.agent_id,
             )
+            return replace(translated, execution_budget=execution_budget)
         except (UnicodeDecodeError, json.JSONDecodeError, ProviderPayloadError):
             return AdapterRun(
                 refusal=_refusal(

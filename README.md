@@ -302,8 +302,11 @@ uv run agent-reliability \
 
 The provider policy validates a credential environment-variable name, request ceiling,
 output-token ceiling, timeout, and estimated-spend ceiling without reading the credential
-value. Unknown fields and raw provider content are refused. Live execution is disabled in
-this phase and requires a separate security and delivery review.
+value. Unknown fields and raw provider content are refused. The report includes
+metadata-only usage and the applied ceilings for each mocked scenario, including the
+measured value that caused an over-budget refusal. This is an execution budget, meaning
+an explicit limit on requests, output tokens, elapsed time, and estimated spend; it is
+not a live billing record.
 
 ### Run one bounded live synthetic scenario
 
@@ -467,6 +470,22 @@ The harness provides a repeatable pre-release assurance gate for tool-using agen
 
 The provider-shaped tests run offline. Live provider execution is local-only, explicitly
 opted in, synthetic-input-only, and not part of CI.
+
+### Read the efficiency evidence
+
+Provider comparison reports include an `execution_budgets` entry for each scenario. It
+contains only numeric usage metadata and the ceilings checked against it:
+
+- requests and `max_requests`;
+- output tokens and `max_output_tokens`;
+- elapsed seconds and `max_elapsed_seconds`; and
+- estimated cost and `max_estimated_cost_usd`.
+
+The `within_limits` value makes the decision machine-readable. A refusal caused by a
+budget breach still carries the measured usage and configured ceiling, so a reviewer can
+distinguish an enforced limit from an unexplained provider failure. The report never
+includes credentials, prompts, raw provider responses, or model text. Mock values are
+synthetic; live cost remains an estimate and is not a billing statement.
 
 ## Record a provider-neutral trace
 
@@ -638,10 +657,10 @@ credentials, or copied production traces.
 
 ## Scope and limitations
 
-This phase is deterministic and offline. It does not measure live model behaviour,
-provider differences, latency, cost, or multi-agent coordination. The MCP server is local
-and read-only; there is no hosted dashboard, leaderboard, authentication, or production
-integration. A passing guarded baseline proves only that these synthetic contracts
+The core phase is deterministic and offline. Its provider adapters can report synthetic
+usage metadata, but that does not measure live model behaviour, live provider differences,
+or actual billing. The MCP server is local and read-only; there is no hosted dashboard,
+leaderboard, authentication, or production integration. A passing guarded baseline proves only that these synthetic contracts
 distinguish the planted failures; it does not establish general agent reliability. CI
 proves only that the checked-in synthetic fixture and adapter continue to satisfy the
 current contracts; it does not prove a live agent will emit the same trace.

@@ -35,3 +35,17 @@ def test_markdown_summary_keeps_dimensions_separate():
     assert "## Assurance dimensions" in summary
     assert "`evidence_completeness`" in summary
     assert "## Evaluator validity" in summary
+
+
+def test_provider_budget_summary_is_visible_in_markdown():
+    from agent_reliability_lab.providers import mock_provider_adapters
+    from agent_reliability_lab.runner import run_adapters_comparison
+
+    summary = run_adapters_comparison(
+        mock_provider_adapters("openai"),
+    ).to_markdown()
+
+    assert "## Efficiency and budget" in summary
+    assert "Output tokens" in summary
+    assert "Estimated cost (USD)" in summary
+    assert "Within limits" in summary

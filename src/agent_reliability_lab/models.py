@@ -107,6 +107,50 @@ class Trace:
 
 
 @dataclass(frozen=True)
+class ExecutionBudget:
+    """Metadata-only usage and ceilings for one bounded execution."""
+
+    requests: int
+    output_tokens: int
+    elapsed_seconds: float
+    estimated_cost_usd: float
+    max_requests: int
+    max_output_tokens: int
+    max_elapsed_seconds: float
+    max_estimated_cost_usd: float
+
+    @property
+    def within_limits(self) -> bool:
+        """Return whether observed usage stayed within every configured ceiling."""
+
+        return (
+            self.requests <= self.max_requests
+            and self.output_tokens <= self.max_output_tokens
+            and self.elapsed_seconds <= self.max_elapsed_seconds
+            and self.estimated_cost_usd <= self.max_estimated_cost_usd
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Return numeric usage and limits without provider payloads."""
+
+        return {
+            "usage": {
+                "requests": self.requests,
+                "output_tokens": self.output_tokens,
+                "elapsed_seconds": self.elapsed_seconds,
+                "estimated_cost_usd": self.estimated_cost_usd,
+            },
+            "limits": {
+                "max_requests": self.max_requests,
+                "max_output_tokens": self.max_output_tokens,
+                "max_elapsed_seconds": self.max_elapsed_seconds,
+                "max_estimated_cost_usd": self.max_estimated_cost_usd,
+            },
+            "within_limits": self.within_limits,
+        }
+
+
+@dataclass(frozen=True)
 class Finding:
     """One check result, including what the result cannot establish."""
 
@@ -176,6 +220,7 @@ class AgentReport:
     agent_id: str
     findings: tuple[Finding, ...]
     trace_counts: dict[str, int] = field(default_factory=dict)
+    execution_budgets: dict[str, ExecutionBudget] = field(default_factory=dict)
 
     @property
     def passed(self) -> bool:
@@ -208,6 +253,10 @@ class AgentReport:
             "agent_id": self.agent_id,
             "passed": self.passed,
             "trace_counts": dict(self.trace_counts),
+            "execution_budgets": {
+                scenario_id: budget.to_dict()
+                for scenario_id, budget in sorted(self.execution_budgets.items())
+            },
             "dimensions": [
                 summary.to_dict() for summary in self.dimension_summaries
             ],

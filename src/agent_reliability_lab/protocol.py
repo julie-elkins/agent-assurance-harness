@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
-from .models import EvidenceContract, Trace
+from .models import EvidenceContract, ExecutionBudget, Trace
 
 
 class EventType(str, Enum):
@@ -94,6 +94,7 @@ class AdapterRun:
     trace: Trace | None = None
     refusal: AdapterRefusal | None = None
     events: tuple[ObservableEvent, ...] = ()
+    execution_budget: ExecutionBudget | None = None
 
 
 class AgentAdapter(Protocol):

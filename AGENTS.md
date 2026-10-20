@@ -93,6 +93,9 @@ missing, and what the result does not prove.
   the existing replay comparator, keep traces in memory, and emit only identifier-only
   regression metadata. It must block safety/evidence regressions and refusals while
   reporting task-outcome changes as non-blocking observations.
+- `examples/regressed_adapter.py` is a synthetic negative control. The CI
+  `--expect-blocking` path must pass only when the comparator catches a blocking
+  regression; do not treat its findings as a production recommendation.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.

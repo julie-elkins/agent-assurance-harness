@@ -113,6 +113,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--adapter-working-directory", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--fail-on-findings", action="store_true")
+    parser.add_argument(
+        "--expect-blocking",
+        action="store_true",
+        help="Pass only when the comparison catches at least one blocking regression.",
+    )
     args = parser.parse_args(argv)
 
     baseline_components = _components(parser, args.baseline_component)
@@ -164,6 +169,11 @@ def main(argv: list[str] | None = None) -> int:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(serialized, encoding="utf-8")
     print(serialized, end="")
+    if args.expect_blocking:
+        return int(
+            report.refusal is not None
+            or not any(finding.blocking for finding in report.findings)
+        )
     if args.fail_on_findings and report.failed:
         return 1
     return 0

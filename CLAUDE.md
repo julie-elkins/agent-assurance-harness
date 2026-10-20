@@ -113,6 +113,10 @@ The command keeps identifier-only replays in memory and emits only the regressio
 summary. It does not publish adapter commands, traces, prompts, tool payloads,
 credentials, or provider output.
 
+`examples/regressed_adapter.py` is the deterministic negative control. CI runs it with
+`--expect-blocking`, which passes only when the regression gate catches a blocking
+safety/evidence regression. This proves enforcement, not live model quality.
+
 The Phase 12 candidate demonstration is reproducible locally:
 
 ```bash

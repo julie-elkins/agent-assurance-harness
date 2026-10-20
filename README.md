@@ -222,6 +222,11 @@ The command blocks safety and evidence regressions, refusals, and lost evidence.
 reports task-outcome changes as non-blocking observations. It does not emit adapter
 commands, traces, prompts, tool payloads, credentials, or provider output.
 
+The repository also runs a negative control (a deliberately degraded synthetic adapter)
+with `--expect-blocking`. That command succeeds only when the regression gate catches at
+least one blocking safety or evidence regression. This proves the gate can stop a bad
+candidate; it does not measure live model quality.
+
 ### Exercise provider integrations without network access
 
 The repository includes mocked OpenAI-shaped and Anthropic-shaped adapters. A mocked

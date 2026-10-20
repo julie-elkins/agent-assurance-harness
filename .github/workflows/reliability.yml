@@ -70,6 +70,24 @@ jobs:
           --output /tmp/agent-reliability-adapter-regression.json
           --fail-on-findings
 
+      - name: Prove regression gate blocks degraded candidate
+        run: >-
+          uv run python tools/adapter_regression_report.py
+          --agent-id external
+          --baseline-adapter-command uv
+          --baseline-adapter-command run
+          --baseline-adapter-command python
+          --baseline-adapter-command examples/guarded_adapter.py
+          --candidate-adapter-command uv
+          --candidate-adapter-command run
+          --candidate-adapter-command python
+          --candidate-adapter-command examples/regressed_adapter.py
+          --baseline-change-id approved-baseline-negative-control
+          --baseline-component guardrails
+          --candidate-change-id candidate-regression-control
+          --candidate-component guardrails
+          --expect-blocking
+
       - name: Generate starter custom pack
         run: >-
           uv run python tools/init_scenario_pack.py

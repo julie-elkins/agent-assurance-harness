@@ -49,6 +49,9 @@ missing, and what the result does not prove.
   side-effect path must not call the simulated environment.
 - Replay files must cover exactly the built-in scenario-pack set and may contain only
   identifier-only adapter responses; missing coverage is a refusal.
+- `TraceRecorder` is the provider-neutral integration path. It must reject raw tool
+  arguments, raw tool-result payloads, and free-form claim or answer text; use one
+  recorder per scenario execution.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

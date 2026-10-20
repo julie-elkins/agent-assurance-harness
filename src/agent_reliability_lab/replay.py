@@ -64,6 +64,23 @@ class ReplayFile:
     agent_id: str
     cases: tuple[ReplayCase, ...]
 
+    def to_dict(self) -> dict[str, object]:
+        """Return the strict JSON shape used by replay files."""
+
+        from .external import adapter_run_to_dict
+
+        return {
+            "replay_version": self.replay_version,
+            "agent_id": self.agent_id,
+            "runs": [
+                {
+                    "scenario_id": case.scenario_id,
+                    "response": adapter_run_to_dict(case.response),
+                }
+                for case in self.cases
+            ],
+        }
+
 
 @dataclass(frozen=True)
 class ReplayLoadResult:

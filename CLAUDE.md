@@ -72,3 +72,8 @@ uv run agent-reliability \
 Do not add prompts, hidden reasoning, raw tool arguments, raw tool results, credentials,
 or live traces to a replay file. The GitHub Actions workflow is the delivery gate for
 tests, pack validation, replay, and the guarded external adapter.
+
+For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
+identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
+structured refusals for raw arguments, raw result payloads, and free-form claims or
+answers.

@@ -142,6 +142,37 @@ The command refuses missing, duplicate, unknown, or malformed scenarios. Add
 code. The repository's GitHub Actions workflow runs tests, validates packs, replays the
 guarded fixture, and runs the guarded external adapter.
 
+## Record a provider-neutral trace
+
+`TraceRecorder` is the safe integration point for an agent that can expose observable
+callbacks but should not import a provider SDK. It records tool names, result statuses,
+synthetic evidence identifiers, claim and answer classifications, abstentions,
+authorization identifiers, side-effect identifiers, and tool-output flags. It rejects
+raw tool arguments, raw result payloads, free-form claim text, and free-form answer text.
+
+```python
+from agent_reliability_lab import TraceRecorder
+
+recorder = TraceRecorder(
+    scenario_id="inappropriate-answer",
+    agent_id="my-agent",
+)
+recorder.record_tool_call("lookup_policy")
+recorder.record_tool_result(
+    "lookup_policy",
+    "not_found",
+    result_id="tool-result-005",
+)
+recorder.record_claim("claim:evidence_insufficient")
+recorder.record_abstention()
+run = recorder.finish()
+```
+
+`finish()` returns the same `AdapterRun` consumed by the evaluator and replay serializer.
+The recorder is stateful, so create one recorder per scenario execution. A rejected
+operation makes the final run a structured refusal rather than allowing a partial trace
+to look complete.
+
 ## Use it as an MCP server
 
 The repository also exposes a small local MCP server (Model Context Protocol server: a

@@ -52,6 +52,7 @@ from .replay import (
     ReplayRefusal,
     run_replay_file,
 )
+from .recorder import RecorderResult, TraceRecorder
 from .packs import (
     PACK_VERSION,
     PackRefusal,
@@ -95,6 +96,7 @@ __all__ = [
     "ReplayLoadResult",
     "ReplayReport",
     "ReplayRefusal",
+    "RecorderResult",
     "ScenarioPack",
     "ScenarioRequest",
     "ScenarioAdapter",
@@ -103,6 +105,7 @@ __all__ = [
     "ToolObservation",
     "ToolSpec",
     "Trace",
+    "TraceRecorder",
     "all_evaluator_failures_caught",
     "adapter_run_from_dict",
     "adapter_run_to_dict",

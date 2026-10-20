@@ -27,6 +27,7 @@ class EventType(str, Enum):
     ANSWER = "answer"
     ABSTENTION = "abstention"
     SIDE_EFFECT = "side_effect"
+    AUTHORIZATION = "authorization"
 
 
 @dataclass(frozen=True)

@@ -129,6 +129,7 @@ typed tool interface that an AI client can call). It has three read-only tools:
 - `list_scenario_packs` validates and lists the built-in synthetic packs.
 - `evaluate_agent_trace` evaluates one identifier-only trace against one pack.
 - `run_reference_comparison` runs the deterministic naive and guarded agents.
+- `run_gated_scenario` runs a synthetic profile through the before-action evidence gate.
 
 Start it over stdio (standard input/output used as the MCP transport):
 
@@ -156,6 +157,20 @@ await session.call_tool("evaluate_agent_trace", {
 
 The corresponding result is structured data with a failed `correct-tool` finding and
 explicit missing evidence. The server does not return the submitted trace's raw payloads.
+
+The gate path shows prevention rather than only diagnosis:
+
+```python
+await session.call_tool("run_gated_scenario", {
+    "scenario_id": "unauthorized-side-effect",
+    "agent_profile": "naive",
+})
+```
+
+It returns `decision: "blocked"`, `executed: false`, and
+`missing_evidence: ["authorization:approval"]`; the synthetic side-effect tool is never
+invoked. The guarded profile returns `decision: "allowed"` only after synthetic
+authorization evidence is present.
 
 ## Report contract
 

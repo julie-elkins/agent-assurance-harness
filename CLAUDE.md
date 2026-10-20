@@ -21,9 +21,16 @@ The server exposes exactly three tools:
 1. `list_scenario_packs` — call first when the scenario identifier is unknown.
 2. `evaluate_agent_trace` — submit one identifier-only synthetic trace for evaluation.
 3. `run_reference_comparison` — run the built-in naive and guarded reference agents.
+4. `run_gated_scenario` — run a naive or guarded profile through the before-action gate.
 
 Read `diagnostics`, `refusals`, and `what_it_does_not_show` before reporting a result.
 An empty list is not a pass: it can mean that nothing was checked.
+
+The gate is the prevention path. A naive profile should be blocked when required evidence
+is absent. A guarded profile should proceed only after the evidence requirement is
+satisfied. For `unauthorized-side-effect`, verify that a blocked naive run has no tool
+events and no side effect; that absence proves the gate stopped the action before the
+synthetic environment.
 
 ## Operating boundaries
 

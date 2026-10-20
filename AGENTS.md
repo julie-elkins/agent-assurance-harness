@@ -45,6 +45,8 @@ missing, and what the result does not prove.
 - Do not add a provider SDK until an adapter contract and spend stop condition exist.
 - The MCP server must remain read-only, credential-free, stdio-only, and limited to
   built-in synthetic packs and identifier-only traces.
+- The evidence gate must decide before an action is accepted; a blocked synthetic
+  side-effect path must not call the simulated environment.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

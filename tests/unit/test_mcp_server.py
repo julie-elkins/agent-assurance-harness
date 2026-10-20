@@ -19,6 +19,7 @@ def test_tool_surface_is_narrow_typed_and_read_only():
         "list_scenario_packs",
         "evaluate_agent_trace",
         "run_reference_comparison",
+        "run_gated_scenario",
     ]
     assert all(
         not left.startswith(right)
@@ -51,9 +52,23 @@ def test_in_process_tools_return_structured_results():
                 },
             },
         )
-        return packs, comparison, evaluated
+        blocked = await server.call_tool(
+            "run_gated_scenario",
+            {
+                "scenario_id": "unauthorized-side-effect",
+                "agent_profile": "naive",
+            },
+        )
+        allowed = await server.call_tool(
+            "run_gated_scenario",
+            {
+                "scenario_id": "unauthorized-side-effect",
+                "agent_profile": "guarded",
+            },
+        )
+        return packs, comparison, evaluated, blocked, allowed
 
-    packs, comparison, evaluated = anyio.run(call_tools)
+    packs, comparison, evaluated, blocked, allowed = anyio.run(call_tools)
 
     assert packs.is_error is False
     assert len(packs.structured_content["packs"]) == 5
@@ -62,6 +77,12 @@ def test_in_process_tools_return_structured_results():
     assert all(item["caught"] for item in comparison.structured_content["mutation_tests"])
     assert evaluated.is_error is False
     assert evaluated.structured_content["finding"]["status"] == "failed"
+    assert blocked.structured_content["decision"] == "blocked"
+    assert blocked.structured_content["executed"] is False
+    assert blocked.structured_content["tool_events"] == []
+    assert allowed.structured_content["decision"] == "allowed"
+    assert allowed.structured_content["executed"] is True
+    assert allowed.structured_content["side_effects"] == ["side-effect-001"]
 
 
 def test_unknown_scenario_is_a_structured_refusal():
@@ -104,12 +125,13 @@ def test_stdio_client_sees_initialization_surface_and_tool_result():
     initialization, tools, result = anyio.run(run_client)
 
     assert initialization.server_info.name == "agent-reliability-lab"
-    assert initialization.server_info.version == "0.4.0"
+    assert initialization.server_info.version == "0.5.0"
     assert "list_scenario_packs" in initialization.instructions
     assert [tool.name for tool in tools.tools] == [
         "list_scenario_packs",
         "evaluate_agent_trace",
         "run_reference_comparison",
+        "run_gated_scenario",
     ]
     assert result.is_error is False
     assert len(result.structured_content["packs"]) == 5

@@ -31,15 +31,22 @@ from .packs import (
     load_builtin_pack_results,
     load_builtin_packs,
 )
+from .gate import (
+    GateDecision,
+    GatedRun,
+    run_gated_scenario as execute_gated_scenario,
+)
 from .runner import run_comparison
 from .scenarios import scenarios
 
 
-SERVER_VERSION = "0.4.0"
+SERVER_VERSION = "0.5.0"
 SERVER_INSTRUCTIONS = (
-    "Use list_scenario_packs before evaluate_agent_trace when the scenario is unknown. "
+    "Use list_scenario_packs before evaluate_agent_trace or run_gated_scenario when the "
+    "scenario is unknown. "
     "Submit identifier-only synthetic traces; tool arguments and raw payloads are not "
     "accepted. Read diagnostics and what_it_does_not_show before treating a result as "
+    "evidence. A blocked gated action must not be retried without satisfying its missing "
     "evidence. This server is read-only, local, credential-free, and synthetic-only."
 )
 
@@ -298,6 +305,43 @@ class ReferenceComparisonOutput(StrictModel):
     diagnostics: DiagnosticsOutput
 
 
+class GatedToolEventOutput(StrictModel):
+    """One identifier-only synthetic event from a gated run."""
+
+    tool_name: str
+    result_status: str
+    result_id: str | None = Field(
+        default=None,
+        description="Synthetic result identifier, or null when no result was observed.",
+    )
+    side_effect_id: str | None = Field(
+        default=None,
+        description="Synthetic side-effect identifier, or null when none was observed.",
+    )
+
+
+class GatedScenarioOutput(StrictModel):
+    """The observable result of a before-action evidence decision."""
+
+    scenario_id: str
+    agent_profile: str
+    action: str
+    decision: str
+    blocked: bool
+    executed: bool
+    message: str
+    required_evidence: list[str]
+    observed_evidence: list[str]
+    missing_evidence: list[str]
+    tool_events: list[GatedToolEventOutput]
+    side_effects: list[str]
+    refusal: RefusalOutput | None = Field(
+        default=None,
+        description="Structured refusal when the requested synthetic run could not be set up.",
+    )
+    diagnostics: DiagnosticsOutput
+
+
 def _diagnostics(*, what_it_does_not_show: str) -> DiagnosticsOutput:
     return DiagnosticsOutput(
         source="agent-reliability-lab synthetic scenario packs",
@@ -462,6 +506,37 @@ def _comparison_output(include_mutations: bool) -> ReferenceComparisonOutput:
             what_it_does_not_show=(
                 "It does not show live-provider behaviour, latency, cost, or reliability "
                 "outside the five synthetic scenarios."
+            )
+        ),
+    )
+
+
+def _gated_output(run: GatedRun) -> GatedScenarioOutput:
+    return GatedScenarioOutput(
+        scenario_id=run.scenario_id,
+        agent_profile=run.agent_profile,
+        action=run.result.action.value,
+        decision=run.result.decision.value,
+        blocked=run.result.decision is GateDecision.BLOCKED,
+        executed=run.executed,
+        message=run.result.message,
+        required_evidence=list(run.result.required_evidence),
+        observed_evidence=list(run.result.observed_evidence),
+        missing_evidence=list(run.result.missing_evidence),
+        tool_events=[
+            GatedToolEventOutput(
+                tool_name=event.tool_name,
+                result_status=event.result_status,
+                result_id=event.result_id,
+                side_effect_id=event.side_effect_id,
+            )
+            for event in run.tool_events
+        ],
+        side_effects=list(run.side_effects),
+        diagnostics=_diagnostics(
+            what_it_does_not_show=(
+                "It does not establish that the same gate would be correct for a live "
+                "tool schema or an unlisted action."
             )
         ),
     )
@@ -654,6 +729,67 @@ def run_reference_comparison(
             ),
             diagnostics=_diagnostics(
                 what_it_does_not_show="It does not show any agent behaviour because the comparison did not run."
+            ),
+        )
+
+
+@server.tool(
+    name="run_gated_scenario",
+    title="Run a synthetic scenario through the evidence gate",
+    description=(
+        "Run one built-in scenario with the naive or guarded synthetic agent profile. "
+        "The EvidenceGate decides BEFORE the requested claim, answer, abstention, or "
+        "protected side effect is accepted. A blocked protected side effect is never "
+        "invoked, even in the synthetic environment. Use scenario_id values returned by "
+        "list_scenario_packs and agent_profile='naive' or 'guarded'."
+    ),
+    annotations=_READ_ONLY,
+    structured_output=True,
+)
+def run_gated_scenario(
+    scenario_id: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=128,
+            description="Built-in scenario identifier, for example 'unauthorized-side-effect'.",
+        ),
+    ],
+    agent_profile: Annotated[
+        str,
+        Field(
+            min_length=1,
+            max_length=32,
+            description="Synthetic profile: 'naive' demonstrates a blocked action; 'guarded' demonstrates the allowed path.",
+        ),
+    ],
+) -> GatedScenarioOutput:
+    """Run one synthetic agent profile through the before-action evidence gate."""
+
+    try:
+        return _gated_output(execute_gated_scenario(scenario_id, agent_profile))
+    except (RuntimeError, ValueError) as error:
+        return GatedScenarioOutput(
+            scenario_id=scenario_id,
+            agent_profile=agent_profile,
+            action="unknown",
+            decision=GateDecision.BLOCKED.value,
+            blocked=True,
+            executed=False,
+            message="The gated scenario could not be started.",
+            required_evidence=[],
+            observed_evidence=[],
+            missing_evidence=[],
+            tool_events=[],
+            side_effects=[],
+            refusal=_refusal(
+                "gated_scenario_refused",
+                "The requested scenario or agent profile is not available.",
+                "Call list_scenario_packs, then use a listed scenario_id and either 'naive' or 'guarded'.",
+                str(error),
+            ),
+            diagnostics=_diagnostics(
+                what_it_does_not_show="It does not show a runtime decision because the synthetic run was not started."
             ),
         )
 

@@ -4,19 +4,24 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-reliability-lab"
-version = "0.3.0"
+version = "0.4.0"
 description = "Offline Agent Assurance Harness for tool-using AI agents."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Julie Elkins" }]
-dependencies = []
+dependencies = [
+    # Exact pin keeps the local stdio protocol and output-schema behaviour reproducible.
+    "mcp==2.3.0",
+    "pydantic>=2.11,<3",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
 
 [project.scripts]
 agent-reliability = "agent_reliability_lab.cli:main"
+agent-reliability-mcp = "agent_reliability_lab.mcp_server:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

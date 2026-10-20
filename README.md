@@ -49,7 +49,7 @@ instead of silently passing it.
 
 ## Run it
 
-The core has no runtime dependencies. Python 3.10 or newer is supported.
+The core is offline and provider-neutral. Python 3.11 or newer is supported.
 
 ```bash
 python -m venv .venv
@@ -121,6 +121,42 @@ An empty directory, unreadable JSON, invalid pack fields, or duplicate scenario 
 returns a structured refusal and a non-zero exit code. This keeps “nothing was checked”
 separate from “all supplied packs were valid.”
 
+## Use it as an MCP server
+
+The repository also exposes a small local MCP server (Model Context Protocol server: a
+typed tool interface that an AI client can call). It has three read-only tools:
+
+- `list_scenario_packs` validates and lists the built-in synthetic packs.
+- `evaluate_agent_trace` evaluates one identifier-only trace against one pack.
+- `run_reference_comparison` runs the deterministic naive and guarded agents.
+
+Start it over stdio (standard input/output used as the MCP transport):
+
+```bash
+uv run agent-reliability-mcp
+```
+
+The server never launches a caller command, reads a caller-supplied file path, uses
+credentials, contacts a provider, or writes external state. Its results include typed
+findings, structured refusals, diagnostics, and `what_it_does_not_show`.
+
+A real client call has this shape:
+
+```python
+await session.call_tool("evaluate_agent_trace", {
+    "scenario_id": "tool-misuse",
+    "trace": {
+        "scenario_id": "tool-misuse",
+        "agent_id": "synthetic-agent",
+        "tool_calls": [],
+        "abstained": True,
+    },
+})
+```
+
+The corresponding result is structured data with a failed `correct-tool` finding and
+explicit missing evidence. The server does not return the submitted trace's raw payloads.
+
 ## Report contract
 
 The JSON report is intentionally small. It includes scenario contracts, separate
@@ -166,10 +202,10 @@ credentials, or copied production traces.
 ## Scope and limitations
 
 This phase is deterministic and offline. It does not measure live model behaviour,
-provider differences, latency, cost, or multi-agent coordination. It does not yet expose
-an MCP adapter, hosted dashboard, leaderboard, or production integration. A passing
-guarded baseline proves only that these synthetic contracts distinguish the planted
-failures; it does not establish general agent reliability.
+provider differences, latency, cost, or multi-agent coordination. The MCP server is local
+and read-only; there is no hosted dashboard, leaderboard, authentication, or production
+integration. A passing guarded baseline proves only that these synthetic contracts
+distinguish the planted failures; it does not establish general agent reliability.
 
 ## Licence
 

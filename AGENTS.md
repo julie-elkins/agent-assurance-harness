@@ -5,7 +5,8 @@
 This repository is a public, synthetic demonstration of an Agent Assurance Harness for
 tool-using AI agents. An evidence contract is the observable evidence required before an
 agent claim can pass. An adapter is a small connector that runs an agent through the
-harness without changing the evidence contract.
+harness without changing the evidence contract. The local MCP server exposes that
+contract as read-only tools; it is not a hosted service or a live-provider gateway.
 
 ## Data boundary
 
@@ -42,6 +43,8 @@ missing, and what the result does not prove.
   condition exist.
 - Use synthetic fixtures only.
 - Do not add a provider SDK until an adapter contract and spend stop condition exist.
+- The MCP server must remain read-only, credential-free, stdio-only, and limited to
+  built-in synthetic packs and identifier-only traces.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

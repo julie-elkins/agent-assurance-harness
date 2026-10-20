@@ -29,6 +29,12 @@
       "blocking": true
     },
     {
+      "check_id": "provider-adapter-assurance",
+      "report_kind": "provider-assurance",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "audit-evidence-integrity",
       "report_kind": "audit",
       "expected": "match",

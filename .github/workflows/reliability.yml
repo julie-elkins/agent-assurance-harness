@@ -131,6 +131,14 @@ jobs:
           --negative-report /tmp/agent-reliability-negative-regression.json
           --negative-attestation /tmp/agent-reliability-negative-attestation.json
 
+      - name: Run provider adapter assurance
+        run: >-
+          uv run python tools/provider_assurance_report.py
+          --output /tmp/agent-reliability-provider-assurance.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Evaluate operational ship gate
         run: >-
           uv run python tools/ship_gate_report.py
@@ -139,6 +147,7 @@ jobs:
           --golden-trace-positive /tmp/agent-reliability-golden-trace.json
           --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json
           --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
+          --provider-assurance /tmp/agent-reliability-provider-assurance.json
           --output /tmp/agent-reliability-ship-gate.json
           --fail-on-block
 
@@ -161,6 +170,7 @@ jobs:
           --golden-trace-positive /tmp/agent-reliability-golden-trace.json
           --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json
           --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
+          --provider-assurance /tmp/agent-reliability-provider-assurance.json
           --output /tmp/agent-reliability-ship-gate.json
           --markdown >> "$GITHUB_STEP_SUMMARY"
 
@@ -176,6 +186,7 @@ jobs:
             /tmp/agent-reliability-negative-attestation.json
             /tmp/agent-reliability-golden-trace.json
             /tmp/agent-reliability-golden-negative.json
+            /tmp/agent-reliability-provider-assurance.json
             /tmp/agent-reliability-ship-gate.json
           if-no-files-found: error
           retention-days: 14
@@ -266,14 +277,3 @@ jobs:
           /tmp/candidate-replay.json
           --json
           --fail-on-findings
-
-      - name: Run mocked provider adapters and publish budget evidence
-        run: |
-          uv run agent-reliability \
-            --mock-provider all \
-            --markdown \
-            --mutations \
-            --fail-on-findings \
-            > /tmp/agent-reliability-provider-summary.md
-          cat /tmp/agent-reliability-provider-summary.md
-          cat /tmp/agent-reliability-provider-summary.md >> "$GITHUB_STEP_SUMMARY"

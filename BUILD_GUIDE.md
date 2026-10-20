@@ -70,6 +70,7 @@ The current progression is intentionally operational:
 | 7 | Golden Trace baseline | Whether canonical successful evidence drifted even when status still passes |
 | 8 | Operational ship gate | Who notices a failure, what blocks release, how to roll back, and what audit record remains |
 | 9 | Audit evidence binding | Whether the release record is complete and matches the current checkout and approved baseline |
+| 10 | Provider adapter assurance | Whether provider-shaped adapters use the shared gate, preserve credential boundaries, and enforce budget refusals |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -224,6 +225,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/golden_trace_report.py` — Golden Trace comparison and drift gate.
 - `examples/ship-gate.json` — synthetic operational ownership, blocking, rollback, audit, and stop-condition contract.
 - `tools/ship_gate_report.py` — release-readiness decision from metadata-only assurance reports.
+- `src/agent_reliability_lab/provider_assurance.py` — shared provider-shaped positive and budget-negative controls.
+- `tools/provider_assurance_report.py` — metadata-only provider adapter assurance report.
 
 ### Audit evidence binding
 
@@ -236,6 +239,19 @@ cross-report mismatch blocks the gate.
 The report remains metadata-only: hashes and identifiers are visible, while
 prompts, traces, provider output, credentials, and private contacts remain
 excluded.
+
+### Provider adapter assurance
+
+Phase 10 makes the provider boundary a required CI check. Both mocked
+OpenAI-shaped and Anthropic-shaped adapters run through the same scenario
+evaluator, and a deliberately over-budget run must produce structured
+refusals. The report records credential environment-variable names and
+explicitly records that credential values were not observed; it never reads a
+credential value.
+
+The live provider boundary remains separate and disabled in CI. This phase
+proves the adapter contract, privacy boundary, and budget enforcement without
+making a network call or claiming live-provider quality.
 
 ### Operational ship gate
 

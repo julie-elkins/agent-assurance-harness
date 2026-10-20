@@ -95,6 +95,13 @@ from .providers import (
     mock_provider_adapters,
     translate_provider_payload,
 )
+from .provider_assurance import (
+    PROVIDER_ASSURANCE_VERSION,
+    ProviderAssuranceReport,
+    ProviderNegativeControl,
+    ProviderResult,
+    run_provider_assurance,
+)
 from .regression import (
     RegressionFinding,
     RegressionReport,
@@ -191,6 +198,10 @@ __all__ = [
     "MockProviderAdapter",
     "ProviderLimits",
     "ProviderPolicy",
+    "PROVIDER_ASSURANCE_VERSION",
+    "ProviderAssuranceReport",
+    "ProviderNegativeControl",
+    "ProviderResult",
     "all_evaluator_failures_caught",
     "adapter_run_from_dict",
     "adapter_run_to_dict",
@@ -218,6 +229,7 @@ __all__ = [
     "live_provider_adapter",
     "mock_provider_adapters",
     "translate_provider_payload",
+    "run_provider_assurance",
     "run_replay_file",
     "run_adapter_replay",
     "run_replay",

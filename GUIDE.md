@@ -354,6 +354,21 @@ appends its metadata-only efficiency table, so reviewers can see the request, to
 time, and estimated-spend ceilings without downloading the JSON artifact. No PR-comment
 permission is needed.
 
+Phase 10 adds `tools/provider_assurance_report.py` to that required path. It
+checks both provider-shaped adapters through the shared evaluator, verifies the
+credential boundary uses names rather than values, and requires the deliberately
+over-budget negative control to be caught. The report is metadata-only and
+does not enable live network access.
+
+Run it locally with:
+
+```bash
+uv run python tools/provider_assurance_report.py \
+  --output /tmp/agent-reliability-provider-assurance.json \
+  --markdown \
+  --fail-on-findings
+```
+
 ## Extend the harness safely
 
 When adding a capability, use this order:

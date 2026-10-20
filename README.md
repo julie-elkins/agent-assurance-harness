@@ -375,6 +375,19 @@ measured value that caused an over-budget refusal. This is an execution budget, 
 an explicit limit on requests, output tokens, elapsed time, and estimated spend; it is
 not a live billing record.
 
+The required CI lane also runs:
+
+```bash
+uv run python tools/provider_assurance_report.py \
+  --output /tmp/agent-reliability-provider-assurance.json \
+  --markdown \
+  --fail-on-findings
+```
+
+It passes only when both provider-shaped adapters pass the shared evaluator,
+credential values remain unobserved, and the deliberate over-budget control is
+caught. The ship gate blocks if this report is missing or fails.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

@@ -166,6 +166,35 @@ def _golden_observation(
     return CheckObservation(check_id, passed, reason)
 
 
+def _provider_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    providers = report.get("providers")
+    negative_control = report.get("negative_control")
+    provider_ids = {
+        item.get("provider_id")
+        for item in providers
+        if isinstance(item, dict)
+    } if isinstance(providers, list) else set()
+    passed = (
+        expected == "pass"
+        and report.get("provider_assurance_version") == 1
+        and report.get("passed") is True
+        and provider_ids == {"openai", "anthropic"}
+        and isinstance(negative_control, dict)
+        and negative_control.get("caught") is True
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "provider-assurance-failed",
+    )
+
+
 def _observations(
     manifest: ShipGateManifest,
     paths: dict[str, Path],
@@ -187,6 +216,12 @@ def _observations(
             )
         elif check.report_kind == "golden-trace":
             observations[check.check_id] = _golden_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
+        elif check.report_kind == "provider-assurance":
+            observations[check.check_id] = _provider_observation(
                 check.check_id,
                 path,
                 expected=check.expected,
@@ -241,6 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--golden-trace-positive", type=Path)
     parser.add_argument("--adapter-regression-negative-control", type=Path)
     parser.add_argument("--golden-trace-negative-control", type=Path)
+    parser.add_argument("--provider-assurance", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument("--fail-on-block", action="store_true")
@@ -251,6 +287,7 @@ def main(argv: list[str] | None = None) -> int:
         "golden-trace-positive": args.golden_trace_positive,
         "adapter-regression-negative-control": args.adapter_regression_negative_control,
         "golden-trace-negative-control": args.golden_trace_negative_control,
+        "provider-adapter-assurance": args.provider_assurance,
     }
     paths = {key: value for key, value in paths.items() if value is not None}
     try:

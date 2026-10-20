@@ -170,6 +170,21 @@ def run_adapter_comparison(
     )
 
 
+def run_adapters_comparison(
+    adapters: tuple[AgentAdapter, ...],
+    *,
+    include_mutations: bool = False,
+) -> ComparisonReport:
+    """Run several provider adapters through one shared assurance report."""
+
+    return _build_comparison(
+        adapters,
+        scenarios(),
+        load_builtin_packs(),
+        include_mutations=include_mutations,
+    )
+
+
 def _build_comparison(
     adapters: tuple[AgentAdapter, ...],
     scenario_cases: tuple[Scenario, ...],

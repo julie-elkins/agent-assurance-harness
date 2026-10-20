@@ -57,6 +57,14 @@ from .replay import (
 )
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
+from .providers import (
+    DEFAULT_PROVIDER_LIMITS,
+    MockProviderAdapter,
+    ProviderLimits,
+    ProviderPolicy,
+    mock_provider_adapters,
+    translate_provider_payload,
+)
 from .regression import (
     RegressionFinding,
     RegressionReport,
@@ -76,7 +84,11 @@ from .packs import (
     load_scenario_pack,
     request_from_pack,
 )
-from .runner import run_adapter_comparison, run_comparison
+from .runner import (
+    run_adapter_comparison,
+    run_adapters_comparison,
+    run_comparison,
+)
 
 __all__ = [
     "AgentReport",
@@ -96,6 +108,7 @@ __all__ = [
     "Finding",
     "FindingStatus",
     "EventType",
+    "DEFAULT_PROVIDER_LIMITS",
     "HARNESS_COMPONENTS",
     "HarnessChangeManifest",
     "ObservableEvent",
@@ -118,6 +131,9 @@ __all__ = [
     "ToolSpec",
     "Trace",
     "TraceRecorder",
+    "MockProviderAdapter",
+    "ProviderLimits",
+    "ProviderPolicy",
     "all_evaluator_failures_caught",
     "adapter_run_from_dict",
     "adapter_run_to_dict",
@@ -131,7 +147,10 @@ __all__ = [
     "request_from_pack",
     "reference_adapters",
     "run_adapter_comparison",
+    "run_adapters_comparison",
     "run_comparison",
+    "mock_provider_adapters",
+    "translate_provider_payload",
     "run_replay_file",
     "run_replay",
     "load_otlp_file",

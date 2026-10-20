@@ -92,3 +92,11 @@ jobs:
           /tmp/candidate-replay.json
           --json
           --fail-on-findings
+
+      - name: Run mocked provider adapters
+        run: >-
+          uv run agent-reliability
+          --mock-provider all
+          --json
+          --mutations
+          --fail-on-findings

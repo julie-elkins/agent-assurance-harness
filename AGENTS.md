@@ -67,6 +67,9 @@ missing, and what the result does not prove.
 - `examples/candidate_replay.py` is the synthetic candidate generator for the
   baseline-to-candidate CI demonstration; it must remain deterministic and
   identifier-only.
+- `providers.py` contains mocked provider-shaped adapters only. They must not import
+  provider SDKs, read credential values, make network calls, or accept raw provider
+  content. Live provider execution requires a new security and delivery-path intake.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

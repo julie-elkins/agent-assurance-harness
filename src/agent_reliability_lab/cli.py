@@ -14,9 +14,15 @@ from .external import (
 )
 from .packs import load_builtin_pack_results, load_pack_directory
 from .otlp import load_otlp_file
+from .providers import mock_provider_adapters
 from .replay import REPLAY_VERSION, ReplayReport, run_replay, run_replay_file
 from .regression import RegressionReport, compare_replay_files
-from .runner import failed_checks, run_adapter_comparison, run_comparison
+from .runner import (
+    failed_checks,
+    run_adapter_comparison,
+    run_adapters_comparison,
+    run_comparison,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -89,6 +95,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="Import and evaluate one local identifier-only OTLP/JSON trace export.",
     )
     parser.add_argument(
+        "--mock-provider",
+        choices=("openai", "anthropic", "all"),
+        help="Run the credential-free mocked provider adapter(s).",
+    )
+    parser.add_argument(
         "--compare-replay",
         nargs=2,
         metavar=("BASELINE", "CANDIDATE"),
@@ -143,6 +154,30 @@ def _print_regression_report(
             )
 
 
+def _print_comparison_report(report, args: argparse.Namespace) -> None:
+    if args.json:
+        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
+    elif args.markdown:
+        print(report.to_markdown())
+    else:
+        for agent_report in report.reports:
+            outcome = "PASS" if agent_report.passed else "FINDINGS"
+            print(f"{agent_report.agent_id}: {outcome}")
+            for finding in agent_report.findings:
+                print(
+                    f"  [{finding.status.value}] {finding.check_id}: "
+                    f"{finding.message}"
+                )
+        if args.mutations:
+            print("mutation tests:")
+            for mutation in report.mutation_tests:
+                outcome = "CAUGHT" if mutation.caught else "MISSED"
+                print(
+                    f"  [{outcome}] {mutation.mutation_id}: "
+                    f"{mutation.description}"
+                )
+
+
 def main(argv: list[str] | None = None) -> int:
     """Run the CLI and return a process exit code."""
 
@@ -180,6 +215,7 @@ def main(argv: list[str] | None = None) -> int:
             or args.adapter_check
             or args.adapter_command
             or args.mutations
+            or args.mock_provider is not None
         ):
             print(
                 "Trace input cannot be combined with another trace input, pack listing, "
@@ -209,6 +245,26 @@ def main(argv: list[str] | None = None) -> int:
         if report.refusal is not None:
             return 1
         if args.fail_on_findings and report.failed:
+            return 1
+        return 0
+    if args.mock_provider is not None:
+        if (
+            args.list_packs
+            or args.pack_directory is not None
+            or args.adapter_check
+            or args.adapter_command
+        ):
+            print(
+                "--mock-provider cannot be combined with pack listing or adapter options.",
+                file=sys.stderr,
+            )
+            return 2
+        report = run_adapters_comparison(
+            mock_provider_adapters(args.mock_provider),
+            include_mutations=args.mutations,
+        )
+        _print_comparison_report(report, args)
+        if args.fail_on_findings and failed_checks(report):
             return 1
         return 0
     if args.list_packs:
@@ -273,21 +329,7 @@ def main(argv: list[str] | None = None) -> int:
             )
             return 2
         report = run_comparison(include_mutations=args.mutations)
-    if args.json:
-        print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
-    elif args.markdown:
-        print(report.to_markdown())
-    else:
-        for agent_report in report.reports:
-            outcome = "PASS" if agent_report.passed else "FINDINGS"
-            print(f"{agent_report.agent_id}: {outcome}")
-            for finding in agent_report.findings:
-                print(f"  [{finding.status.value}] {finding.check_id}: {finding.message}")
-        if args.mutations:
-            print("mutation tests:")
-            for mutation in report.mutation_tests:
-                outcome = "CAUGHT" if mutation.caught else "MISSED"
-                print(f"  [{outcome}] {mutation.mutation_id}: {mutation.description}")
+    _print_comparison_report(report, args)
     if args.fail_on_findings and failed_checks(report):
         return 1
     return 0

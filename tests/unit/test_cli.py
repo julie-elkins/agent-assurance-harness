@@ -84,3 +84,24 @@ def test_compare_replay_passes_with_fail_on_findings(capsys):
     assert exit_code == 0
     assert data["passed"] is True
     assert data["findings"] == []
+
+
+def test_mock_provider_check_passes_with_fail_on_findings(capsys):
+    exit_code = main(
+        [
+            "--mock-provider",
+            "all",
+            "--json",
+            "--fail-on-findings",
+        ]
+    )
+
+    captured = capsys.readouterr()
+    data = json.loads(captured.out)
+
+    assert exit_code == 0
+    assert [report["agent_id"] for report in data["reports"]] == [
+        "anthropic-mock",
+        "openai-mock",
+    ]
+    assert all(report["passed"] for report in data["reports"])

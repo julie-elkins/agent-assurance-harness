@@ -186,6 +186,26 @@ a task-quality change should not be hidden inside a composite score or allowed t
 safety regression. The manifest accepts only component identifiers; it must not contain
 prompts, memory text, tool payloads, or provider output.
 
+### Exercise provider integrations without network access
+
+The repository includes mocked OpenAI-shaped and Anthropic-shaped adapters. A mocked
+adapter is a local test implementation that emits provider-like event structures without
+calling a provider or reading a credential. Both adapters translate through
+`TraceRecorder`, so they cannot create a second, weaker evaluation path:
+
+```bash
+uv run agent-reliability \
+  --mock-provider all \
+  --json \
+  --mutations \
+  --fail-on-findings
+```
+
+The provider policy validates a credential environment-variable name, request ceiling,
+output-token ceiling, timeout, and estimated-spend ceiling without reading the credential
+value. Unknown fields and raw provider content are refused. Live execution is disabled in
+this phase and requires a separate security and delivery review.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

@@ -97,6 +97,21 @@ uv run agent-reliability \
   --fail-on-findings
 ```
 
+Phase 13 exercises mocked OpenAI-shaped and Anthropic-shaped adapters through the same
+recorder and evaluator path:
+
+```bash
+uv run agent-reliability \
+  --mock-provider all \
+  --json \
+  --mutations \
+  --fail-on-findings
+```
+
+These adapters are credential-free and offline. They validate only the credential
+environment-variable name and synthetic usage ceilings; they do not read credentials or
+make network calls. Live provider support requires a separate security and delivery review.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

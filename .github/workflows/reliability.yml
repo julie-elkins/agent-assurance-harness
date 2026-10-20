@@ -46,3 +46,28 @@ jobs:
           --json
           --mutations
           --fail-on-findings
+
+      - name: Generate replay through TraceRecorder
+        run: >-
+          uv run python examples/recorder_adapter.py
+          --replay
+          > /tmp/recorder-replay.json
+
+      - name: Replay generated TraceRecorder output
+        run: >-
+          uv run agent-reliability
+          --replay-file /tmp/recorder-replay.json
+          --json
+          --fail-on-findings
+
+      - name: Run TraceRecorder JSONL adapter
+        run: >-
+          uv run agent-reliability
+          --adapter-check
+          --adapter-command uv
+          --adapter-command run
+          --adapter-command python
+          --adapter-command examples/recorder_adapter.py
+          --json
+          --mutations
+          --fail-on-findings

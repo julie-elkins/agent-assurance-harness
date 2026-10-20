@@ -52,6 +52,9 @@ missing, and what the result does not prove.
 - `TraceRecorder` is the provider-neutral integration path. It must reject raw tool
   arguments, raw tool-result payloads, and free-form claim or answer text; use one
   recorder per scenario execution.
+- `examples/recorder_adapter.py` is the synthetic integration reference. Its stdout is
+  either the JSONL adapter protocol or a replay file; diagnostics must not be printed
+  there.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
 - Do not print raw payloads in logs or exception messages.

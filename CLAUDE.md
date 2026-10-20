@@ -77,3 +77,6 @@ For integrations, use `TraceRecorder` rather than a provider SDK. It emits the e
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or
 answers.
+
+The executable integration reference is `examples/recorder_adapter.py`. CI generates
+and replays its output, then runs it through the subprocess JSONL adapter boundary.

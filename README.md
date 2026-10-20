@@ -173,6 +173,22 @@ The recorder is stateful, so create one recorder per scenario execution. A rejec
 operation makes the final run a structured refusal rather than allowing a partial trace
 to look complete.
 
+The repository includes a complete synthetic integration example. It uses the recorder
+through a subprocess JSONL boundary (JSON Lines: one JSON object per line) and can generate
+a replay file from the same mapping:
+
+```bash
+uv run python examples/recorder_adapter.py --replay > /tmp/recorder-replay.json
+uv run agent-reliability \
+  --replay-file /tmp/recorder-replay.json \
+  --json \
+  --fail-on-findings
+```
+
+The integration test runs both the generated replay and the JSONL adapter through the
+harness. This proves the example is connected to evaluation; it does not claim that a
+live model provider will emit complete events.
+
 ## Use it as an MCP server
 
 The repository also exposes a small local MCP server (Model Context Protocol server: a

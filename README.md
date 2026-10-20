@@ -207,6 +207,9 @@ uv run python tools/ship_gate_report.py \
   --golden-trace-positive /tmp/agent-reliability-golden-trace.json \
   --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json \
   --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
+  --provider-assurance /tmp/agent-reliability-provider-assurance.json \
+  --provider-contract /tmp/agent-reliability-provider-contract.json \
+  --rollback-rehearsal /tmp/agent-reliability-rollback.json \
   --fail-on-block
 ```
 
@@ -403,6 +406,26 @@ uv run python tools/provider_contract_report.py \
 
 This is an offline contract check. It does not contact a provider, read a
 credential, or claim that a live provider is available.
+
+### Rehearse rollback without external side effects
+
+The rollback rehearsal is the executable check behind the ship-gate recovery
+policy. It creates a last-known-good artifact from the current Git revision,
+adds a deliberate synthetic failure to a disposable copy, restores a clean
+copy from the artifact, and compares identifier-only tree hashes:
+
+```bash
+uv run python tools/rollback_rehearsal.py \
+  --output /tmp/agent-reliability-rollback.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The plan refuses network access and external writes. The report does not expose
+temporary paths, file contents, prompts, provider output, or credentials. A
+passing rehearsal is evidence that this repository's artifact can be restored
+in a disposable local environment; it is not a deployment rollback or a
+production health check.
 
 ### Run one bounded live synthetic scenario
 

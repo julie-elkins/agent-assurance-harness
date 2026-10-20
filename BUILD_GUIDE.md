@@ -72,6 +72,7 @@ The current progression is intentionally operational:
 | 9 | Audit evidence binding | Whether the release record is complete and matches the current checkout and approved baseline |
 | 10 | Provider adapter assurance | Whether provider-shaped adapters use the shared gate, preserve credential boundaries, and enforce budget refusals |
 | 11 | Provider contract drift | Whether reviewed provider response shapes remain accepted and unsafe changes are refused |
+| 12 | Rollback rehearsal | Whether a controlled artifact failure can be detected and restored without external side effects |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -231,6 +232,9 @@ The harness can support that path, but its synthetic gate does not replace those
 - `src/agent_reliability_lab/provider_contract.py` — fixture fingerprints and safe response-contract checks.
 - `examples/provider-contract-manifest.json` — approved provider fixture hashes and negative controls.
 - `tools/provider_contract_report.py` — provider contract drift and refusal gate.
+- `src/agent_reliability_lab/rollback_rehearsal.py` — disposable artifact failure and restoration rehearsal.
+- `examples/rollback-plan.json` — strict no-network, no-write rollback rehearsal policy.
+- `tools/rollback_rehearsal.py` — metadata-only rollback rehearsal report.
 
 ### Audit evidence binding
 
@@ -267,6 +271,23 @@ accepted blocks the ship gate.
 
 The manifest contains hashes and fixture names only. Provider content is not
 copied into the report, and the gate makes no network call.
+
+### Rollback rehearsal
+
+Phase 12 turns the ship-gate rollback declaration into an executable control.
+The rehearsal archives the current Git revision, extracts it into a temporary
+last-known-good directory, injects a synthetic release marker into a separate
+failed copy, and extracts the archive again as the restored artifact. It
+requires the failed and original tree hashes to differ and the restored and
+original hashes to match. The restored hash is also bound into the ship-gate
+audit record, so a report cannot claim restoration without carrying the
+artifact identity.
+
+This is intentionally a rehearsal rather than a deployment action. It does not
+modify the checkout, run `git revert`, contact a deployment target, or inspect
+external state. That keeps the public CI control safe and deterministic, but
+the cost is material: it cannot prove that a production database, queue,
+provider session, or other stateful dependency would recover.
 
 ### Operational ship gate
 

@@ -301,6 +301,9 @@ uv run python tools/ship_gate_report.py \
   --golden-trace-positive /tmp/agent-reliability-golden-trace.json \
   --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json \
   --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
+  --provider-assurance /tmp/agent-reliability-provider-assurance.json \
+  --provider-contract /tmp/agent-reliability-provider-contract.json \
+  --rollback-rehearsal /tmp/agent-reliability-rollback.json \
   --fail-on-block
 ```
 
@@ -308,13 +311,37 @@ The result is `READY` only when every required check has the expected state.
 Missing evidence becomes `BLOCKED`, so a skipped check cannot look like a
 successful release. The report records the configured rollback method,
 last-known-good target, audit fields, and bounded stop condition; it does not
-perform a rollback or claim production health.
+perform a production rollback or claim production health. The required
+rollback rehearsal injects a synthetic failure into a disposable release
+copy, restores a clean copy from the Git artifact, and binds the restored tree
+hash into the audit evidence. This proves artifact restoration locally, not
+restoration of external deployment state.
 
 Phase 9 binds those audit fields to actual evidence. The report must carry the
 current Git revision, package version, scenario-pack SHA-256, Golden Trace
 SHA-256, and final decision. The gate compares them with the current checkout
 and the approved Golden Trace manifest. A stale report or cross-report mismatch
 blocks release instead of leaving an audit field as an unverified declaration.
+
+### Rehearse the rollback path
+
+Rollback rehearsal is the controlled failure test for the ship-gate recovery
+contract. It uses the current Git revision as the synthetic last-known-good
+artifact, creates a disposable failed copy, detects the changed tree hash,
+restores from the archived artifact, and requires the restored hash to match:
+
+```bash
+uv run python tools/rollback_rehearsal.py \
+  --output /tmp/agent-reliability-rollback.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The plan is strict: `external_writes_allowed` and `network_allowed` must both
+be false. The rehearsal never modifies the checkout or calls a deployment
+system. Its report contains only hashes, identifiers, booleans, and bounded
+timing. A pass means the local artifact restoration path worked; it does not
+prove a real deployment, database, queue, or provider session could roll back.
 
 ## Read the attestation
 

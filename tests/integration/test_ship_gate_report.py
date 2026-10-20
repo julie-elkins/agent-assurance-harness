@@ -49,6 +49,7 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
     negative_golden = tmp_path / "negative-golden.json"
     provider_assurance = tmp_path / "provider-assurance.json"
     provider_contract = tmp_path / "provider-contract.json"
+    rollback_rehearsal = tmp_path / "rollback-rehearsal.json"
     output = tmp_path / "ship-gate.json"
     git_commit, package_version = _current_identity()
     golden_manifest = json.loads(GOLDEN_MANIFEST.read_text(encoding="utf-8"))
@@ -121,6 +122,33 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
         ),
         encoding="utf-8",
     )
+    rollback_rehearsal.write_text(
+        json.dumps(
+            {
+                "rollback_rehearsal_version": 1,
+                "passed": True,
+                "failure_injection": {
+                    "type": "synthetic-release-marker",
+                    "applied": True,
+                    "detected": True,
+                },
+                "recovery": {
+                    "method": "git-archive-restore-rehearsal",
+                    "target": "last-known-good-commit",
+                    "original_tree_sha256": "d" * 64,
+                    "failed_tree_sha256": "e" * 64,
+                    "restored_tree_sha256": "d" * 64,
+                    "restored_match": True,
+                },
+                "side_effects": {
+                    "external_writes_attempted": False,
+                    "network_used": False,
+                },
+                "verification": {"passed": True},
+            }
+        ),
+        encoding="utf-8",
+    )
     command = [
         sys.executable,
         str(TOOL),
@@ -138,6 +166,8 @@ def _run(tmp_path: Path, *, block: bool = False) -> subprocess.CompletedProcess[
         str(provider_assurance),
         "--provider-contract",
         str(provider_contract),
+        "--rollback-rehearsal",
+        str(rollback_rehearsal),
         "--output",
         str(output),
         "--fail-on-block",

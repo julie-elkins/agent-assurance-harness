@@ -50,10 +50,21 @@ def _safe_value(value: object) -> str | None:
     return None
 
 
+def _sha256_value(value: object) -> str | None:
+    if (
+        isinstance(value, str)
+        and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value)
+    ):
+        return value
+    return None
+
+
 def _audit_observation(
     check_id: str,
     regression_path: Path | None,
     golden_path: Path | None,
+    rollback_path: Path | None,
 ) -> tuple[CheckObservation, dict[str, str]]:
     """Bind report identifiers to the current checkout and baseline manifest."""
 
@@ -61,6 +72,7 @@ def _audit_observation(
     values: dict[str, str] = {}
     regression = _read_object(regression_path) if regression_path else {}
     golden = _read_object(golden_path) if golden_path else {}
+    rollback = _read_object(rollback_path) if rollback_path else {}
     attestation = regression.get("assurance_attestation")
     if not isinstance(attestation, dict):
         reasons.append("assurance-attestation-missing")
@@ -69,12 +81,17 @@ def _audit_observation(
     if not isinstance(manifest, dict):
         reasons.append("golden-manifest-missing")
         manifest = {}
+    recovery = rollback.get("recovery")
+    if not isinstance(recovery, dict):
+        reasons.append("rollback-recovery-missing")
+        recovery = {}
 
     observed = {
         "git-commit": attestation.get("git_commit"),
         "package-version": attestation.get("package_version"),
         "scenario-pack-sha256": attestation.get("pack_set_sha256"),
         "golden-trace-sha256": golden.get("candidate_trace_sha256"),
+        "rollback-artifact-sha256": recovery.get("restored_tree_sha256"),
     }
     for field, value in observed.items():
         safe = _safe_value(value)
@@ -101,6 +118,10 @@ def _audit_observation(
         manifest.get("trace_sha256")
     ):
         reasons.append("golden-trace-sha256-mismatch")
+    if values.get("rollback-artifact-sha256") != _safe_value(
+        recovery.get("original_tree_sha256")
+    ):
+        reasons.append("rollback-artifact-mismatch")
 
     return CheckObservation(
         check_id,
@@ -231,6 +252,49 @@ def _provider_contract_observation(
     )
 
 
+def _rollback_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    failure_injection = report.get("failure_injection")
+    recovery = report.get("recovery")
+    side_effects = report.get("side_effects")
+    verification = report.get("verification")
+    passed = (
+        expected == "pass"
+        and report.get("rollback_rehearsal_version") == 1
+        and report.get("passed") is True
+        and isinstance(failure_injection, dict)
+        and failure_injection.get("type") == "synthetic-release-marker"
+        and failure_injection.get("applied") is True
+        and failure_injection.get("detected") is True
+        and isinstance(recovery, dict)
+        and recovery.get("method") == "git-archive-restore-rehearsal"
+        and recovery.get("target") == "last-known-good-commit"
+        and _sha256_value(recovery.get("original_tree_sha256")) is not None
+        and _sha256_value(recovery.get("failed_tree_sha256")) is not None
+        and _sha256_value(recovery.get("restored_tree_sha256")) is not None
+        and recovery.get("failed_tree_sha256")
+        != recovery.get("original_tree_sha256")
+        and recovery.get("restored_tree_sha256")
+        == recovery.get("original_tree_sha256")
+        and recovery.get("restored_match") is True
+        and isinstance(side_effects, dict)
+        and side_effects.get("external_writes_attempted") is False
+        and side_effects.get("network_used") is False
+        and isinstance(verification, dict)
+        and verification.get("passed") is True
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "rollback-rehearsal-failed",
+    )
+
+
 def _observations(
     manifest: ShipGateManifest,
     paths: dict[str, Path],
@@ -264,6 +328,12 @@ def _observations(
             )
         elif check.report_kind == "provider-contract":
             observations[check.check_id] = _provider_contract_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
+        elif check.report_kind == "rollback":
+            observations[check.check_id] = _rollback_observation(
                 check.check_id,
                 path,
                 expected=check.expected,
@@ -320,6 +390,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--golden-trace-negative-control", type=Path)
     parser.add_argument("--provider-assurance", type=Path)
     parser.add_argument("--provider-contract", type=Path)
+    parser.add_argument("--rollback-rehearsal", type=Path)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument("--fail-on-block", action="store_true")
@@ -332,6 +403,7 @@ def main(argv: list[str] | None = None) -> int:
         "golden-trace-negative-control": args.golden_trace_negative_control,
         "provider-adapter-assurance": args.provider_assurance,
         "provider-contract-drift": args.provider_contract,
+        "rollback-rehearsal": args.rollback_rehearsal,
     }
     paths = {key: value for key, value in paths.items() if value is not None}
     try:
@@ -348,6 +420,7 @@ def main(argv: list[str] | None = None) -> int:
             audit_check_id,
             args.adapter_regression_positive,
             args.golden_trace_positive,
+            args.rollback_rehearsal,
         )
         observations = _observations(manifest, paths, audit_observation)
         audit_values["decision"] = "pending"

@@ -14,9 +14,10 @@ REPOSITORY = Path(__file__).parents[2]
 MANIFEST = REPOSITORY / "examples" / "ship-gate.json"
 AUDIT_VALUES = {
     "git-commit": "a" * 40,
-    "package-version": "0.34.0",
+    "package-version": "0.37.0",
     "scenario-pack-sha256": "b" * 64,
     "golden-trace-sha256": "c" * 64,
+    "rollback-artifact-sha256": "d" * 64,
     "decision": "ready",
 }
 

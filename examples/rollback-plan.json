@@ -1,0 +1,11 @@
+{
+  "rollback_plan_version": 1,
+  "rollback_id": "synthetic-artifact-rollback",
+  "method": "git-archive-restore-rehearsal",
+  "target": "last-known-good-commit",
+  "failure_injection": "synthetic-release-marker",
+  "verification": "restored-artifact-integrity",
+  "max_elapsed_seconds": 60,
+  "external_writes_allowed": false,
+  "network_allowed": false
+}

@@ -41,6 +41,12 @@
       "blocking": true
     },
     {
+      "check_id": "rollback-rehearsal",
+      "report_kind": "rollback",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "audit-evidence-integrity",
       "report_kind": "audit",
       "expected": "match",
@@ -76,6 +82,7 @@
       "package-version",
       "scenario-pack-sha256",
       "golden-trace-sha256",
+      "rollback-artifact-sha256",
       "decision"
     ],
     "storage": "ci-artifact"

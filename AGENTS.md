@@ -96,6 +96,12 @@ missing, and what the result does not prove.
 - `examples/regressed_adapter.py` is a synthetic negative control. The CI
   `--expect-blocking` path must pass only when the comparator catches a blocking
   regression; do not treat its findings as a production recommendation.
+- `tools/adapter_regression_report.py` must include a metadata-only assurance
+  attestation with the package version, Git commit, canonical built-in pack-set hash,
+  pack manifests, harness changes, counts, and refusal code. The attestation must not
+  include traces, prompts, commands, credentials, provider output, or raw finding
+  messages. It identifies what was checked; it is not a signed provenance claim or
+  live-provider quality result.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.

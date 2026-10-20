@@ -227,6 +227,36 @@ with `--expect-blocking`. That command succeeds only when the regression gate ca
 least one blocking safety or evidence regression. This proves the gate can stop a bad
 candidate; it does not measure live model quality.
 
+Each regression report also includes an assurance attestation (a metadata-only record of
+the exact evaluation state). It records the package version, Git commit, canonical hash
+of the complete built-in pack set, per-pack manifests, harness changes, scenario count,
+finding counts, and any refusal code. Pass `--attestation-output PATH` to write the
+attestation separately for CI or release review:
+
+```bash
+uv run python tools/adapter_regression_report.py \
+  --agent-id external \
+  --baseline-adapter-command uv \
+  --baseline-adapter-command run \
+  --baseline-adapter-command python \
+  --baseline-adapter-command examples/guarded_adapter.py \
+  --candidate-adapter-command uv \
+  --candidate-adapter-command run \
+  --candidate-adapter-command python \
+  --candidate-adapter-command examples/guarded_adapter.py \
+  --baseline-change-id approved-baseline-2026-10-20 \
+  --baseline-component guardrails \
+  --candidate-change-id candidate-guardrails-2026-10-20 \
+  --candidate-component guardrails \
+  --attestation-output /tmp/agent-reliability-attestation.json \
+  --fail-on-findings
+```
+
+The attestation contains hashes and counts only; it does not contain traces, prompts,
+commands, credentials, tool payloads, provider output, or raw finding messages. It is
+evidence of what the local harness checked, not a signed provenance claim and not proof
+of live-provider quality.
+
 ### Exercise provider integrations without network access
 
 The repository includes mocked OpenAI-shaped and Anthropic-shaped adapters. A mocked

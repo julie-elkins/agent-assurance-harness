@@ -68,6 +68,7 @@ jobs:
           --candidate-change-id candidate-ci
           --candidate-component guardrails
           --output /tmp/agent-reliability-adapter-regression.json
+          --attestation-output /tmp/agent-reliability-adapter-attestation.json
           --fail-on-findings
 
       - name: Prove regression gate blocks degraded candidate
@@ -86,6 +87,7 @@ jobs:
           --baseline-component guardrails
           --candidate-change-id candidate-regression-control
           --candidate-component guardrails
+          --attestation-output /tmp/agent-reliability-negative-attestation.json
           --expect-blocking
 
       - name: Generate starter custom pack

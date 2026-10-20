@@ -5,8 +5,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
+import tomllib
 from pathlib import Path
 
+from agent_reliability_lab.attestation import (
+    AssuranceAttestation,
+    build_regression_attestation,
+)
 from agent_reliability_lab.external import (
     DEFAULT_ADAPTER_TIMEOUT_SECONDS,
     DEFAULT_MAX_MEMORY_BYTES,
@@ -21,9 +27,11 @@ from agent_reliability_lab.replay import (
     ReplayRefusal,
     run_adapter_replay,
 )
+from agent_reliability_lab.packs import load_builtin_packs
 
 
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _identifier(value: str) -> str:
@@ -51,6 +59,32 @@ def _refused_report(error: Exception) -> RegressionReport:
             guidance="Repair the adapter or built-in pack validation issue before retrying.",
             source=type(error).__name__,
         ),
+    )
+
+
+def _package_version() -> str:
+    with (ROOT / "pyproject.toml").open("rb") as stream:
+        return tomllib.load(stream)["project"]["version"]
+
+
+def _git_commit() -> str:
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _attestation(
+    report: RegressionReport,
+) -> AssuranceAttestation:
+    return build_regression_attestation(
+        report,
+        load_builtin_packs(),
+        package_version=_package_version(),
+        git_commit=_git_commit(),
     )
 
 
@@ -112,6 +146,11 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--adapter-working-directory", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument(
+        "--attestation-output",
+        type=Path,
+        help="Optional path for the metadata-only assurance attestation.",
+    )
     parser.add_argument("--fail-on-findings", action="store_true")
     parser.add_argument(
         "--expect-blocking",
@@ -164,10 +203,19 @@ def main(argv: list[str] | None = None) -> int:
     except (OSError, RuntimeError, ValueError) as error:
         report = _refused_report(error)
 
-    serialized = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"
+    attestation = _attestation(report)
+    report_data = report.to_dict()
+    report_data["assurance_attestation"] = attestation.to_dict()
+    serialized = json.dumps(report_data, indent=2, sort_keys=True) + "\n"
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(serialized, encoding="utf-8")
+    if args.attestation_output is not None:
+        args.attestation_output.parent.mkdir(parents=True, exist_ok=True)
+        args.attestation_output.write_text(
+            json.dumps(attestation.to_dict(), indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
     print(serialized, end="")
     if args.expect_blocking:
         return int(

@@ -86,4 +86,25 @@ def _harness_version() -> str:
         return "source-checkout"
 
 
-__all__ = ["PACK_HASH_ALGORITHM", "PackManifest", "pack_manifest", "pack_sha256"]
+def pack_set_sha256(packs: tuple[ScenarioPack, ...]) -> str:
+    """Return the hash of the sorted canonical pack set."""
+
+    encoded = json.dumps(
+        [
+            pack.to_dict()
+            for pack in sorted(packs, key=lambda item: item.scenario_id)
+        ],
+        ensure_ascii=True,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+__all__ = [
+    "PACK_HASH_ALGORITHM",
+    "PackManifest",
+    "pack_manifest",
+    "pack_set_sha256",
+    "pack_sha256",
+]

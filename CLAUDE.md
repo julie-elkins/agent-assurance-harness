@@ -117,6 +117,14 @@ credentials, or provider output.
 `--expect-blocking`, which passes only when the regression gate catches a blocking
 safety/evidence regression. This proves enforcement, not live model quality.
 
+Phase 25 adds a metadata-only assurance attestation to the regression report. The
+attestation records the package version, Git commit, canonical built-in pack-set hash,
+per-pack manifests, harness changes, scenario count, finding counts, and refusal code.
+Use `--attestation-output PATH` to write the same identifier-only record separately.
+It contains no traces, prompts, commands, credentials, provider output, or raw finding
+messages; it identifies the evaluated state but does not sign provenance or establish
+live-provider quality.
+
 The Phase 12 candidate demonstration is reproducible locally:
 
 ```bash

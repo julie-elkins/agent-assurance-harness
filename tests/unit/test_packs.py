@@ -8,7 +8,11 @@ from agent_reliability_lab.packs import (
     load_pack_directory,
     request_from_pack,
 )
-from agent_reliability_lab.pack_provenance import pack_manifest, pack_sha256
+from agent_reliability_lab.pack_provenance import (
+    pack_manifest,
+    pack_set_sha256,
+    pack_sha256,
+)
 from agent_reliability_lab.scenarios import scenarios
 
 
@@ -62,6 +66,15 @@ def test_pack_fingerprint_is_stable_and_changes_with_definition():
 
     assert decoded.pack is not None
     assert pack_sha256(decoded.pack) != first
+
+
+def test_pack_set_fingerprint_is_stable_and_order_independent():
+    packs = load_builtin_packs()
+    first = pack_set_sha256(packs)
+    second = pack_set_sha256(tuple(reversed(packs)))
+
+    assert first == second
+    assert len(first) == 64
 
 
 def test_pack_rejects_unknown_and_payload_fields():

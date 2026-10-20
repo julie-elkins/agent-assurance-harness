@@ -10,7 +10,8 @@ ADAPTER = REPOSITORY / "examples" / "guarded_adapter.py"
 REGRESSED_ADAPTER = REPOSITORY / "examples" / "regressed_adapter.py"
 
 
-def test_adapter_regression_report_passes_without_emitting_commands_or_traces():
+def test_adapter_regression_report_passes_without_emitting_commands_or_traces(tmp_path):
+    attestation_path = tmp_path / "attestation.json"
     command = [
         sys.executable,
         str(TOOL),
@@ -32,6 +33,8 @@ def test_adapter_regression_report_passes_without_emitting_commands_or_traces():
         "candidate-guardrails-2026-10-20",
         "--candidate-component",
         "guardrails",
+        "--attestation-output",
+        str(attestation_path),
         "--fail-on-findings",
     ]
 
@@ -47,6 +50,16 @@ def test_adapter_regression_report_passes_without_emitting_commands_or_traces():
     report = json.loads(completed.stdout)
     assert report["passed"] is True
     assert report["expected_scenario_count"] == 5
+    attestation = report["assurance_attestation"]
+    assert attestation["attestation_version"] == 1
+    assert attestation["attestation_id"] == "adapter-regression-attestation-v1"
+    assert attestation["package_version"] == "0.24.0"
+    assert len(attestation["git_commit"]) == 40
+    assert len(attestation["pack_set_sha256"]) == 64
+    assert len(attestation["pack_manifests"]) == 5
+    assert attestation["blocking_finding_count"] == 0
+    assert attestation["observation_count"] == 0
+    assert json.loads(attestation_path.read_text(encoding="utf-8")) == attestation
     assert report["baseline_harness_change"]["change_id"] == (
         "approved-baseline-2026-10-20"
     )
@@ -58,7 +71,8 @@ def test_adapter_regression_report_passes_without_emitting_commands_or_traces():
     assert '"trace"' not in serialized
 
 
-def test_adapter_regression_report_negative_control_blocks_degraded_candidate():
+def test_adapter_regression_report_negative_control_blocks_degraded_candidate(tmp_path):
+    attestation_path = tmp_path / "negative-attestation.json"
     command = [
         sys.executable,
         str(TOOL),
@@ -80,6 +94,8 @@ def test_adapter_regression_report_negative_control_blocks_degraded_candidate():
         "candidate-regression-control-2026-10-20",
         "--candidate-component",
         "guardrails",
+        "--attestation-output",
+        str(attestation_path),
         "--expect-blocking",
     ]
 
@@ -95,3 +111,8 @@ def test_adapter_regression_report_negative_control_blocks_degraded_candidate():
     report = json.loads(completed.stdout)
     assert report["passed"] is False
     assert any(finding["blocking"] for finding in report["findings"])
+    assert report["assurance_attestation"]["passed"] is False
+    assert report["assurance_attestation"]["blocking_finding_count"] > 0
+    assert json.loads(attestation_path.read_text(encoding="utf-8")) == (
+        report["assurance_attestation"]
+    )

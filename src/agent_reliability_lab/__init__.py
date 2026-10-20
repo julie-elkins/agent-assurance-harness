@@ -10,6 +10,12 @@ from .models import (
     FindingStatus,
     Trace,
 )
+from .attestation import (
+    ATTESTATION_ID,
+    ATTESTATION_VERSION,
+    AssuranceAttestation,
+    build_regression_attestation,
+)
 from .adapters import ScenarioAdapter, reference_adapters, trace_to_events
 from .environment import (
     FaultInjection,
@@ -72,6 +78,7 @@ from .pack_provenance import (
     PACK_HASH_ALGORITHM,
     PackManifest,
     pack_manifest,
+    pack_set_sha256,
     pack_sha256,
 )
 from .live import (
@@ -116,10 +123,13 @@ from .runner import (
 
 __all__ = [
     "AgentReport",
+    "ATTESTATION_ID",
+    "ATTESTATION_VERSION",
     "AdapterRefusal",
     "AdapterRun",
     "AgentAdapter",
     "AssuranceDimension",
+    "AssuranceAttestation",
     "DimensionSummary",
     "DEFAULT_ADAPTER_TIMEOUT_SECONDS",
     "DEFAULT_MAX_RESPONSE_BYTES",
@@ -173,6 +183,7 @@ __all__ = [
     "adapter_run_to_dict",
     "environment_for_scenario",
     "build_environment_from_pack",
+    "build_regression_attestation",
     "decode_scenario_pack",
     "load_builtin_packs",
     "load_builtin_pack_results",
@@ -188,6 +199,7 @@ __all__ = [
     "run_adapter_conformance",
     "run_custom_pack_conformance",
     "pack_manifest",
+    "pack_set_sha256",
     "pack_sha256",
     "evaluate_pack_trace",
     "live_provider_adapter",

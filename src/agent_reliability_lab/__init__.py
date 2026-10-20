@@ -25,6 +25,16 @@ from .evaluators import (
     all_evaluator_failures_caught,
     run_evaluator_validity,
 )
+from .external import (
+    DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    DEFAULT_MAX_RESPONSE_BYTES,
+    ProtocolDecodeError,
+    SubprocessAdapter,
+    adapter_run_from_dict,
+    adapter_run_to_dict,
+    scenario_request_from_dict,
+    scenario_request_to_dict,
+)
 from .protocol import (
     AdapterRefusal,
     AdapterRun,
@@ -34,7 +44,7 @@ from .protocol import (
     ScenarioRequest,
     validate_adapter_run,
 )
-from .runner import run_comparison
+from .runner import run_adapter_comparison, run_comparison
 
 __all__ = [
     "AgentReport",
@@ -43,6 +53,8 @@ __all__ = [
     "AgentAdapter",
     "AssuranceDimension",
     "DimensionSummary",
+    "DEFAULT_ADAPTER_TIMEOUT_SECONDS",
+    "DEFAULT_MAX_RESPONSE_BYTES",
     "EvidenceContract",
     "EvidenceRequirement",
     "FaultInjection",
@@ -53,17 +65,24 @@ __all__ = [
     "FindingStatus",
     "EventType",
     "ObservableEvent",
+    "ProtocolDecodeError",
     "ScenarioRequest",
     "ScenarioAdapter",
     "SimulatedToolEnvironment",
+    "SubprocessAdapter",
     "ToolObservation",
     "ToolSpec",
     "Trace",
     "all_evaluator_failures_caught",
+    "adapter_run_from_dict",
+    "adapter_run_to_dict",
     "environment_for_scenario",
     "reference_adapters",
+    "run_adapter_comparison",
     "run_comparison",
     "run_evaluator_validity",
+    "scenario_request_from_dict",
+    "scenario_request_to_dict",
     "trace_to_events",
     "validate_adapter_run",
 ]

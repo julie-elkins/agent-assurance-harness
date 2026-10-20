@@ -143,11 +143,35 @@ def run_comparison(include_mutations: bool = False) -> ComparisonReport:
 
     scenario_cases = scenarios()
     adapters = reference_adapters()
+    return _build_comparison(
+        adapters,
+        scenario_cases,
+        include_mutations=include_mutations,
+    )
+
+
+def run_adapter_comparison(
+    adapter: AgentAdapter,
+    *,
+    include_mutations: bool = False,
+) -> ComparisonReport:
+    """Run one external adapter through the same assurance report shape."""
+
+    return _build_comparison(
+        (adapter,),
+        scenarios(),
+        include_mutations=include_mutations,
+    )
+
+
+def _build_comparison(
+    adapters: tuple[AgentAdapter, ...],
+    scenario_cases: tuple[Scenario, ...],
+    *,
+    include_mutations: bool,
+) -> ComparisonReport:
     return ComparisonReport(
-        reports=(
-            _run_agent(adapters[0], scenario_cases),
-            _run_agent(adapters[1], scenario_cases),
-        ),
+        reports=tuple(_run_agent(adapter, scenario_cases) for adapter in adapters),
         scenario_count=len(scenario_cases),
         contracts=tuple(case.contract for case in scenario_cases),
         mutation_tests=run_mutation_tests() if include_mutations else (),
@@ -159,7 +183,7 @@ def failed_checks(report: ComparisonReport) -> int:
     """Count failed checks across both agents."""
 
     return sum(
-        finding.status is FindingStatus.FAILED
+        finding.status in {FindingStatus.FAILED, FindingStatus.REFUSED}
         for agent_report in report.reports
         for finding in agent_report.findings
     )

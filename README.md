@@ -69,6 +69,30 @@ deliberately naive baseline to produce a non-zero exit code:
 python -m agent_reliability_lab --json --fail-on-findings
 ```
 
+## Run an external adapter
+
+The adapter protocol uses one JSON object per line on stdin and one JSON object per line
+on stdout. The harness starts a fresh process for each scenario. Repeat
+`--adapter-command` once per command argument; the harness passes the resulting argument
+vector directly to the operating system and does not invoke a shell.
+
+The included adapter uses the guarded synthetic reference agent:
+
+```bash
+python -m agent_reliability_lab \
+  --adapter-check \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/guarded_adapter.py \
+  --markdown \
+  --mutations
+```
+
+The adapter process receives only synthetic scenario metadata and the evidence contract.
+The harness does not forward the parent environment's secrets. Its timeout and response
+size limits are configurable with `--timeout-seconds` and `--max-response-bytes`.
+
 ## Report contract
 
 The JSON report is intentionally small. It includes scenario contracts, separate

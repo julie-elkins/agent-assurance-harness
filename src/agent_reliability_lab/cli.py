@@ -6,7 +6,12 @@ import argparse
 import json
 import sys
 
-from .runner import failed_checks, run_comparison
+from .external import (
+    DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+    DEFAULT_MAX_RESPONSE_BYTES,
+    SubprocessAdapter,
+)
+from .runner import failed_checks, run_adapter_comparison, run_comparison
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -36,6 +41,28 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Run controlled evidence mutations against the evaluator.",
     )
+    parser.add_argument(
+        "--adapter-check",
+        action="store_true",
+        help="Run a local subprocess adapter through the assurance harness.",
+    )
+    parser.add_argument(
+        "--adapter-command",
+        action="append",
+        help="One argument of the adapter command; repeat for each argument.",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=float,
+        default=DEFAULT_ADAPTER_TIMEOUT_SECONDS,
+        help="Maximum time for one adapter scenario run.",
+    )
+    parser.add_argument(
+        "--max-response-bytes",
+        type=int,
+        default=DEFAULT_MAX_RESPONSE_BYTES,
+        help="Maximum stdout bytes accepted from one adapter scenario run.",
+    )
     return parser
 
 
@@ -43,7 +70,31 @@ def main(argv: list[str] | None = None) -> int:
     """Run the CLI and return a process exit code."""
 
     args = build_parser().parse_args(argv)
-    report = run_comparison(include_mutations=args.mutations)
+    if args.adapter_check:
+        if not args.adapter_command:
+            print(
+                "--adapter-check requires at least one --adapter-command argument.",
+                file=sys.stderr,
+            )
+            return 2
+        adapter = SubprocessAdapter(
+            agent_id="external",
+            command=tuple(args.adapter_command),
+            timeout_seconds=args.timeout_seconds,
+            max_response_bytes=args.max_response_bytes,
+        )
+        report = run_adapter_comparison(
+            adapter,
+            include_mutations=args.mutations,
+        )
+    else:
+        if args.adapter_command:
+            print(
+                "--adapter-command is only valid with --adapter-check.",
+                file=sys.stderr,
+            )
+            return 2
+        report = run_comparison(include_mutations=args.mutations)
     if args.json:
         print(json.dumps(report.to_dict(), indent=2, sort_keys=True))
     elif args.markdown:

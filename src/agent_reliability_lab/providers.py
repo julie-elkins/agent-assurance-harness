@@ -367,6 +367,11 @@ def _openai_events(trace) -> list[dict[str, object]]:
                 if index < len(trace.authorization_operation_ids)
                 else {}
             ),
+            **(
+                {"action_digest": trace.authorization_action_digests[index]}
+                if index < len(trace.authorization_action_digests)
+                else {}
+            ),
         }
         for index, item in enumerate(trace.authorization_ids)
     )
@@ -391,6 +396,14 @@ def _openai_events(trace) -> list[dict[str, object]]:
         }
         for index, reconciliation_id in enumerate(trace.reconciliation_ids)
         if index < len(trace.reconciliation_statuses)
+    )
+    events.extend(
+        {
+            "type": "classification",
+            "kind": "action_digest",
+            "id": action_digest,
+        }
+        for action_digest in trace.action_digests
     )
     return events
 
@@ -445,6 +458,11 @@ def _anthropic_events(trace) -> list[dict[str, object]]:
                 if index < len(trace.authorization_operation_ids)
                 else {}
             ),
+            **(
+                {"action_digest": trace.authorization_action_digests[index]}
+                if index < len(trace.authorization_action_digests)
+                else {}
+            ),
         }
         for index, item in enumerate(trace.authorization_ids)
     )
@@ -469,6 +487,14 @@ def _anthropic_events(trace) -> list[dict[str, object]]:
         }
         for index, reconciliation_id in enumerate(trace.reconciliation_ids)
         if index < len(trace.reconciliation_statuses)
+    )
+    events.extend(
+        {
+            "type": "reliability",
+            "kind": "action_digest",
+            "id": action_digest,
+        }
+        for action_digest in trace.action_digests
     )
     return events
 
@@ -524,7 +550,7 @@ def _translate_openai(
         elif event_type == "classification":
             _keys(
                 event,
-                {"type", "kind", "id", "status"},
+                {"type", "kind", "id", "status", "operation_id", "action_digest"},
                 f"openai events[{index}]",
             )
             _record_classification(
@@ -535,11 +561,19 @@ def _translate_openai(
                     event.get("status"),
                     "openai classification status",
                 ),
+                operation_id=_optional_identifier(
+                    event.get("operation_id"),
+                    "openai classification operation_id",
+                ),
+                action_digest=_optional_action_digest(
+                    event.get("action_digest"),
+                    "openai classification action_digest",
+                ),
             )
         elif event_type in {"authorization", "side_effect"}:
             _keys(
                 event,
-                {"type", "id", "operation_id"},
+                {"type", "id", "operation_id", "action_digest"},
                 f"openai events[{index}]",
             )
             identifier = _identifier(event.get("id"), f"openai {event_type} id")
@@ -548,9 +582,16 @@ def _translate_openai(
                     event.get("operation_id"),
                     "openai authorization operation_id",
                 )
+                action_digest = event.get("action_digest")
+                if action_digest is not None:
+                    action_digest = _required_action_digest(
+                        action_digest,
+                        "openai authorization action_digest",
+                    )
                 recorder.record_authorization(
                     identifier,
                     operation_id=operation_id,
+                    action_digest=action_digest,
                 )
             else:
                 recorder.record_side_effect(identifier)
@@ -628,7 +669,7 @@ def _translate_anthropic(
         elif event_type == "reliability":
             _keys(
                 event,
-                {"type", "kind", "id", "status", "operation_id"},
+                {"type", "kind", "id", "status", "operation_id", "action_digest"},
                 f"anthropic content[{index}]",
             )
             _record_classification(
@@ -642,6 +683,10 @@ def _translate_anthropic(
                 operation_id=_optional_identifier(
                     event.get("operation_id"),
                     "anthropic reliability operation_id",
+                ),
+                action_digest=_optional_action_digest(
+                    event.get("action_digest"),
+                    "anthropic reliability action_digest",
                 ),
             )
         else:
@@ -660,6 +705,7 @@ def _record_classification(
     *,
     status: str | None = None,
     operation_id: str | None = None,
+    action_digest: str | None = None,
 ) -> None:
     if kind == "claim":
         if identifier is None:
@@ -689,6 +735,7 @@ def _record_classification(
         recorder.record_authorization(
             identifier,
             operation_id=operation_id,
+            action_digest=action_digest,
         )
     elif kind == "side_effect":
         if identifier is None:
@@ -722,6 +769,14 @@ def _record_classification(
                 "Emit an identifier-only reconciliation classification with its status.",
             )
         recorder.record_reconciliation(identifier, status)
+    elif kind == "action_digest":
+        if identifier is None:
+            raise ProviderPayloadError(
+                "missing_classification_id",
+                "An action-digest classification requires an identifier.",
+                "Emit an identifier-only sha256 action digest.",
+            )
+        recorder.record_action_digest(identifier)
     else:
         raise ProviderPayloadError(
             "unknown_reliability_classification",
@@ -798,6 +853,25 @@ def _optional_identifier(value: object, context: str) -> str | None:
     if value is None:
         return None
     return _identifier(value, context)
+
+
+def _required_action_digest(value: object, context: str) -> str:
+    if not isinstance(value, str) or re.fullmatch(
+        r"sha256:[0-9a-f]{64}",
+        value,
+    ) is None:
+        raise ProviderPayloadError(
+            "invalid_provider_action_digest",
+            f"{context} must be a lowercase sha256 digest identifier.",
+            "Use the form sha256:<64 lowercase hexadecimal characters>.",
+        )
+    return value
+
+
+def _optional_action_digest(value: object, context: str) -> str | None:
+    if value is None:
+        return None
+    return _required_action_digest(value, context)
 
 
 def _identifier_list(value: object, context: str) -> tuple[str, ...]:

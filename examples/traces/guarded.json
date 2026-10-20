@@ -336,9 +336,15 @@
           "side_effects": ["side-effect-002"],
           "authorization_ids": ["authorization:approval"],
           "authorization_operation_ids": ["operation-001"],
+          "authorization_action_digests": [
+            "sha256:f8bc04abfc40d9272d7befd7b538ba5fbaf578b8d2464546e04ee4642a1ba8ed"
+          ],
           "tool_output_flags": [],
           "operation_ids": ["operation-001", "operation-001"],
           "idempotency_keys": ["idempotency-001", "idempotency-001"],
+          "action_digests": [
+            "sha256:f8bc04abfc40d9272d7befd7b538ba5fbaf578b8d2464546e04ee4642a1ba8ed"
+          ],
           "reconciliation_ids": ["reconcile-result-001"],
           "reconciliation_statuses": ["confirmed"]
         },
@@ -462,6 +468,14 @@
             "name": "reconcile-result-001",
             "status": "confirmed",
             "evidence_id": "reconcile-result-001"
+          },
+          {
+            "sequence": 16,
+            "event_id": "event-016",
+            "event_type": "action_digest",
+            "name": "sha256:f8bc04abfc40d9272d7befd7b538ba5fbaf578b8d2464546e04ee4642a1ba8ed",
+            "status": null,
+            "evidence_id": null
           }
         ]
       }

@@ -68,7 +68,15 @@ def _requirement_satisfied(
                     trace.operation_ids
                 )
             )
+        if value == "bound-to-action":
+            return bool(trace.authorization_ids) and bool(
+                set(trace.authorization_action_digests).intersection(
+                    trace.action_digests
+                )
+            )
         return not trace.side_effects or bool(trace.authorization_ids)
+    if evidence_type == "action_digest":
+        return value in trace.action_digests
     if evidence_type == "side_effect":
         if value == "operation-id":
             return len(trace.operation_ids) >= 2 and len(set(trace.operation_ids)) == 1

@@ -17,7 +17,7 @@ from enum import Enum
 from .environment import SimulatedToolEnvironment, ToolObservation
 from .models import FindingStatus, ToolCall, Trace
 from .packs import ScenarioPack, build_environment_from_pack, load_builtin_packs
-from .scenarios import Scenario, scenarios
+from .scenarios import AMBIGUOUS_ACTION_DIGEST, Scenario, scenarios
 
 
 class GateAction(str, Enum):
@@ -124,6 +124,48 @@ class EvidenceGate:
                     required_evidence=required,
                     observed_evidence=observed + trace.authorization_ids,
                     missing_evidence=("authorization:bound-to-operation",),
+                )
+            if (
+                "authorization:bound-to-action" in required
+                and not set(trace.authorization_action_digests).intersection(
+                    trace.action_digests
+                )
+            ):
+                return GateResult(
+                    action=action,
+                    decision=GateDecision.BLOCKED,
+                    message=(
+                        "Protected side effect blocked because authorization is "
+                        "not bound to the canonical action digest."
+                    ),
+                    required_evidence=required,
+                    observed_evidence=observed + trace.authorization_ids,
+                    missing_evidence=("authorization:bound-to-action",),
+                )
+            expected_action_digests = tuple(
+                requirement.split(":", 1)[1]
+                for requirement in required
+                if requirement.startswith("action-digest:")
+            )
+            missing_action_digest = next(
+                (
+                    digest
+                    for digest in expected_action_digests
+                    if digest not in trace.action_digests
+                ),
+                None,
+            )
+            if missing_action_digest is not None:
+                return GateResult(
+                    action=action,
+                    decision=GateDecision.BLOCKED,
+                    message=(
+                        "Protected side effect blocked because the observed action "
+                        "digest does not match the contract."
+                    ),
+                    required_evidence=required,
+                    observed_evidence=observed + trace.authorization_ids,
+                    missing_evidence=(f"action-digest:{missing_action_digest}",),
                 )
             return GateResult(
                 action=action,
@@ -365,8 +407,14 @@ def _run_profile(
                 claim="The retry reused stable write identity.",
                 authorization_ids=("authorization:approval",),
                 authorization_operation_ids=("operation-001",),
+                authorization_action_digests=(
+                    AMBIGUOUS_ACTION_DIGEST,
+                ),
                 operation_ids=("operation-001", "operation-001"),
                 idempotency_keys=("idempotency-001", "idempotency-001"),
+                action_digests=(
+                    AMBIGUOUS_ACTION_DIGEST,
+                ),
                 reconciliation_ids=("reconcile-result-001",),
                 reconciliation_statuses=("confirmed",),
             )

@@ -2,6 +2,7 @@ from agent_reliability_lab.external import adapter_run_from_dict, adapter_run_to
 from agent_reliability_lab.protocol import EventType
 from agent_reliability_lab.recorder import TraceRecorder
 from agent_reliability_lab.replay import REPLAY_VERSION, ReplayFile
+from agent_reliability_lab.scenarios import AMBIGUOUS_ACTION_DIGEST
 
 
 def test_recorder_builds_an_identifier_only_replay_case():
@@ -200,3 +201,31 @@ def test_recorder_records_authorization_operation_binding():
     assert run.trace.authorization_ids == ("authorization:approval",)
     assert run.trace.authorization_operation_ids == ("operation-001",)
     assert run.events[0].evidence_id == "operation-001"
+
+
+def test_recorder_rejects_non_sha256_action_digest():
+    recorder = TraceRecorder(
+        scenario_id="ambiguous-side-effect-retry",
+        agent_id="synthetic-agent",
+    )
+
+    result = recorder.record_action_digest("not-a-digest")
+
+    assert result.accepted is False
+    assert result.refusal is not None
+    assert result.refusal.error == "invalid_action_digest"
+
+
+def test_recorder_records_action_digest_without_payload():
+    recorder = TraceRecorder(
+        scenario_id="ambiguous-side-effect-retry",
+        agent_id="synthetic-agent",
+    )
+
+    result = recorder.record_action_digest(AMBIGUOUS_ACTION_DIGEST)
+    run = recorder.finish()
+
+    assert result.accepted is True
+    assert run.trace is not None
+    assert run.trace.action_digests == (AMBIGUOUS_ACTION_DIGEST,)
+    assert run.events[0].event_type is EventType.ACTION_DIGEST

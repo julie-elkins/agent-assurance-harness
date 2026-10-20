@@ -23,7 +23,7 @@ from agent_reliability_lab.replay import (
     ReplayCase,
     ReplayFile,
 )
-from agent_reliability_lab.scenarios import scenarios
+from agent_reliability_lab.scenarios import AMBIGUOUS_ACTION_DIGEST, scenarios
 
 
 AGENT_ID = "external"
@@ -34,6 +34,7 @@ def _record_observation(
     observation: ToolObservation,
     *,
     authorization_operation_id: str | None = None,
+    authorization_action_digest: str | None = None,
 ) -> None:
     """Map synthetic observable metadata into the recorder boundary."""
 
@@ -48,9 +49,12 @@ def _record_observation(
         recorder.record_authorization(
             "authorization:approval",
             operation_id=authorization_operation_id,
+            action_digest=authorization_action_digest,
         )
     if observation.side_effect_attempted is not None:
         recorder.record_side_effect(observation.side_effect_attempted)
+    if authorization_action_digest is not None:
+        recorder.record_action_digest(authorization_action_digest)
 
 
 def _record_guarded_run(
@@ -88,6 +92,9 @@ def _record_guarded_run(
             recorder,
             first,
             authorization_operation_id="operation-001",
+            authorization_action_digest=(
+                AMBIGUOUS_ACTION_DIGEST
+            ),
         )
         recorder.record_operation_id("operation-001")
         recorder.record_idempotency_key("idempotency-001")

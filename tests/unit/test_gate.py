@@ -8,7 +8,7 @@ from agent_reliability_lab.gate import (
 )
 from agent_reliability_lab.models import Trace
 from agent_reliability_lab.packs import load_builtin_packs
-from agent_reliability_lab.scenarios import scenarios
+from agent_reliability_lab.scenarios import AMBIGUOUS_ACTION_DIGEST, scenarios
 
 
 SCENARIO_IDS = (
@@ -99,3 +99,34 @@ def test_unrelated_authorization_does_not_unlock_ambiguous_write():
 
     assert result.decision is GateDecision.BLOCKED
     assert result.missing_evidence == ("authorization:bound-to-operation",)
+
+
+def test_wrong_action_digest_does_not_unlock_ambiguous_write():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "ambiguous-side-effect-retry"
+    )
+    pack = next(
+        pack
+        for pack in load_builtin_packs()
+        if pack.scenario_id == scenario.scenario_id
+    )
+    wrong_digest = "sha256:" + "0" * 64
+    result = EvidenceGate(scenario, pack).decide(
+        Trace(
+            scenario_id=scenario.scenario_id,
+            agent_id="synthetic-agent",
+            authorization_ids=("authorization:approval",),
+            authorization_operation_ids=("operation-001",),
+            authorization_action_digests=(wrong_digest,),
+            operation_ids=("operation-001", "operation-001"),
+            action_digests=(wrong_digest,),
+        ),
+        action=GateAction.PROTECTED_SIDE_EFFECT,
+    )
+
+    assert result.decision is GateDecision.BLOCKED
+    assert result.missing_evidence == (
+        f"action-digest:{AMBIGUOUS_ACTION_DIGEST}",
+    )

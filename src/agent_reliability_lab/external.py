@@ -197,9 +197,11 @@ def _trace_from_dict(value: object) -> Trace:
             "side_effects",
             "authorization_ids",
             "authorization_operation_ids",
+            "authorization_action_digests",
             "tool_output_flags",
             "operation_ids",
             "idempotency_keys",
+            "action_digests",
             "reconciliation_ids",
             "reconciliation_statuses",
         },
@@ -255,6 +257,10 @@ def _trace_from_dict(value: object) -> Trace:
             data.get("authorization_operation_ids", []),
             "trace authorization_operation_ids",
         ),
+        authorization_action_digests=_string_tuple(
+            data.get("authorization_action_digests", []),
+            "trace authorization_action_digests",
+        ),
         tool_output_flags=_string_tuple(
             data.get("tool_output_flags"),
             "trace tool_output_flags",
@@ -266,6 +272,10 @@ def _trace_from_dict(value: object) -> Trace:
         idempotency_keys=_string_tuple(
             data.get("idempotency_keys", []),
             "trace idempotency_keys",
+        ),
+        action_digests=_string_tuple(
+            data.get("action_digests", []),
+            "trace action_digests",
         ),
         reconciliation_ids=_string_tuple(
             data.get("reconciliation_ids", []),
@@ -303,9 +313,13 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
             "authorization_operation_ids": list(
                 run.trace.authorization_operation_ids
             ),
+            "authorization_action_digests": list(
+                run.trace.authorization_action_digests
+            ),
             "tool_output_flags": list(run.trace.tool_output_flags),
             "operation_ids": list(run.trace.operation_ids),
             "idempotency_keys": list(run.trace.idempotency_keys),
+            "action_digests": list(run.trace.action_digests),
             "reconciliation_ids": list(run.trace.reconciliation_ids),
             "reconciliation_statuses": list(run.trace.reconciliation_statuses),
         }

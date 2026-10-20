@@ -28,6 +28,7 @@ from .replay import ReplayCase
 
 
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
+_ACTION_DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True)
@@ -57,9 +58,11 @@ class TraceRecorder:
         self._side_effects: list[str] = []
         self._authorization_ids: list[str] = []
         self._authorization_operation_ids: list[str] = []
+        self._authorization_action_digests: list[str] = []
         self._tool_output_flags: list[str] = []
         self._operation_ids: list[str] = []
         self._idempotency_keys: list[str] = []
+        self._action_digests: list[str] = []
         self._reconciliation_ids: list[str] = []
         self._reconciliation_statuses: list[str] = []
         self._claim: str | None = None
@@ -220,6 +223,7 @@ class TraceRecorder:
         authorization_id: str,
         *,
         operation_id: str | None = None,
+        action_digest: str | None = None,
     ) -> RecorderResult:
         """Record authorization and, when available, its protected operation."""
 
@@ -229,6 +233,11 @@ class TraceRecorder:
         invalid = _identifier_refusal(authorization_id, "authorization_id")
         if invalid is None and operation_id is not None:
             invalid = _identifier_refusal(operation_id, "authorization_operation_id")
+        if invalid is None and action_digest is not None:
+            invalid = _action_digest_refusal(
+                action_digest,
+                "authorization_action_digest",
+            )
         if invalid is not None:
             return self._set_refusal(invalid)
         if authorization_id in self._authorization_ids:
@@ -240,6 +249,8 @@ class TraceRecorder:
         self._authorization_ids.append(authorization_id)
         if operation_id is not None:
             _append_unique(self._authorization_operation_ids, operation_id)
+        if action_digest is not None:
+            _append_unique(self._authorization_action_digests, action_digest)
         return self._event(
             EventType.AUTHORIZATION,
             authorization_id,
@@ -296,6 +307,18 @@ class TraceRecorder:
             EventType.IDEMPOTENCY_KEY,
         )
 
+    def record_action_digest(self, action_digest: str) -> RecorderResult:
+        """Record a protected-action fingerprint without its payload."""
+
+        blocked = self._blocked()
+        if blocked is not None:
+            return blocked
+        invalid = _action_digest_refusal(action_digest, "action_digest")
+        if invalid is not None:
+            return self._set_refusal(invalid)
+        _append_unique(self._action_digests, action_digest)
+        return self._event(EventType.ACTION_DIGEST, action_digest)
+
     def record_reconciliation(
         self,
         reconciliation_id: str,
@@ -349,9 +372,13 @@ class TraceRecorder:
                 side_effects=tuple(self._side_effects),
                 authorization_ids=tuple(self._authorization_ids),
                 authorization_operation_ids=tuple(self._authorization_operation_ids),
+                authorization_action_digests=tuple(
+                    self._authorization_action_digests
+                ),
                 tool_output_flags=tuple(self._tool_output_flags),
                 operation_ids=tuple(self._operation_ids),
                 idempotency_keys=tuple(self._idempotency_keys),
+                action_digests=tuple(self._action_digests),
                 reconciliation_ids=tuple(self._reconciliation_ids),
                 reconciliation_statuses=tuple(self._reconciliation_statuses),
             ),
@@ -431,6 +458,16 @@ def _identifier_refusal(value: object, context: str) -> AdapterRefusal | None:
                 "Use letters, numbers, dots, underscores, colons, slashes, or hyphens; "
                 "do not send free-form text."
             ),
+        )
+    return None
+
+
+def _action_digest_refusal(value: object, context: str) -> AdapterRefusal | None:
+    if not isinstance(value, str) or not _ACTION_DIGEST.fullmatch(value):
+        return AdapterRefusal(
+            error="invalid_action_digest",
+            message=f"{context} must be a lowercase sha256 digest identifier.",
+            guidance="Use the form sha256:<64 lowercase hexadecimal characters>.",
         )
     return None
 

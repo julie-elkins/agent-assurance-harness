@@ -438,6 +438,23 @@
                       "value": {
                         "stringValue": "operation-001"
                       }
+                    },
+                    {
+                      "key": "agent.reliability.action_digest",
+                      "value": {
+                        "stringValue": "sha256:f8bc04abfc40d9272d7befd7b538ba5fbaf578b8d2464546e04ee4642a1ba8ed"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.action_digest",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "sha256:f8bc04abfc40d9272d7befd7b538ba5fbaf578b8d2464546e04ee4642a1ba8ed"
+                      }
                     }
                   ]
                 },

@@ -217,6 +217,10 @@ class AgentTraceInput(StrictModel):
         default_factory=list,
         description="Protected operation identifiers covered by authorization evidence.",
     )
+    authorization_action_digests: list[str] = Field(
+        default_factory=list,
+        description="Action fingerprints covered by authorization evidence.",
+    )
     tool_output_flags: list[str] = Field(
         default_factory=list,
         description="Classifications such as 'instruction_like', not the output itself.",
@@ -228,6 +232,10 @@ class AgentTraceInput(StrictModel):
     idempotency_keys: list[str] = Field(
         default_factory=list,
         description="Identifier-only idempotency key, repeated when a write is retried.",
+    )
+    action_digests: list[str] = Field(
+        default_factory=list,
+        description="Lowercase sha256 fingerprints of canonical protected actions.",
     )
     reconciliation_ids: list[str] = Field(
         default_factory=list,
@@ -454,9 +462,11 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
         side_effects=tuple(trace.side_effects),
         authorization_ids=tuple(trace.authorization_ids),
         authorization_operation_ids=tuple(trace.authorization_operation_ids),
+        authorization_action_digests=tuple(trace.authorization_action_digests),
         tool_output_flags=tuple(trace.tool_output_flags),
         operation_ids=tuple(trace.operation_ids),
         idempotency_keys=tuple(trace.idempotency_keys),
+        action_digests=tuple(trace.action_digests),
         reconciliation_ids=tuple(trace.reconciliation_ids),
         reconciliation_statuses=tuple(trace.reconciliation_statuses),
     )

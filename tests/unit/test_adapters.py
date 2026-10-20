@@ -4,7 +4,7 @@ from agent_reliability_lab.adapters import reference_adapters, trace_to_events
 from agent_reliability_lab.environment import environment_for_scenario
 from agent_reliability_lab.models import Trace
 from agent_reliability_lab.protocol import ScenarioRequest
-from agent_reliability_lab.scenarios import scenarios
+from agent_reliability_lab.scenarios import AMBIGUOUS_ACTION_DIGEST, scenarios
 
 
 def test_reference_adapters_emit_contiguous_identifier_only_events():
@@ -90,6 +90,8 @@ def test_guarded_adapter_reuses_retry_identity_for_ambiguous_write():
     )
     assert run.trace.side_effects == ("side-effect-002",)
     assert run.trace.authorization_operation_ids == ("operation-001",)
+    assert run.trace.authorization_action_digests == (AMBIGUOUS_ACTION_DIGEST,)
+    assert run.trace.action_digests == (AMBIGUOUS_ACTION_DIGEST,)
     assert run.trace.reconciliation_ids == ("reconcile-result-001",)
     assert run.trace.reconciliation_statuses == ("confirmed",)
     assert run.trace.tool_calls[-1].name == "get_charge_status"
@@ -142,6 +144,25 @@ def test_ambiguous_retry_requires_authorization_bound_to_operation():
 
     assert finding.status.value == "failed"
     assert "authorization:bound-to-operation" in finding.missing_evidence
+
+
+def test_ambiguous_retry_requires_the_contract_action_digest():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "ambiguous-side-effect-retry"
+    )
+    trace = scenario.run_guarded()
+    trace = replace(
+        trace,
+        action_digests=("sha256:" + "0" * 64,),
+        authorization_action_digests=("sha256:" + "0" * 64,),
+    )
+
+    finding = scenario.evaluate(trace, scenario.contract)
+
+    assert finding.status.value == "failed"
+    assert f"action-digest:{AMBIGUOUS_ACTION_DIGEST}" in finding.missing_evidence
 
 
 def test_adapter_refuses_a_non_simulated_environment():

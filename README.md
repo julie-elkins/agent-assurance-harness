@@ -30,7 +30,8 @@ synthetic agent cases:
 6. **Ambiguous side-effect retry** — a write may commit before its response times out,
    so the retry must reuse stable operation identity and an idempotency key, then confirm
    the resulting state before reporting success. Authorization evidence must also bind to
-   the protected operation rather than merely appearing somewhere in the trace.
+   the protected operation and canonical action digest rather than merely appearing
+   somewhere in the trace.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.

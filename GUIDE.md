@@ -77,7 +77,10 @@ write happened exactly once.
 
 The same scenario now requires authorization binding: the authorization evidence must name
 the protected operation identifier. This prevents an approval for an unrelated operation
-from satisfying the side-effect gate.
+from satisfying the side-effect gate. It also requires the same canonical action digest
+on the observed action and the authorization evidence. A digest is a one-way fingerprint
+of the canonical action fields; here it is synthetic equality evidence, not a signature and
+not proof that a live service interpreted the action correctly.
 
 Run the public hygiene checks before treating a change as release-ready:
 

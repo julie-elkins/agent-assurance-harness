@@ -69,6 +69,7 @@ _RELIABILITY_EVENT_IDS = {
     "agent.reliability.tool_output_flag",
     "agent.reliability.operation_id",
     "agent.reliability.idempotency_key",
+    "agent.reliability.action_digest",
     "agent.reliability.reconciliation",
 }
 _RELIABILITY_EVENT_ABSTENTION = "agent.reliability.abstention"
@@ -326,13 +327,23 @@ def _record_event(
             attributes,
             "agent.reliability.operation_id",
         )
-        recorder.record_authorization(event_id, operation_id=operation_id)
+        action_digest = _first_string(
+            attributes,
+            "agent.reliability.action_digest",
+        )
+        recorder.record_authorization(
+            event_id,
+            operation_id=operation_id,
+            action_digest=action_digest,
+        )
     elif name == "agent.reliability.side_effect":
         recorder.record_side_effect(event_id)
     elif name == "agent.reliability.operation_id":
         recorder.record_operation_id(event_id)
     elif name == "agent.reliability.idempotency_key":
         recorder.record_idempotency_key(event_id)
+    elif name == "agent.reliability.action_digest":
+        recorder.record_action_digest(event_id)
     elif name == "agent.reliability.reconciliation":
         status = _first_string(attributes, "agent.reliability.status")
         if status is None:

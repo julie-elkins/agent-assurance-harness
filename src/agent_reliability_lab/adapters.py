@@ -23,7 +23,7 @@ from .protocol import (
     ScenarioRequest,
     validate_adapter_run,
 )
-from .scenarios import Scenario, scenarios
+from .scenarios import AMBIGUOUS_ACTION_DIGEST, Scenario, scenarios
 
 
 def trace_to_events(trace: Trace) -> tuple[ObservableEvent, ...]:
@@ -77,6 +77,8 @@ def trace_to_events(trace: Trace) -> tuple[ObservableEvent, ...]:
             authorization_id,
             evidence_id=operation_id,
         )
+    for action_digest in trace.action_digests:
+        add_event(EventType.ACTION_DIGEST, action_digest)
     for operation_id in trace.operation_ids:
         add_event(EventType.OPERATION_ID, operation_id)
     for idempotency_key in trace.idempotency_keys:
@@ -233,6 +235,11 @@ class ScenarioAdapter:
                     if self.guarded
                     else ()
                 ),
+                authorization_action_digests=(
+                    (AMBIGUOUS_ACTION_DIGEST,)
+                    if self.guarded
+                    else ()
+                ),
                 operation_ids=(
                     ("operation-001", "operation-001")
                     if self.guarded
@@ -240,6 +247,13 @@ class ScenarioAdapter:
                 ),
                 idempotency_keys=(
                     ("idempotency-001", "idempotency-001")
+                    if self.guarded
+                    else ()
+                ),
+                action_digests=(
+                    (
+                        AMBIGUOUS_ACTION_DIGEST,
+                    )
                     if self.guarded
                     else ()
                 ),

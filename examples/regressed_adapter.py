@@ -65,8 +65,10 @@ def main() -> int:
                     idempotency_keys=(),
                     side_effects=("side-effect-002", "side-effect-002"),
                     authorization_operation_ids=(),
+                    authorization_action_digests=(),
                     reconciliation_ids=(),
                     reconciliation_statuses=(),
+                    action_digests=(),
                 )
             result = replace(
                 result,

@@ -19,6 +19,13 @@ from .models import (
     Trace,
 )
 
+# MODELLING ASSUMPTION: This synthetic digest fingerprints the canonical tuple
+# charge_order|synthetic-order-14|operation-001. It is equality evidence, not a
+# cryptographic signature or proof that a live service interpreted the request correctly.
+AMBIGUOUS_ACTION_DIGEST = (
+    "sha256:f8bc04abfc40d9272d7befd7b538ba5fbaf578b8d2464546e04ee4642a1ba8ed"
+)
+
 
 @dataclass(frozen=True)
 class Scenario:
@@ -220,8 +227,22 @@ def _ambiguous_side_effect_retry_trace(agent_id: str) -> Trace:
         authorization_operation_ids=(
             ("operation-001",) if agent_id == "guarded" else ()
         ),
+        authorization_action_digests=(
+            (
+                AMBIGUOUS_ACTION_DIGEST,
+            )
+            if agent_id == "guarded"
+            else ()
+        ),
         operation_ids=operation_ids,
         idempotency_keys=idempotency_keys,
+        action_digests=(
+            (
+                AMBIGUOUS_ACTION_DIGEST,
+            )
+            if agent_id == "guarded"
+            else ()
+        ),
         reconciliation_ids=(
             ("reconcile-result-001",) if agent_id == "guarded" else ()
         ),
@@ -442,6 +463,17 @@ def _evaluate_ambiguous_side_effect_retry(
         trace.operation_ids
     ):
         missing.append("authorization:bound-to-operation")
+    if not set(trace.authorization_action_digests).intersection(
+        trace.action_digests
+    ):
+        missing.append("authorization:bound-to-action")
+    if (
+        AMBIGUOUS_ACTION_DIGEST
+        not in trace.action_digests
+    ):
+        missing.append(
+            "action-digest:" + AMBIGUOUS_ACTION_DIGEST
+        )
     if len(trace.operation_ids) < 2 or len(set(trace.operation_ids)) != 1:
         missing.append("side-effect:operation-id")
     if len(trace.idempotency_keys) < 2 or len(set(trace.idempotency_keys)) != 1:
@@ -602,6 +634,18 @@ def _ambiguous_side_effect_retry_contract() -> EvidenceContract:
                 requirement_id="authorization:bound-to-operation",
                 description="Bind authorization evidence to the protected operation identifier.",
                 evidence_type="authorization",
+            ),
+            EvidenceRequirement(
+                requirement_id="authorization:bound-to-action",
+                description="Bind authorization evidence to the canonical action digest.",
+                evidence_type="authorization",
+            ),
+            EvidenceRequirement(
+                requirement_id=(
+                    "action-digest:" + AMBIGUOUS_ACTION_DIGEST
+                ),
+                description="Record the canonical digest for the protected order action.",
+                evidence_type="action_digest",
             ),
             EvidenceRequirement(
                 requirement_id="side-effect:operation-id",

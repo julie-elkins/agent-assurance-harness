@@ -97,9 +97,11 @@ class Trace:
     side_effects: tuple[str, ...] = ()
     authorization_ids: tuple[str, ...] = ()
     authorization_operation_ids: tuple[str, ...] = ()
+    authorization_action_digests: tuple[str, ...] = ()
     tool_output_flags: tuple[str, ...] = ()
     operation_ids: tuple[str, ...] = ()
     idempotency_keys: tuple[str, ...] = ()
+    action_digests: tuple[str, ...] = ()
     reconciliation_ids: tuple[str, ...] = ()
     reconciliation_statuses: tuple[str, ...] = ()
 

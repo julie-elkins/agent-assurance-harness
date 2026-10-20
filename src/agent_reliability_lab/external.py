@@ -196,6 +196,7 @@ def _trace_from_dict(value: object) -> Trace:
             "evidence_ids",
             "side_effects",
             "authorization_ids",
+            "authorization_operation_ids",
             "tool_output_flags",
             "operation_ids",
             "idempotency_keys",
@@ -250,6 +251,10 @@ def _trace_from_dict(value: object) -> Trace:
             data.get("authorization_ids"),
             "trace authorization_ids",
         ),
+        authorization_operation_ids=_string_tuple(
+            data.get("authorization_operation_ids", []),
+            "trace authorization_operation_ids",
+        ),
         tool_output_flags=_string_tuple(
             data.get("tool_output_flags"),
             "trace tool_output_flags",
@@ -295,6 +300,9 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
             "evidence_ids": list(run.trace.evidence_ids),
             "side_effects": list(run.trace.side_effects),
             "authorization_ids": list(run.trace.authorization_ids),
+            "authorization_operation_ids": list(
+                run.trace.authorization_operation_ids
+            ),
             "tool_output_flags": list(run.trace.tool_output_flags),
             "operation_ids": list(run.trace.operation_ids),
             "idempotency_keys": list(run.trace.idempotency_keys),

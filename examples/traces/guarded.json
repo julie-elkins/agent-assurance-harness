@@ -335,6 +335,7 @@
           ],
           "side_effects": ["side-effect-002"],
           "authorization_ids": ["authorization:approval"],
+          "authorization_operation_ids": ["operation-001"],
           "tool_output_flags": [],
           "operation_ids": ["operation-001", "operation-001"],
           "idempotency_keys": ["idempotency-001", "idempotency-001"],
@@ -404,7 +405,7 @@
             "event_type": "authorization",
             "name": "authorization:approval",
             "status": null,
-            "evidence_id": null
+            "evidence_id": "operation-001"
           },
           {
             "sequence": 9,

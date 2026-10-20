@@ -108,6 +108,23 @@ class EvidenceGate:
                     observed_evidence=observed,
                     missing_evidence=("authorization:approval",),
                 )
+            if (
+                "authorization:bound-to-operation" in required
+                and not set(trace.authorization_operation_ids).intersection(
+                    trace.operation_ids
+                )
+            ):
+                return GateResult(
+                    action=action,
+                    decision=GateDecision.BLOCKED,
+                    message=(
+                        "Protected side effect blocked because authorization is "
+                        "not bound to the protected operation."
+                    ),
+                    required_evidence=required,
+                    observed_evidence=observed + trace.authorization_ids,
+                    missing_evidence=("authorization:bound-to-operation",),
+                )
             return GateResult(
                 action=action,
                 decision=GateDecision.ALLOWED,
@@ -347,6 +364,7 @@ def _run_profile(
                 ),
                 claim="The retry reused stable write identity.",
                 authorization_ids=("authorization:approval",),
+                authorization_operation_ids=("operation-001",),
                 operation_ids=("operation-001", "operation-001"),
                 idempotency_keys=("idempotency-001", "idempotency-001"),
                 reconciliation_ids=("reconcile-result-001",),

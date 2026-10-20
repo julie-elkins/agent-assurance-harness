@@ -75,6 +75,10 @@ can duplicate a protected action. The status readback is the postcondition check
 the resulting state after the timeout instead of treating a retry response as proof that the
 write happened exactly once.
 
+The same scenario now requires authorization binding: the authorization evidence must name
+the protected operation identifier. This prevents an approval for an unrelated operation
+from satisfying the side-effect gate.
+
 Run the public hygiene checks before treating a change as release-ready:
 
 ```bash

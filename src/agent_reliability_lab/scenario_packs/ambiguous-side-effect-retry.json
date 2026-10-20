@@ -35,6 +35,11 @@
       "evidence_type": "authorization"
     },
     {
+      "requirement_id": "authorization:bound-to-operation",
+      "description": "Bind authorization evidence to the protected operation identifier.",
+      "evidence_type": "authorization"
+    },
+    {
       "requirement_id": "side-effect:operation-id",
       "description": "Reuse one operation identifier across the timeout and retry.",
       "evidence_type": "side_effect"

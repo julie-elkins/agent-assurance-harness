@@ -432,6 +432,12 @@
                       "value": {
                         "stringValue": "authorization:approval"
                       }
+                    },
+                    {
+                      "key": "agent.reliability.operation_id",
+                      "value": {
+                        "stringValue": "operation-001"
+                      }
                     }
                   ]
                 },

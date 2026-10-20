@@ -322,7 +322,11 @@ def _record_event(
     elif name == "agent.reliability.answer":
         recorder.record_answer(event_id)
     elif name == "agent.reliability.authorization":
-        recorder.record_authorization(event_id)
+        operation_id = _first_string(
+            attributes,
+            "agent.reliability.operation_id",
+        )
+        recorder.record_authorization(event_id, operation_id=operation_id)
     elif name == "agent.reliability.side_effect":
         recorder.record_side_effect(event_id)
     elif name == "agent.reliability.operation_id":

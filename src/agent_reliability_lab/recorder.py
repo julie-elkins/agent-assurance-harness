@@ -56,6 +56,7 @@ class TraceRecorder:
         self._evidence_ids: list[str] = []
         self._side_effects: list[str] = []
         self._authorization_ids: list[str] = []
+        self._authorization_operation_ids: list[str] = []
         self._tool_output_flags: list[str] = []
         self._operation_ids: list[str] = []
         self._idempotency_keys: list[str] = []
@@ -214,13 +215,20 @@ class TraceRecorder:
         self._abstained = True
         return self._event(EventType.ABSTENTION, "abstention")
 
-    def record_authorization(self, authorization_id: str) -> RecorderResult:
-        """Record an authorization identifier without recording its contents."""
+    def record_authorization(
+        self,
+        authorization_id: str,
+        *,
+        operation_id: str | None = None,
+    ) -> RecorderResult:
+        """Record authorization and, when available, its protected operation."""
 
         blocked = self._blocked()
         if blocked is not None:
             return blocked
         invalid = _identifier_refusal(authorization_id, "authorization_id")
+        if invalid is None and operation_id is not None:
+            invalid = _identifier_refusal(operation_id, "authorization_operation_id")
         if invalid is not None:
             return self._set_refusal(invalid)
         if authorization_id in self._authorization_ids:
@@ -230,7 +238,13 @@ class TraceRecorder:
                 guidance="Record each authorization identifier once per run.",
             )
         self._authorization_ids.append(authorization_id)
-        return self._event(EventType.AUTHORIZATION, authorization_id)
+        if operation_id is not None:
+            _append_unique(self._authorization_operation_ids, operation_id)
+        return self._event(
+            EventType.AUTHORIZATION,
+            authorization_id,
+            evidence_id=operation_id,
+        )
 
     def record_side_effect(self, side_effect_id: str) -> RecorderResult:
         """Record a synthetic side-effect identifier."""
@@ -334,6 +348,7 @@ class TraceRecorder:
                 evidence_ids=tuple(self._evidence_ids),
                 side_effects=tuple(self._side_effects),
                 authorization_ids=tuple(self._authorization_ids),
+                authorization_operation_ids=tuple(self._authorization_operation_ids),
                 tool_output_flags=tuple(self._tool_output_flags),
                 operation_ids=tuple(self._operation_ids),
                 idempotency_keys=tuple(self._idempotency_keys),

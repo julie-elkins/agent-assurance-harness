@@ -359,8 +359,16 @@ def _openai_events(trace) -> list[dict[str, object]]:
     if trace.abstained:
         events.append({"type": "classification", "kind": "abstention"})
     events.extend(
-        {"type": "authorization", "id": item}
-        for item in trace.authorization_ids
+        {
+            "type": "authorization",
+            "id": item,
+            **(
+                {"operation_id": trace.authorization_operation_ids[index]}
+                if index < len(trace.authorization_operation_ids)
+                else {}
+            ),
+        }
+        for index, item in enumerate(trace.authorization_ids)
     )
     events.extend(
         {"type": "side_effect", "id": item}
@@ -428,8 +436,17 @@ def _anthropic_events(trace) -> list[dict[str, object]]:
     if trace.abstained:
         events.append({"type": "reliability", "kind": "abstention"})
     events.extend(
-        {"type": "reliability", "kind": "authorization", "id": item}
-        for item in trace.authorization_ids
+        {
+            "type": "reliability",
+            "kind": "authorization",
+            "id": item,
+            **(
+                {"operation_id": trace.authorization_operation_ids[index]}
+                if index < len(trace.authorization_operation_ids)
+                else {}
+            ),
+        }
+        for index, item in enumerate(trace.authorization_ids)
     )
     events.extend(
         {"type": "reliability", "kind": "side_effect", "id": item}
@@ -520,10 +537,21 @@ def _translate_openai(
                 ),
             )
         elif event_type in {"authorization", "side_effect"}:
-            _keys(event, {"type", "id"}, f"openai events[{index}]")
+            _keys(
+                event,
+                {"type", "id", "operation_id"},
+                f"openai events[{index}]",
+            )
             identifier = _identifier(event.get("id"), f"openai {event_type} id")
             if event_type == "authorization":
-                recorder.record_authorization(identifier)
+                operation_id = _optional_identifier(
+                    event.get("operation_id"),
+                    "openai authorization operation_id",
+                )
+                recorder.record_authorization(
+                    identifier,
+                    operation_id=operation_id,
+                )
             else:
                 recorder.record_side_effect(identifier)
         else:
@@ -600,7 +628,7 @@ def _translate_anthropic(
         elif event_type == "reliability":
             _keys(
                 event,
-                {"type", "kind", "id", "status"},
+                {"type", "kind", "id", "status", "operation_id"},
                 f"anthropic content[{index}]",
             )
             _record_classification(
@@ -610,6 +638,10 @@ def _translate_anthropic(
                 status=_optional_identifier(
                     event.get("status"),
                     "anthropic reliability status",
+                ),
+                operation_id=_optional_identifier(
+                    event.get("operation_id"),
+                    "anthropic reliability operation_id",
                 ),
             )
         else:
@@ -627,6 +659,7 @@ def _record_classification(
     identifier: str | None,
     *,
     status: str | None = None,
+    operation_id: str | None = None,
 ) -> None:
     if kind == "claim":
         if identifier is None:
@@ -653,7 +686,10 @@ def _record_classification(
                 "An authorization classification requires an identifier.",
                 "Emit an identifier-only authorization classification.",
             )
-        recorder.record_authorization(identifier)
+        recorder.record_authorization(
+            identifier,
+            operation_id=operation_id,
+        )
     elif kind == "side_effect":
         if identifier is None:
             raise ProviderPayloadError(

@@ -96,6 +96,7 @@ class Trace:
     evidence_ids: tuple[str, ...] = ()
     side_effects: tuple[str, ...] = ()
     authorization_ids: tuple[str, ...] = ()
+    authorization_operation_ids: tuple[str, ...] = ()
     tool_output_flags: tuple[str, ...] = ()
     operation_ids: tuple[str, ...] = ()
     idempotency_keys: tuple[str, ...] = ()

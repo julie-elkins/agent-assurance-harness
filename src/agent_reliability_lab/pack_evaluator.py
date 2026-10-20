@@ -62,6 +62,12 @@ def _requirement_satisfied(
             for call in trace.tool_calls
         )
     if evidence_type == "authorization":
+        if value == "bound-to-operation":
+            return bool(trace.authorization_ids) and bool(
+                set(trace.authorization_operation_ids).intersection(
+                    trace.operation_ids
+                )
+            )
         return not trace.side_effects or bool(trace.authorization_ids)
     if evidence_type == "side_effect":
         if value == "operation-id":

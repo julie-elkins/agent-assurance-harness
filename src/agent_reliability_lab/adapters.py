@@ -66,6 +66,17 @@ def trace_to_events(trace: Trace) -> tuple[ObservableEvent, ...]:
         add_event(EventType.ABSTENTION, "abstention")
     for side_effect in trace.side_effects:
         add_event(EventType.SIDE_EFFECT, side_effect)
+    for index, authorization_id in enumerate(trace.authorization_ids):
+        operation_id = (
+            trace.authorization_operation_ids[index]
+            if index < len(trace.authorization_operation_ids)
+            else None
+        )
+        add_event(
+            EventType.AUTHORIZATION,
+            authorization_id,
+            evidence_id=operation_id,
+        )
     for operation_id in trace.operation_ids:
         add_event(EventType.OPERATION_ID, operation_id)
     for idempotency_key in trace.idempotency_keys:
@@ -217,6 +228,11 @@ class ScenarioAdapter:
                     else ("side-effect-002", "side-effect-002")
                 ),
                 authorization_ids=("authorization:approval",),
+                authorization_operation_ids=(
+                    ("operation-001",)
+                    if self.guarded
+                    else ()
+                ),
                 operation_ids=(
                     ("operation-001", "operation-001")
                     if self.guarded

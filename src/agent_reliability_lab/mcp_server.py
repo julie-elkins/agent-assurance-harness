@@ -213,6 +213,10 @@ class AgentTraceInput(StrictModel):
         default_factory=list,
         description="Synthetic authorization identifiers observed in the trace.",
     )
+    authorization_operation_ids: list[str] = Field(
+        default_factory=list,
+        description="Protected operation identifiers covered by authorization evidence.",
+    )
     tool_output_flags: list[str] = Field(
         default_factory=list,
         description="Classifications such as 'instruction_like', not the output itself.",
@@ -449,6 +453,7 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
         evidence_ids=tuple(trace.evidence_ids),
         side_effects=tuple(trace.side_effects),
         authorization_ids=tuple(trace.authorization_ids),
+        authorization_operation_ids=tuple(trace.authorization_operation_ids),
         tool_output_flags=tuple(trace.tool_output_flags),
         operation_ids=tuple(trace.operation_ids),
         idempotency_keys=tuple(trace.idempotency_keys),

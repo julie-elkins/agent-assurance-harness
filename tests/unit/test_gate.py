@@ -73,3 +73,29 @@ def test_unrecognised_authorization_label_does_not_unlock_side_effect():
 
     assert result.decision is GateDecision.BLOCKED
     assert result.missing_evidence == ("authorization:approval",)
+
+
+def test_unrelated_authorization_does_not_unlock_ambiguous_write():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "ambiguous-side-effect-retry"
+    )
+    pack = next(
+        pack
+        for pack in load_builtin_packs()
+        if pack.scenario_id == scenario.scenario_id
+    )
+    result = EvidenceGate(scenario, pack).decide(
+        Trace(
+            scenario_id=scenario.scenario_id,
+            agent_id="synthetic-agent",
+            authorization_ids=("authorization:approval",),
+            authorization_operation_ids=("operation-unrelated",),
+            operation_ids=("operation-001", "operation-001"),
+        ),
+        action=GateAction.PROTECTED_SIDE_EFFECT,
+    )
+
+    assert result.decision is GateDecision.BLOCKED
+    assert result.missing_evidence == ("authorization:bound-to-operation",)

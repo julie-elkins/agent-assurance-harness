@@ -31,6 +31,7 @@ def test_recorder_builds_an_identifier_only_replay_case():
     assert run.trace.evidence_ids == ("tool-result-007",)
     assert run.trace.tool_output_flags == ("instruction_like",)
     assert run.trace.authorization_ids == ("authorization:approval",)
+    assert run.trace.authorization_operation_ids == ()
     assert [event.event_type for event in run.events] == [
         EventType.TOOL_CALL,
         EventType.TOOL_RESULT,
@@ -180,3 +181,22 @@ def test_recorder_records_identifier_only_reconciliation():
     assert run.events[0].event_type is EventType.RECONCILIATION
     assert run.events[0].status == "confirmed"
     assert run.events[0].evidence_id == "reconcile-result-001"
+
+
+def test_recorder_records_authorization_operation_binding():
+    recorder = TraceRecorder(
+        scenario_id="ambiguous-side-effect-retry",
+        agent_id="synthetic-agent",
+    )
+
+    result = recorder.record_authorization(
+        "authorization:approval",
+        operation_id="operation-001",
+    )
+    run = recorder.finish()
+
+    assert result.accepted is True
+    assert run.trace is not None
+    assert run.trace.authorization_ids == ("authorization:approval",)
+    assert run.trace.authorization_operation_ids == ("operation-001",)
+    assert run.events[0].evidence_id == "operation-001"

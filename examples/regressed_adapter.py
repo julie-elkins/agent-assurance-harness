@@ -64,6 +64,7 @@ def main() -> int:
                     operation_ids=("operation-001", "operation-002"),
                     idempotency_keys=(),
                     side_effects=("side-effect-002", "side-effect-002"),
+                    authorization_operation_ids=(),
                     reconciliation_ids=(),
                     reconciliation_statuses=(),
                 )

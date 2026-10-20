@@ -32,6 +32,8 @@ AGENT_ID = "external"
 def _record_observation(
     recorder: TraceRecorder,
     observation: ToolObservation,
+    *,
+    authorization_operation_id: str | None = None,
 ) -> None:
     """Map synthetic observable metadata into the recorder boundary."""
 
@@ -43,7 +45,10 @@ def _record_observation(
         output_flags=observation.output_flags,
     )
     if observation.authorization_present:
-        recorder.record_authorization("authorization:approval")
+        recorder.record_authorization(
+            "authorization:approval",
+            operation_id=authorization_operation_id,
+        )
     if observation.side_effect_attempted is not None:
         recorder.record_side_effect(observation.side_effect_attempted)
 
@@ -79,7 +84,11 @@ def _record_guarded_run(
     elif scenario_id == "ambiguous-side-effect-retry":
         first = environment.invoke("charge_order", authorized=True)
         second = environment.invoke("charge_order", authorized=True)
-        _record_observation(recorder, first)
+        _record_observation(
+            recorder,
+            first,
+            authorization_operation_id="operation-001",
+        )
         recorder.record_operation_id("operation-001")
         recorder.record_idempotency_key("idempotency-001")
         recorder.record_tool_call(second.tool_name)

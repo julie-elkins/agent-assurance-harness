@@ -1,0 +1,70 @@
+{
+  "ship_gate_version": 1,
+  "gate_id": "agent-assurance-ship-gate",
+  "owner": "synthetic-release-owner",
+  "observer": "synthetic-ci-reviewer",
+  "required_checks": [
+    {
+      "check_id": "adapter-regression-positive",
+      "report_kind": "adapter-regression",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
+      "check_id": "golden-trace-positive",
+      "report_kind": "golden-trace",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
+      "check_id": "adapter-regression-negative-control",
+      "report_kind": "adapter-regression",
+      "expected": "blocked",
+      "blocking": true
+    },
+    {
+      "check_id": "golden-trace-negative-control",
+      "report_kind": "golden-trace",
+      "expected": "drift-caught",
+      "blocking": true
+    }
+  ],
+  "failure_policies": [
+    {
+      "condition": "required-check-failed",
+      "notice": "synthetic-ci-reviewer",
+      "action": "block-release",
+      "audit_event": "ship-gate-blocked",
+      "rollback": "git-revert-last-known-good"
+    },
+    {
+      "condition": "required-evidence-missing",
+      "notice": "synthetic-ci-reviewer",
+      "action": "block-release",
+      "audit_event": "ship-gate-evidence-missing",
+      "rollback": "git-revert-last-known-good"
+    }
+  ],
+  "rollback": {
+    "method": "git-revert",
+    "target": "last-known-good-commit",
+    "verification": "rerun-agent-reliability-gate",
+    "max_minutes": 5
+  },
+  "audit": {
+    "required": true,
+    "fields": [
+      "git-commit",
+      "package-version",
+      "scenario-pack-sha256",
+      "golden-trace-sha256",
+      "decision"
+    ],
+    "storage": "ci-artifact"
+  },
+  "stop_condition": {
+    "max_iterations": 1,
+    "max_elapsed_seconds": 900,
+    "unattended_allowed": false
+  }
+}

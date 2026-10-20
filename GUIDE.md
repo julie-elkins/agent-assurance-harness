@@ -280,6 +280,36 @@ claim and answer wording but includes the identifier-only evidence fields that t
 evaluator uses. A changed Golden Trace blocks until the baseline is intentionally
 reviewed and refreshed; refreshing it is an approval action, not an automatic test fix.
 
+### Add an operational ship gate
+
+An operational ship gate is the machine-readable release-readiness record that
+answers four questions: who notices a failure, what blocks release, how to
+restore the last known-good revision, and what metadata remains for review.
+That matters because a test can detect a regression without defining who acts
+or how a blocked change is recovered.
+
+This repository keeps that contract synthetic and public in
+`examples/ship-gate.json`. It names no real person, contact method, credential,
+deployment target, prompt, trace, or provider output. The CI workflow evaluates
+the gate with the positive regression and Golden Trace reports plus their
+deliberately degraded controls:
+
+```bash
+uv run python tools/ship_gate_report.py \
+  --gate examples/ship-gate.json \
+  --adapter-regression-positive /tmp/agent-reliability-adapter-regression.json \
+  --golden-trace-positive /tmp/agent-reliability-golden-trace.json \
+  --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json \
+  --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
+  --fail-on-block
+```
+
+The result is `READY` only when every required check has the expected state.
+Missing evidence becomes `BLOCKED`, so a skipped check cannot look like a
+successful release. The report records the configured rollback method,
+last-known-good target, audit fields, and bounded stop condition; it does not
+perform a rollback or claim production health.
+
 ## Read the attestation
 
 An assurance attestation is a metadata-only record of one evaluation state. It contains:

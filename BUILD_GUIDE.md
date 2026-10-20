@@ -68,6 +68,7 @@ The current progression is intentionally operational:
 | 5 | Pull-request assurance summaries | Whether reviewers can see the decision and provenance in CI |
 | 6 | Evidence source and freshness | Whether evidence is from the approved source and within its age window |
 | 7 | Golden Trace baseline | Whether canonical successful evidence drifted even when status still passes |
+| 8 | Operational ship gate | Who notices a failure, what blocks release, how to roll back, and what audit record remains |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -220,6 +221,32 @@ The harness can support that path, but its synthetic gate does not replace those
 - `.github/workflows/reliability.yml` — pull-request assurance workflow.
 - `examples/traces/golden-manifest.json` — metadata-only Golden Trace identity.
 - `tools/golden_trace_report.py` — Golden Trace comparison and drift gate.
+- `examples/ship-gate.json` — synthetic operational ownership, blocking, rollback, audit, and stop-condition contract.
+- `tools/ship_gate_report.py` — release-readiness decision from metadata-only assurance reports.
+
+### Operational ship gate
+
+Phase 8 makes the delivery path (the route a change takes from code review to a
+release decision) operationally explicit. `examples/ship-gate.json` records a
+synthetic owner and observer, the checks that block release, the rollback target,
+the metadata required for audit, and the stop condition for a run.
+
+The gate is evaluated with:
+
+```bash
+uv run python tools/ship_gate_report.py \
+  --gate examples/ship-gate.json \
+  --adapter-regression-positive /tmp/agent-reliability-adapter-regression.json \
+  --golden-trace-positive /tmp/agent-reliability-golden-trace.json \
+  --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json \
+  --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
+  --fail-on-block
+```
+
+The command returns `READY` only when the positive checks pass and both
+deliberately degraded controls are caught. A missing report is a blocked
+decision, not an empty success. The rollback value is a public synthetic
+contract, not an automated deployment action.
 
 ## Review checklist
 

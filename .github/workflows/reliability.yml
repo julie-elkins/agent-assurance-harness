@@ -80,6 +80,7 @@ jobs:
           --candidate-adapter-command examples/regressed_adapter.py
           --candidate-change-id candidate-golden-negative-control
           --candidate-component guardrails
+          --output /tmp/agent-reliability-golden-negative.json
           --expect-drift
 
       - name: Compare baseline and candidate adapters
@@ -130,6 +131,17 @@ jobs:
           --negative-report /tmp/agent-reliability-negative-regression.json
           --negative-attestation /tmp/agent-reliability-negative-attestation.json
 
+      - name: Evaluate operational ship gate
+        run: >-
+          uv run python tools/ship_gate_report.py
+          --gate examples/ship-gate.json
+          --adapter-regression-positive /tmp/agent-reliability-adapter-regression.json
+          --golden-trace-positive /tmp/agent-reliability-golden-trace.json
+          --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json
+          --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
+          --output /tmp/agent-reliability-ship-gate.json
+          --fail-on-block
+
       - name: Publish pull-request assurance summary
         if: always()
         run: >-
@@ -139,6 +151,18 @@ jobs:
           --negative-report /tmp/agent-reliability-negative-regression.json
           --negative-attestation /tmp/agent-reliability-negative-attestation.json
           --output "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish operational ship-gate summary
+        if: always()
+        run: >-
+          uv run python tools/ship_gate_report.py
+          --gate examples/ship-gate.json
+          --adapter-regression-positive /tmp/agent-reliability-adapter-regression.json
+          --golden-trace-positive /tmp/agent-reliability-golden-trace.json
+          --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json
+          --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json
+          --output /tmp/agent-reliability-ship-gate.json
+          --markdown >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload pull-request assurance evidence
         if: always()
@@ -150,6 +174,9 @@ jobs:
             /tmp/agent-reliability-adapter-attestation.json
             /tmp/agent-reliability-negative-regression.json
             /tmp/agent-reliability-negative-attestation.json
+            /tmp/agent-reliability-golden-trace.json
+            /tmp/agent-reliability-golden-negative.json
+            /tmp/agent-reliability-ship-gate.json
           if-no-files-found: error
           retention-days: 14
 

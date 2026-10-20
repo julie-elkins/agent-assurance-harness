@@ -192,6 +192,27 @@ manifest. The digest intentionally excludes free-form claim and answer wording, 
 wording changes are not automatically evidence regressions. It does include the
 identifier-only evidence that the evaluator relies on.
 
+### Evaluate the operational ship gate
+
+The operational ship gate makes release recovery explicit: it records who
+notices a failure, which evidence blocks release, how to restore the
+last-known-good revision, and which metadata is retained for audit. This
+prevents a green-looking workflow from hiding a missing check or an undefined
+rollback path.
+
+```bash
+uv run python tools/ship_gate_report.py \
+  --gate examples/ship-gate.json \
+  --adapter-regression-positive /tmp/agent-reliability-adapter-regression.json \
+  --golden-trace-positive /tmp/agent-reliability-golden-trace.json \
+  --adapter-regression-negative-control /tmp/agent-reliability-negative-regression.json \
+  --golden-trace-negative-control /tmp/agent-reliability-golden-negative.json \
+  --fail-on-block
+```
+
+This public example uses synthetic identifiers only. It does not deploy,
+contact a real owner, export provider output, or store credentials.
+
 ### Compare a changed harness with its approved baseline
 
 Harness²-style workflows can change the surrounding harness—such as guardrails, skills,

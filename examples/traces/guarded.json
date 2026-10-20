@@ -608,6 +608,142 @@
         }
       },
       "scenario_id": "evidence-freshness-source"
+    },
+    {
+      "response": {
+        "events": [
+          {
+            "event_id": "event-001",
+            "event_type": "tool_call",
+            "evidence_id": null,
+            "name": "lookup_authoritative_record",
+            "sequence": 1,
+            "status": null
+          },
+          {
+            "event_id": "event-002",
+            "event_type": "tool_result",
+            "evidence_id": "record:authoritative:stale:001",
+            "name": "lookup_authoritative_record",
+            "sequence": 2,
+            "status": "ok"
+          },
+          {
+            "event_id": "event-003",
+            "event_type": "claim",
+            "evidence_id": null,
+            "name": "claim",
+            "sequence": 3,
+            "status": null
+          },
+          {
+            "event_id": "event-004",
+            "event_type": "abstention",
+            "evidence_id": null,
+            "name": "abstention",
+            "sequence": 4,
+            "status": null
+          }
+        ],
+        "trace": {
+          "abstained": true,
+          "action_digests": [],
+          "agent_id": "external",
+          "answer": null,
+          "authorization_action_digests": [],
+          "authorization_ids": [],
+          "authorization_operation_ids": [],
+          "claim": "claim:evidence_quality_failed",
+          "evidence_ids": [
+            "record:authoritative:stale:001"
+          ],
+          "idempotency_keys": [],
+          "operation_ids": [],
+          "reconciliation_ids": [],
+          "reconciliation_statuses": [],
+          "scenario_id": "evidence-stale-approved-source",
+          "side_effects": [],
+          "tool_calls": [
+            {
+              "age_seconds": 7200.0,
+              "name": "lookup_authoritative_record",
+              "result_id": "record:authoritative:stale:001",
+              "result_status": "ok",
+              "source": "authoritative-catalog"
+            }
+          ],
+          "tool_output_flags": []
+        }
+      },
+      "scenario_id": "evidence-stale-approved-source"
+    },
+    {
+      "response": {
+        "events": [
+          {
+            "event_id": "event-001",
+            "event_type": "tool_call",
+            "evidence_id": null,
+            "name": "lookup_authoritative_record",
+            "sequence": 1,
+            "status": null
+          },
+          {
+            "event_id": "event-002",
+            "event_type": "tool_result",
+            "evidence_id": "record:wrong-source:001",
+            "name": "lookup_authoritative_record",
+            "sequence": 2,
+            "status": "ok"
+          },
+          {
+            "event_id": "event-003",
+            "event_type": "claim",
+            "evidence_id": null,
+            "name": "claim",
+            "sequence": 3,
+            "status": null
+          },
+          {
+            "event_id": "event-004",
+            "event_type": "abstention",
+            "evidence_id": null,
+            "name": "abstention",
+            "sequence": 4,
+            "status": null
+          }
+        ],
+        "trace": {
+          "abstained": true,
+          "action_digests": [],
+          "agent_id": "external",
+          "answer": null,
+          "authorization_action_digests": [],
+          "authorization_ids": [],
+          "authorization_operation_ids": [],
+          "claim": "claim:evidence_quality_failed",
+          "evidence_ids": [
+            "record:wrong-source:001"
+          ],
+          "idempotency_keys": [],
+          "operation_ids": [],
+          "reconciliation_ids": [],
+          "reconciliation_statuses": [],
+          "scenario_id": "evidence-fresh-wrong-source",
+          "side_effects": [],
+          "tool_calls": [
+            {
+              "age_seconds": 60.0,
+              "name": "lookup_authoritative_record",
+              "result_id": "record:wrong-source:001",
+              "result_status": "ok",
+              "source": "cache"
+            }
+          ],
+          "tool_output_flags": []
+        }
+      },
+      "scenario_id": "evidence-fresh-wrong-source"
     }
   ]
 }

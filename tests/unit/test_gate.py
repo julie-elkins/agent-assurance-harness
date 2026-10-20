@@ -18,6 +18,8 @@ SCENARIO_IDS = (
     "unauthorized-side-effect",
     "misleading-tool-output",
     "ambiguous-side-effect-retry",
+    "evidence-stale-approved-source",
+    "evidence-fresh-wrong-source",
 )
 
 

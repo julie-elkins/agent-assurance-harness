@@ -287,6 +287,28 @@ class ScenarioAdapter:
                 ),
                 evidence_ids=_evidence_ids(observation),
             )
+        if scenario_id in {
+            "evidence-stale-approved-source",
+            "evidence-fresh-wrong-source",
+        }:
+            observation = environment.invoke("lookup_authoritative_record")
+            return Trace(
+                scenario_id=scenario_id,
+                agent_id=self.agent_id,
+                tool_calls=(_tool_call(observation),),
+                claim=(
+                    "Evidence quality failed; the agent held back."
+                    if self.guarded
+                    else "The record was checked."
+                ),
+                answer=(
+                    None
+                    if self.guarded
+                    else "The synthetic record is available."
+                ),
+                abstained=self.guarded,
+                evidence_ids=_evidence_ids(observation),
+            )
         raise ValueError(f"Unknown synthetic scenario: {scenario_id}")
 
     def run(

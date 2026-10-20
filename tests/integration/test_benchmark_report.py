@@ -17,6 +17,8 @@ def test_public_synthetic_benchmark_reports_guarded_paths_and_controls():
         "misleading-tool-output",
         "ambiguous-side-effect-retry",
         "evidence-freshness-source",
+        "evidence-stale-approved-source",
+        "evidence-fresh-wrong-source",
     ]
     assert [agent["agent_id"] for agent in data["agents"]] == [
         "naive",

@@ -425,6 +425,36 @@ def _run_profile(
                 claim="The write completed after retrying the timed-out request.",
             )
         action = GateAction.PROTECTED_SIDE_EFFECT
+    elif scenario.scenario_id in {
+        "evidence-stale-approved-source",
+        "evidence-fresh-wrong-source",
+    }:
+        observation = environment.invoke("lookup_authoritative_record")
+        tool_events.append(_tool_event(observation))
+        trace = _trace_for_tool_call(
+            scenario.scenario_id,
+            agent_profile,
+            observation,
+        )
+        trace = replace(
+            trace,
+            claim=(
+                "Evidence quality failed; the agent held back."
+                if agent_profile == "guarded"
+                else "The record was checked."
+            ),
+            answer=(
+                None
+                if agent_profile == "guarded"
+                else "The synthetic record is available."
+            ),
+            abstained=agent_profile == "guarded",
+        )
+        action = (
+            GateAction.ABSTAIN
+            if agent_profile == "guarded"
+            else GateAction.ANSWER
+        )
     else:  # pragma: no cover - registry parity is checked before this function.
         raise ValueError(f"Unknown synthetic scenario: {scenario.scenario_id}")
 

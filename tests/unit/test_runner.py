@@ -4,12 +4,12 @@ from agent_reliability_lab.runner import failed_checks, run_comparison
 def test_comparison_keeps_baseline_failure_visible():
     report = run_comparison()
 
-    assert report.scenario_count == 7
-    assert len(report.contracts) == 7
+    assert report.scenario_count == 9
+    assert len(report.contracts) == 9
     assert [item.agent_id for item in report.reports] == ["naive", "guarded"]
     assert report.reports[0].passed is False
     assert report.reports[1].passed is True
-    assert failed_checks(report) == 7
+    assert failed_checks(report) == 9
 
 
 def test_each_guarded_scenario_has_evidence():

@@ -1,7 +1,7 @@
 {
   "agent_id": "external",
   "golden_trace_version": 1,
-  "pack_set_sha256": "2bd63d297f92494b3a63b0c57f2435f53d76a2dfd2c64b7c10901cff5a1bc213",
-  "scenario_count": 7,
-  "trace_sha256": "8ca9116119399a97cadf1da3f1ef9c1c61712b45b9ed4e57046e00568951bc7b"
+  "pack_set_sha256": "08c548b67f00bf7aed6cedd3551ef3e18f5d5c7a33d1714a6d925e7e8ab7a501",
+  "scenario_count": 9,
+  "trace_sha256": "6b067ebbc7391a8d81d08d4964a10c7b9bda381ca49884fdb992f07615bb8e2c"
 }

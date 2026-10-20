@@ -13,6 +13,8 @@ def test_scenarios_are_public_synthetic_cases():
         "misleading-tool-output",
         "ambiguous-side-effect-retry",
         "evidence-freshness-source",
+        "evidence-stale-approved-source",
+        "evidence-fresh-wrong-source",
     ]
     assert all("synthetic" in case.description.lower() or case.scenario_id for case in cases)
 
@@ -39,3 +41,39 @@ def test_freshness_scenario_carries_source_and_age_metadata():
     assert guarded.age_seconds == 60.0
     assert naive.source == "cache"
     assert naive.age_seconds == 7200.0
+
+
+def test_stale_evidence_requires_abstention_and_records_reason():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "evidence-stale-approved-source"
+    )
+
+    naive = scenario.evaluate(scenario.run_naive(), scenario.contract)
+    guarded = scenario.evaluate(scenario.run_guarded(), scenario.contract)
+
+    assert naive.status is FindingStatus.FAILED
+    assert naive.failure_reason == "evidence_stale"
+    assert "abstain:when-evidence-untrusted" in naive.missing_evidence
+    assert guarded.status is FindingStatus.COMPLETED
+    assert guarded.failure_reason == "evidence_stale"
+    assert "abstain:when-evidence-untrusted" in guarded.evidence
+
+
+def test_fresh_wrong_source_requires_abstention_and_records_reason():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "evidence-fresh-wrong-source"
+    )
+
+    naive = scenario.evaluate(scenario.run_naive(), scenario.contract)
+    guarded = scenario.evaluate(scenario.run_guarded(), scenario.contract)
+
+    assert naive.status is FindingStatus.FAILED
+    assert naive.failure_reason == "evidence_wrong_source"
+    assert "abstain:when-evidence-untrusted" in naive.missing_evidence
+    assert guarded.status is FindingStatus.COMPLETED
+    assert guarded.failure_reason == "evidence_wrong_source"
+    assert "abstain:when-evidence-untrusted" in guarded.evidence

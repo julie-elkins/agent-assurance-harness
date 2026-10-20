@@ -19,7 +19,7 @@ def test_otlp_fixture_normalizes_and_passes_all_synthetic_scenarios():
     assert report.refusal is None
     assert report.agent_report is not None
     assert report.agent_report.passed is True
-    assert len(report.agent_report.findings) == 7
+    assert len(report.agent_report.findings) == 9
 
 
 def test_otlp_refuses_a_sensitive_attribute_before_normalization():

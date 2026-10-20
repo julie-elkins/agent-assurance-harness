@@ -167,6 +167,7 @@ class Finding:
     status: FindingStatus
     message: str
     dimension: AssuranceDimension = AssuranceDimension.EVIDENCE_COMPLETENESS
+    failure_reason: str | None = None
     required_evidence: tuple[str, ...] = ()
     evidence: tuple[str, ...] = ()
     missing_evidence: tuple[str, ...] = ()
@@ -180,6 +181,11 @@ class Finding:
             "status": self.status.value,
             "message": self.message,
             "dimension": self.dimension.value,
+            **(
+                {"failure_reason": self.failure_reason}
+                if self.failure_reason is not None
+                else {}
+            ),
             "required_evidence": list(self.required_evidence),
             "evidence": list(self.evidence),
             "missing_evidence": list(self.missing_evidence),

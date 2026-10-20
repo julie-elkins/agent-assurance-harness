@@ -19,7 +19,7 @@ def test_external_example_passes_public_conformance_contract():
     data = report.to_dict()
 
     assert report.conformance_passed
-    assert data["scenario_count"] == 7
+    assert data["scenario_count"] == 9
     assert data["refusal_count"] == 0
     assert data["mutation_controls"] == {
         "mutation_count": 3,

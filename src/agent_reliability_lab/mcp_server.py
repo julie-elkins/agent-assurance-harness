@@ -266,6 +266,10 @@ class FindingOutput(StrictModel):
     status: str
     message: str
     dimension: str
+    failure_reason: str | None = Field(
+        default=None,
+        description="Identifier for the evidence-quality condition that caused a block; null when none was recorded.",
+    )
     required_evidence: list[str]
     evidence: list[str]
     missing_evidence: list[str]
@@ -504,6 +508,7 @@ def _finding_output(finding: Finding) -> FindingOutput:
         status=finding.status.value,
         message=finding.message,
         dimension=finding.dimension.value,
+        failure_reason=finding.failure_reason,
         required_evidence=list(finding.required_evidence),
         evidence=list(finding.evidence),
         missing_evidence=list(finding.missing_evidence),
@@ -600,7 +605,7 @@ def _comparison_output(include_mutations: bool) -> ReferenceComparisonOutput:
         diagnostics=_diagnostics(
             what_it_does_not_show=(
                 "It does not show live-provider behaviour, latency, cost, or reliability "
-                "outside the seven synthetic scenarios."
+                "outside the nine synthetic scenarios."
             )
         ),
     )
@@ -686,7 +691,7 @@ def get_scenario_pack_provenance() -> PackProvenanceOutput:
     name="list_scenario_packs",
     title="List synthetic scenario packs",
     description=(
-        "Validate and list the seven built-in synthetic scenario packs. Use this first "
+        "Validate and list the nine built-in synthetic scenario packs. Use this first "
         "when you need a scenario_id. The result includes refusals and diagnostics; "
         "an empty pack list is not evidence that all packs are valid."
     ),
@@ -825,7 +830,7 @@ def evaluate_agent_trace(
     name="run_reference_comparison",
     title="Run deterministic reference comparison",
     description=(
-        "Run the built-in naive and guarded agents against all seven synthetic scenario "
+        "Run the built-in naive and guarded agents against all nine synthetic scenario "
         "packs. Set include_mutations=true to run deliberate evidence-removal checks. "
         "This never launches a caller command, reads a file path, uses credentials, or "
         "contacts a provider."

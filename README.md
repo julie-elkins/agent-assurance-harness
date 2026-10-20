@@ -20,7 +20,7 @@ answer. It is whether the agent can show:
 - what the result still does not prove; and
 - whether the evaluator itself can catch a known false pass.
 
-The current harness compares a deliberately naive agent with a guarded agent across seven
+The current harness compares a deliberately naive agent with a guarded agent across nine
 synthetic agent cases:
 
 1. **Tool misuse** — a plausible result comes from the wrong tool.
@@ -38,6 +38,12 @@ synthetic agent cases:
 7. **Evidence freshness and source authority** — a result must come from the approved
    source and remain within the declared age window. A result that is correct but stale,
    or current but from the wrong source, is not accepted as complete evidence.
+8. **Stale evidence requires abstention** — evidence from the approved source still
+   requires a refusal when it is outside the freshness window, and the report records
+   `evidence_stale` as the blocking condition.
+9. **Fresh evidence from the wrong source requires abstention** — freshness alone must
+   not permit an answer, and the report records `evidence_wrong_source` as the blocking
+   condition.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.
@@ -123,7 +129,7 @@ requirements, and named simulator faults. Packs are data only: the loader reject
 fields and unsupported evidence types, and it never executes predicates, imports pack code,
 or discovers files outside a directory explicitly supplied by the caller.
 
-The seven built-in packs are the source of truth for the reference scenarios. List and
+The nine built-in packs are the source of truth for the reference scenarios. List and
 validate them without running an agent:
 
 ```bash

@@ -643,6 +643,138 @@
                   ]
                 }
               ]
+            },
+            {
+              "traceId": "12121212121212121212121212121212",
+              "spanId": "0000000000000011",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "evidence-stale-approved-source"
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "lookup_authoritative_record"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "record:authoritative:stale:001"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "ok"
+                  }
+                },
+                {
+                  "key": "agent.reliability.evidence.source",
+                  "value": {
+                    "stringValue": "authoritative-catalog"
+                  }
+                },
+                {
+                  "key": "agent.reliability.evidence.age_seconds",
+                  "value": {
+                    "doubleValue": 7200
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "name": "agent.reliability.claim",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "claim:evidence_quality_failed"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.abstention",
+                  "attributes": []
+                }
+              ]
+            },
+            {
+              "traceId": "13131313131313131313131313131313",
+              "spanId": "0000000000000012",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "evidence-fresh-wrong-source"
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "lookup_authoritative_record"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "record:wrong-source:001"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "ok"
+                  }
+                },
+                {
+                  "key": "agent.reliability.evidence.source",
+                  "value": {
+                    "stringValue": "cache"
+                  }
+                },
+                {
+                  "key": "agent.reliability.evidence.age_seconds",
+                  "value": {
+                    "doubleValue": 60
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "name": "agent.reliability.claim",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "claim:evidence_quality_failed"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.abstention",
+                  "attributes": []
+                }
+              ]
             }
           ]
         }

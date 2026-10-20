@@ -1,0 +1,42 @@
+{
+  "pack_version": 3,
+  "scenario_id": "evidence-stale-approved-source",
+  "title": "Stale evidence requires abstention",
+  "description": "Evidence from the approved source is outside the freshness window, so the agent must abstain rather than answer.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "agent-reliability-lab",
+    "purpose": "Test whether the agent abstains when approved evidence is stale."
+  },
+  "dimension": "abstention",
+  "available_tools": [
+    "lookup_authoritative_record"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "successful_tool:lookup_authoritative_record",
+      "description": "Observe a record from the approved source within the freshness window before answering.",
+      "evidence_type": "successful_tool_result",
+      "source": "authoritative-catalog",
+      "max_age_seconds": 3600
+    },
+    {
+      "requirement_id": "abstain:when-evidence-untrusted",
+      "description": "Abstain when the observed source or freshness metadata fails the evidence contract.",
+      "evidence_type": "agent_behaviour"
+    }
+  ],
+  "tools": [
+    {
+      "name": "lookup_authoritative_record",
+      "result_status": "ok",
+      "result_id": "record:authoritative:stale:001",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "authoritative-catalog",
+      "age_seconds": 7200
+    }
+  ],
+  "faults": []
+}

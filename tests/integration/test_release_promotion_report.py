@@ -11,8 +11,8 @@ TOOL = REPOSITORY / "tools" / "release_promotion_report.py"
 def test_release_promotion_report_is_metadata_only(tmp_path):
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir()
-    wheel = artifacts / "agent_reliability_lab-0.41.0-py3-none-any.whl"
-    source = artifacts / "agent_reliability_lab-0.41.0.tar.gz"
+    wheel = artifacts / "agent_reliability_lab-0.42.0-py3-none-any.whl"
+    source = artifacts / "agent_reliability_lab-0.42.0.tar.gz"
     wheel.write_bytes(b"synthetic wheel")
     source.write_bytes(b"synthetic source distribution")
 
@@ -42,7 +42,7 @@ def test_release_promotion_report_is_metadata_only(tmp_path):
         "release_artifact_version": 1,
         "passed": True,
         "git_commit": commit,
-        "package_version": "0.41.0",
+        "package_version": "0.42.0",
         "artifact_output_persisted": True,
         "sbom_persisted": True,
         "artifact_names": [source.name, wheel.name],

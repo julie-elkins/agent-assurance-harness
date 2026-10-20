@@ -123,6 +123,16 @@ def _record_guarded_run(
         )
         recorder.record_claim("claim:current_authoritative_record")
         recorder.record_answer("answer:current_record_available")
+    elif scenario_id in {
+        "evidence-stale-approved-source",
+        "evidence-fresh-wrong-source",
+    }:
+        _record_observation(
+            recorder,
+            environment.invoke("lookup_authoritative_record"),
+        )
+        recorder.record_claim("claim:evidence_quality_failed")
+        recorder.record_abstention()
     else:
         recorder.record_claim(f"claim:unknown_scenario:{scenario_id}")
     return recorder.finish()

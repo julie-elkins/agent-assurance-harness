@@ -80,6 +80,7 @@ The current progression is intentionally operational:
 | 14 | Release provenance | Whether signed CI provenance covers the exact artifacts from the committed source state |
 | 15 | Release promotion | Whether an explicitly approved, provenance-verified artifact may proceed to a future release boundary |
 | 16 | Reusable GitHub Action | Whether another repository can consume the same bounded assurance contract and structured decision |
+| 17 | Evidence-quality abstention | Whether stale or wrong-source evidence produces abstention with a diagnostic failure reason |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -103,6 +104,11 @@ Both values are metadata, not record content. The evaluator rejects a result whe
 source is wrong, the age is missing, or the age exceeds the declared limit. This catches
 “right answer from stale cache” failures without exporting the record that was retrieved.
 
+Phase 17 makes the rejection paths explicit. It tests approved-but-stale evidence and
+fresh-but-wrong-source evidence separately, requires abstention for each, and records
+`evidence_stale` or `evidence_wrong_source` so a freshness-only evaluator cannot pass the
+wrong-source case. The failure reason is an identifier, not the retrieved record.
+
 ## How to add a control
 
 Add one complete vertical path, in dependency order:
@@ -112,7 +118,8 @@ Add one complete vertical path, in dependency order:
    establish.
 3. **Add the synthetic environment.** Return identifiers and classifications only.
 4. **Add naive and guarded traces.** The naive trace must fail for the intended reason; the
-   guarded trace must pass for the intended reason.
+   guarded trace must pass for the intended reason. If evidence is invalid but present,
+   include a guarded abstention trace and assert the exact failure reason.
 5. **Add a mutation.** Remove, replace, stale, or misbind the evidence and prove the
    evaluator catches it.
 6. **Propagate the fields.** Update the recorder, subprocess protocol, provider-shaped

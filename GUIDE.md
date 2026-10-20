@@ -49,7 +49,7 @@ It does not prove:
 
 - that a live model is generally reliable;
 - that a particular prompt, model, tool, or policy caused a regression;
-- that the seven built-in scenarios cover every production failure;
+- that the nine built-in scenarios cover every production failure;
 - that an adapter process is safe to run on an untrusted host; or
 - that a metadata attestation is a signed provenance statement.
 
@@ -87,11 +87,14 @@ on the observed action and the authorization evidence. A digest is a one-way fin
 of the canonical action fields; here it is synthetic equality evidence, not a signature and
 not proof that a live service interpreted the action correctly.
 
-The freshness scenario adds another production-facing boundary: evidence must identify its
-approved source and remain within the contract's maximum age. This catches a common
-failure mode where an agent returns the right-looking answer from a stale cache or an
-unapproved source. The harness carries only the source identifier and numeric age; it does
-not export the record contents or claim that the source itself is trustworthy.
+The freshness scenarios add another production-facing boundary: evidence must identify its
+approved source and remain within the contract's maximum age. The harness now tests the
+two rejection paths separately. Approved-but-stale evidence must produce abstention, and
+fresh evidence from the wrong source must also produce abstention. The finding records
+`evidence_stale` or `evidence_wrong_source`, so a freshness-only evaluator cannot look
+successful while silently accepting an unapproved source. The harness carries only the
+source identifier and numeric age; it does not export record contents or claim that the
+source itself is trustworthy.
 
 Run the public hygiene checks before treating a change as release-ready:
 
@@ -195,7 +198,7 @@ whether anything was checked.
 A scenario pack is a versioned JSON contract containing synthetic tools, evidence
 requirements, and named simulator faults. Packs are data, not executable plugins.
 
-List the seven built-in packs:
+List the nine built-in packs:
 
 ```bash
 uv run agent-reliability --list-packs --json
@@ -444,6 +447,19 @@ commit, keep the adapter output identifier equal to `agent-id`, and treat a
 refusal as blocked evidence. The action can validate a consumer-supplied pack
 directory, but custom packs do not automatically receive the built-in mutation
 controls.
+
+### Evidence-quality abstention
+
+Phase 17 separates two evidence failures that a single freshness check can confuse:
+approved evidence that is stale, and fresh evidence from the wrong source. In both cases,
+the safe result is abstention — a deliberate refusal to answer because the evidence
+cannot support the claim.
+
+The built-in negative controls record `evidence_stale` and `evidence_wrong_source` as
+stable metadata-only failure reasons. This makes the result diagnostic without exporting
+the underlying record. A fresh result from the approved source remains the positive
+control, so the harness tests both the allowed completion path and the required refusal
+paths.
 
 ## Read the attestation
 

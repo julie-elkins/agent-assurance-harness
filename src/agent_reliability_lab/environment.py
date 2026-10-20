@@ -313,4 +313,28 @@ def environment_for_scenario(scenario_id: str) -> SimulatedToolEnvironment:
                 ),
             )
         )
+    if scenario_id == "evidence-stale-approved-source":
+        return SimulatedToolEnvironment(
+            tools=(
+                ToolSpec(
+                    name="lookup_authoritative_record",
+                    result_status="ok",
+                    result_id="record:authoritative:stale:001",
+                    source="authoritative-catalog",
+                    age_seconds=7200.0,
+                ),
+            )
+        )
+    if scenario_id == "evidence-fresh-wrong-source":
+        return SimulatedToolEnvironment(
+            tools=(
+                ToolSpec(
+                    name="lookup_authoritative_record",
+                    result_status="ok",
+                    result_id="record:wrong-source:001",
+                    source="cache",
+                    age_seconds=60.0,
+                ),
+            )
+        )
     raise ValueError(f"Unknown synthetic scenario: {scenario_id}")

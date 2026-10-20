@@ -73,16 +73,16 @@ def test_in_process_tools_return_structured_results():
     packs, provenance, comparison, evaluated, blocked, allowed = anyio.run(call_tools)
 
     assert packs.is_error is False
-    assert len(packs.structured_content["packs"]) == 7
+    assert len(packs.structured_content["packs"]) == 9
     assert provenance.is_error is False
-    assert len(provenance.structured_content["manifests"]) == 7
+    assert len(provenance.structured_content["manifests"]) == 9
     assert all(
         manifest["data_class"] == "synthetic"
         and len(manifest["pack_sha256"]) == 64
         for manifest in provenance.structured_content["manifests"]
     )
     assert comparison.is_error is False
-    assert comparison.structured_content["scenario_count"] == 7
+    assert comparison.structured_content["scenario_count"] == 9
     assert all(item["caught"] for item in comparison.structured_content["mutation_tests"])
     assert evaluated.is_error is False
     assert evaluated.structured_content["finding"]["status"] == "failed"
@@ -144,4 +144,4 @@ def test_stdio_client_sees_initialization_surface_and_tool_result():
         "run_gated_scenario",
     ]
     assert result.is_error is False
-    assert len(result.structured_content["packs"]) == 7
+    assert len(result.structured_content["packs"]) == 9

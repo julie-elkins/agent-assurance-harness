@@ -148,6 +148,18 @@ contract fixtures exercise the reviewed OpenAI and Anthropic response subsets of
 See `SECURITY.md` before using the live boundary with anything other than built-in
 synthetic input.
 
+Phase 16 verifies the built release artifact in a clean environment:
+
+```bash
+uv run python tools/release_check.py \
+  --sbom-output /tmp/agent-reliability-runtime-sbom.json \
+  --manifest-output /tmp/agent-reliability-release-manifest.json
+```
+
+The manifest contains package, commit, scenario-pack, artifact, and assurance-output
+hashes plus a dirty-checkout indicator; it does not contain traces, prompts, credentials,
+or model text.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

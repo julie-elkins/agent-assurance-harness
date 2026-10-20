@@ -78,6 +78,10 @@ missing, and what the result does not prove.
 - The blocking workflow must run `tools/check_repository_boundaries.py` and the
   hash-checked `tools/audit_dependencies.py` before tests. The boundary check is
   high-signal hygiene, not proof that every possible secret was found.
+- `tools/release_check.py` must build both distribution formats, install the wheel in a
+  clean environment, compare its synthetic assurance output with the source checkout,
+  and emit only hashes and package metadata. Its SBOM output is written only to a path
+  explicitly supplied by the caller.
 - Provider response fixtures under `tests/fixtures/provider_contracts/` are synthetic
   contract examples only. They must not contain raw provider output, prompts, private
   input, or credentials.

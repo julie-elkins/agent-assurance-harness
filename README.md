@@ -252,6 +252,23 @@ Anthropic-shaped response subsets without making network calls.
 
 See [SECURITY.md](SECURITY.md) for the reporting path and the limits of the live boundary.
 
+### Verify a clean release artifact
+
+The release check builds the wheel and source distribution, installs the wheel into a
+temporary environment with locked runtime dependencies, and compares its synthetic
+assurance output with the source checkout. It also creates a CycloneDX SBOM (software
+bill of materials, an inventory of shipped dependencies) and emits a metadata-only
+manifest containing hashes rather than traces or model text:
+
+```bash
+uv run python tools/release_check.py \
+  --sbom-output /tmp/agent-reliability-runtime-sbom.json \
+  --manifest-output /tmp/agent-reliability-release-manifest.json
+```
+
+The manifest records whether the checkout was dirty (had uncommitted changes), so a
+release reviewer can distinguish the committed source state from local edits.
+
 ## Record a provider-neutral trace
 
 `TraceRecorder` is the safe integration point for an agent that can expose observable

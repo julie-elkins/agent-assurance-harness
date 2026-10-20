@@ -28,6 +28,12 @@ jobs:
       - name: Audit Python dependencies
         run: uv run python tools/audit_dependencies.py
 
+      - name: Verify clean release artifact
+        run: >-
+          uv run python tools/release_check.py
+          --sbom-output /tmp/agent-reliability-runtime-sbom.json
+          --manifest-output /tmp/agent-reliability-release-manifest.json
+
       - name: Run tests
         run: uv run pytest
 

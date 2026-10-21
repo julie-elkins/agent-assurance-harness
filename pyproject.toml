@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agent-reliability-lab"
 version = "0.57.0"
-description = "Provider-neutral harness for agent evidence and technical-content assurance before publication."
+description = "Production assurance harness for AI agents: evidence, abstention, safety, privacy, CI gates, and release controls."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

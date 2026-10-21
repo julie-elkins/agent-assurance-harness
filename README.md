@@ -1,7 +1,8 @@
 # Agent Assurance Harness
 
-Production-shaped assurance and review workflows for AI agents and technical-content
-systems.
+Evidence gates for shipping AI agent code to production.
+
+A production assurance harness for AI agents and technical-content systems.
 
 A provider-neutral harness for testing whether tool-using AI agents have the evidence to
 act, abstain, and report honestly, plus a bounded Course Doctor workflow for deciding

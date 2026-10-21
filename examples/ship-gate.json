@@ -53,6 +53,12 @@
       "blocking": true
     },
     {
+      "check_id": "content-assurance-pipeline",
+      "report_kind": "content-pipeline",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "release-artifact-integrity",
       "report_kind": "release-artifact",
       "expected": "pass",

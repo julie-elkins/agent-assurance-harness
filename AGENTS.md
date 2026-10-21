@@ -99,6 +99,10 @@ missing, and what the result does not prove.
   `examples/content-assurance-packs/`; its stale, wrong-source, source-drift,
   unsupported-claim, conflicting-claim, and ambiguous-claim abstention reasons are
   part of the contract and must remain distinguishable.
+- The content-assurance pipeline must process source bytes only in memory, emit only
+  hashes, sizes, section identifiers, and claim-evidence identifiers, and route its
+  decision through the existing content-assurance agent. CI must use synthetic bytes;
+  no fetched documentation body may be persisted or exported.
 - `tools/adapter_regression_report.py` must run baseline and candidate adapters through
   the existing replay comparator, keep traces in memory, and emit only identifier-only
   regression metadata. It must block safety/evidence regressions and refusals while

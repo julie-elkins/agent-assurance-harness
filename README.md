@@ -67,6 +67,22 @@ drift (a changed source fingerprint), unsupported claims, conflicting evidence, 
 ambiguous evidence. The output contains identifiers, statuses, and hashes only; it does
 not contain lesson text.
 
+The end-to-end pipeline accepts synthetic source bytes only for a bounded in-memory run,
+normalizes and fingerprints them, binds claim identifiers to source-section identifiers,
+and routes the metadata through the same content-assurance agent:
+
+```bash
+uv run python tools/content_assurance_pipeline_report.py \
+  --output /tmp/agent-reliability-content-pipeline.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The pipeline discards source bytes before producing its metadata-only report. It tests
+approved ingestion, unsupported claims, stale evidence, source drift, and unapproved
+hosts. Its claim index is explicit synthetic evidence; it does not claim that hashing
+or normalization proves semantic truth.
+
 The reference agent also runs through the existing adapter contract and seven declarative
 scenario packs:
 
@@ -99,7 +115,9 @@ The refresh hashes and discards the response body. It records only the official 
 retrieval time, byte count, and SHA-256 fingerprint. CI does not depend on this network
 path; it uses the synthetic suite so a pull request has repeatable positive and negative
 controls. A future content-ingestion adapter can turn an approved refresh record into
-the content-assurance source contract without exposing the documentation body.
+the content-assurance source contract without exposing the documentation body. The
+Phase 28 pipeline provides that bounded in-memory contract for callers that already
+hold source bytes; the public refresh command still discards fetched bodies.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.

@@ -207,6 +207,23 @@ text. An official, fresh source may still lead to abstention when the support st
 `unsupported`, `conflicting`, or `ambiguous`, because source authority alone does not
 prove that a specific statement is safe to publish.
 
+The end-to-end content pipeline processes source bytes only in memory and then discards
+them. It computes raw and normalized fingerprints, binds a reviewed claim index to
+section identifiers, and sends only the resulting metadata into the content-assurance
+agent. Run its synthetic controls with:
+
+```bash
+uv run python tools/content_assurance_pipeline_report.py \
+  --output /tmp/agent-reliability-content-pipeline.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The pipeline covers approved ingestion, unsupported claims, stale sources, source drift,
+and an unapproved host. A refusal is a blocked input decision; an abstention is a valid
+request where the evidence cannot justify publication. Neither result contains source
+text.
+
 The real-source path is explicit and bounded:
 
 ```bash

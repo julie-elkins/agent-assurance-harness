@@ -56,6 +56,7 @@ def _run(
     provider_contract = tmp_path / "provider-contract.json"
     content_assurance = tmp_path / "content-assurance.json"
     content_conformance = tmp_path / "content-conformance.json"
+    content_pipeline = tmp_path / "content-pipeline.json"
     release_artifact = tmp_path / "release-manifest.json"
     rollback_rehearsal = tmp_path / "rollback-rehearsal.json"
     output = tmp_path / "ship-gate.json"
@@ -197,6 +198,48 @@ def _run(
         ),
         encoding="utf-8",
     )
+    content_pipeline.write_text(
+        json.dumps(
+            {
+                "content_pipeline_version": 1,
+                "passed": True,
+                "controls_missed": [],
+                "cases": [
+                    {
+                        "case_id": "pipeline-approved",
+                        "decision": "approved",
+                        "abstention_reasons": [],
+                        "refusal_code": None,
+                    },
+                    {
+                        "case_id": "pipeline-unsupported-claim",
+                        "decision": "abstain",
+                        "abstention_reasons": ["claim_unsupported"],
+                        "refusal_code": None,
+                    },
+                    {
+                        "case_id": "pipeline-stale-source",
+                        "decision": "abstain",
+                        "abstention_reasons": ["evidence_stale"],
+                        "refusal_code": None,
+                    },
+                    {
+                        "case_id": "pipeline-source-drift",
+                        "decision": "abstain",
+                        "abstention_reasons": ["source_drift"],
+                        "refusal_code": None,
+                    },
+                    {
+                        "case_id": "pipeline-unapproved-host",
+                        "decision": "refused",
+                        "abstention_reasons": [],
+                        "refusal_code": "unapproved_source_host",
+                    },
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     release_artifact.write_text(
         json.dumps(
             {
@@ -272,6 +315,8 @@ def _run(
         str(content_assurance),
         "--content-assurance-conformance",
         str(content_conformance),
+        "--content-assurance-pipeline",
+        str(content_pipeline),
         "--release-artifact",
         str(release_artifact),
         "--rollback-rehearsal",

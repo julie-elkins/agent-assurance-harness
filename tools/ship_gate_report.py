@@ -347,6 +347,55 @@ def _content_adapter_observation(
     )
 
 
+def _content_pipeline_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    cases = report.get("cases")
+    case_map = {
+        item.get("case_id"): item
+        for item in cases
+        if isinstance(item, dict)
+    } if isinstance(cases, list) else {}
+    required_cases = {
+        "pipeline-approved": ("approved", (), None),
+        "pipeline-unsupported-claim": (
+            "abstain",
+            ("claim_unsupported",),
+            None,
+        ),
+        "pipeline-stale-source": ("abstain", ("evidence_stale",), None),
+        "pipeline-source-drift": ("abstain", ("source_drift",), None),
+        "pipeline-unapproved-host": (
+            "refused",
+            (),
+            "unapproved_source_host",
+        ),
+    }
+    cases_passed = all(
+        isinstance(case_map.get(case_id), dict)
+        and case_map[case_id].get("decision") == decision
+        and set(case_map[case_id].get("abstention_reasons", [])) == set(reasons)
+        and case_map[case_id].get("refusal_code") == refusal_code
+        for case_id, (decision, reasons, refusal_code) in required_cases.items()
+    )
+    passed = (
+        expected == "pass"
+        and report.get("content_pipeline_version") == 1
+        and report.get("passed") is True
+        and report.get("controls_missed") == []
+        and cases_passed
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "content-pipeline-failed",
+    )
+
+
 def _release_artifact_observation(
     check_id: str,
     path: Path,
@@ -495,6 +544,12 @@ def _observations(
                 path,
                 expected=check.expected,
             )
+        elif check.report_kind == "content-pipeline":
+            observations[check.check_id] = _content_pipeline_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
         elif check.report_kind == "release-artifact":
             observations[check.check_id] = _release_artifact_observation(
                 check.check_id,
@@ -561,6 +616,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--provider-contract", type=Path)
     parser.add_argument("--content-assurance", type=Path)
     parser.add_argument("--content-assurance-conformance", type=Path)
+    parser.add_argument("--content-assurance-pipeline", type=Path)
     parser.add_argument("--release-artifact", type=Path)
     parser.add_argument("--rollback-rehearsal", type=Path)
     parser.add_argument("--output", type=Path)
@@ -577,6 +633,7 @@ def main(argv: list[str] | None = None) -> int:
         "provider-contract-drift": args.provider_contract,
         "content-assurance-reference": args.content_assurance,
         "content-assurance-adapter": args.content_assurance_conformance,
+        "content-assurance-pipeline": args.content_assurance_pipeline,
         "release-artifact-integrity": args.release_artifact,
         "rollback-rehearsal": args.rollback_rehearsal,
     }

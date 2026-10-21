@@ -206,6 +206,14 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run content assurance pipeline
+        run: >-
+          uv run python tools/content_assurance_pipeline_report.py
+          --output /tmp/agent-reliability-content-pipeline.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Rehearse rollback
         run: >-
           uv run python tools/rollback_rehearsal.py
@@ -226,6 +234,7 @@ jobs:
           --provider-contract /tmp/agent-reliability-provider-contract.json
           --content-assurance /tmp/agent-reliability-content-assurance.json
           --content-assurance-conformance /tmp/agent-reliability-content-conformance.json
+          --content-assurance-pipeline /tmp/agent-reliability-content-pipeline.json
           --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
@@ -254,6 +263,7 @@ jobs:
           --provider-contract /tmp/agent-reliability-provider-contract.json
           --content-assurance /tmp/agent-reliability-content-assurance.json
           --content-assurance-conformance /tmp/agent-reliability-content-conformance.json
+          --content-assurance-pipeline /tmp/agent-reliability-content-pipeline.json
           --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
@@ -275,6 +285,7 @@ jobs:
             /tmp/agent-reliability-provider-contract.json
             /tmp/agent-reliability-content-assurance.json
             /tmp/agent-reliability-content-conformance.json
+            /tmp/agent-reliability-content-pipeline.json
             /tmp/agent-reliability-consumer-validation.json
             /tmp/agent-reliability-release-manifest.json
             /tmp/agent-reliability-runtime-sbom.json

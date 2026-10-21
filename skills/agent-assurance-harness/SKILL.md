@@ -34,6 +34,8 @@ negative control and make the delivery gate fail when it is not caught.
 - Claim support is a separate contract from source authority. Test supported,
   unsupported, conflicting, and ambiguous claim evidence, and preserve the reason that
   caused abstention.
+- Source ingestion must be bounded and ephemeral: process bytes in memory, emit only
+  metadata, and keep CI on synthetic fixtures.
 
 ## Build path
 
@@ -46,15 +48,17 @@ negative control and make the delivery gate fail when it is not caught.
 5. For technical-content assurance, require both source-level controls and claim-level
    controls. An official and fresh source is not sufficient when it does not support the
    declared claim.
-6. Add the control to the blocking CI workflow and preserve the stable
+6. Route source ingestion through the existing content-assurance contract and test
+   oversized, unapproved-host, stale, drifted, and unsupported-claim controls.
+7. Add the control to the blocking CI workflow and preserve the stable
    `Agent reliability gate` job name.
-7. For consumer or action changes, run consumer validation, independent provenance
+8. For consumer or action changes, run consumer validation, independent provenance
    verification, compatibility verification, and pinned-action content-parity
    verification. The parity check must inspect the immutable Git object, not only the
    current action file.
-8. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
+9. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
    the workflow or repository contract changes.
-9. Run the full test suite, repository boundary check, dependency audit, release check,
+10. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
 
 ## Limits

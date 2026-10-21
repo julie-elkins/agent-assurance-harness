@@ -384,7 +384,7 @@ def _content_pipeline_observation(
     )
     passed = (
         expected == "pass"
-        and report.get("content_pipeline_version") == 1
+        and report.get("content_pipeline_version") == 2
         and report.get("passed") is True
         and report.get("controls_missed") == []
         and cases_passed
@@ -428,7 +428,7 @@ def _course_freshness_observation(
     counts = report.get("counts")
     passed = (
         expected == "pass"
-        and report.get("course_freshness_version") == 1
+        and report.get("course_freshness_version") == 2
         and report.get("passed") is True
         and report.get("controls_missed") == []
         and isinstance(counts, dict)
@@ -488,7 +488,7 @@ def _course_doctor_observation(
     counts = report.get("counts")
     passed = (
         expected == "pass"
-        and report.get("course_doctor_version") == 1
+        and report.get("course_doctor_version") == 2
         and report.get("passed") is True
         and report.get("controls_missed") == []
         and isinstance(counts, dict)

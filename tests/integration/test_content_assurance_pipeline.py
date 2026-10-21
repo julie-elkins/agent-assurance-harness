@@ -25,7 +25,7 @@ def test_content_pipeline_report_passes_and_writes_metadata_only(tmp_path):
     )
 
     report = json.loads(result.stdout)
-    assert report["content_pipeline_version"] == 1
+    assert report["content_pipeline_version"] == 2
     assert report["passed"] is True
     assert report["controls_missed"] == []
     assert output.exists()

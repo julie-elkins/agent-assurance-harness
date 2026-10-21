@@ -147,6 +147,16 @@ completed. A proposal is not a verified claim, and a recommendation is not human
 approval. Failed work becomes `not_reviewed`, so it cannot disappear from the worklist.
 The public command uses synthetic fixtures only.
 
+Each claim-level finding also carries a safe locator: the claim and section identifiers,
+the failed check, evidence and source identifiers, the observed source digest, and the
+freshness values used by the decision. This answers “which content record failed?” without
+copying the content itself. If a reviewer needs to open a private local file, request a
+separate local navigation index:
+
+The Markdown form also renders findings in plain language, for example “Source is older
+than the allowed freshness window,” followed by the claim, section, evidence, source,
+and freshness condition. JSON remains the complete machine-readable form.
+
 Private local runs may supply a manifest and an explicit source root:
 
 ```bash
@@ -155,12 +165,15 @@ uv run python tools/course_doctor_report.py \
   --source-root /private/path/course-sources \
   --workspace /tmp/course-doctor \
   --output /tmp/course-doctor.json \
+  --local-index-output /tmp/course-doctor-local-index.json \
   --fail-on-findings
 ```
 
 The local adapter reads only beneath the supplied root, enforces a byte ceiling, processes
 source bytes in memory, and exports metadata only. It does not rewrite or publish course
-content. A human adjudication record is required before a later publisher could act.
+content. The local index contains only caller-supplied relative paths and optional line
+ranges; it must remain local and must not be uploaded with the public report. A human
+adjudication record is required before a later publisher could act.
 
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
@@ -185,6 +198,29 @@ controls. A future content-ingestion adapter can turn an approved refresh record
 the content-assurance source contract without exposing the documentation body. The
 Phase 28 pipeline provides that bounded in-memory contract for callers that already
 hold source bytes; the public refresh command still discards fetched bodies.
+
+Phase 34 adds a provider-neutral adapter for the checked-in verifier used by the public
+Claude Architect Lab course:
+
+```bash
+uv run python tools/claude_course_adapter.py \
+  --course-root /path/to/claude-architect-lab \
+  --output /tmp/claude-course-adapter.json \
+  --markdown
+```
+
+It reuses the course verifier's claim extraction and citation checks, preserves guide,
+verbatim, identifier, and uncovered evidence tiers, and keeps `review_required` when
+exact wording is missing or an identifier is absent. Reports contain the checkout
+revision, lesson and claim-row locators, source URLs, read dates, states, counts, and
+refusal codes, but no claim text, quotes, source bytes, credentials, or private paths.
+The optional `--offline` mode inventories rows without fetching documentation and
+therefore cannot pass claim verification.
+
+This is an explicitly local demonstration, not a CI input. Future courses should use the
+same structured claim/source verification contract. A rough private draft without that
+contract must first be converted into a local-only manifest; the adapter will not invent
+timestamps, freshness windows, or content locations.
 
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.

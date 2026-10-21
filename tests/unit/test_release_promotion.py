@@ -10,7 +10,7 @@ SIGNER_WORKFLOW = (
     ".github/workflows/reliability.yml"
 )
 COMMIT = "a" * 40
-PACKAGE_VERSION = "0.57.0"
+PACKAGE_VERSION = "0.59.0"
 
 
 def _write_evidence(tmp_path):

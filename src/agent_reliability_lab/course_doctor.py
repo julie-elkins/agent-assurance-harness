@@ -38,6 +38,7 @@ from .content_pipeline import (
     ContentPipelineRequest,
     PipelineClaim,
     PipelineDecision,
+    PipelineFindingLocator,
 )
 from .course_freshness import (
     CourseFreshnessCoordinator,
@@ -48,8 +49,27 @@ from .course_freshness import (
 )
 
 
-COURSE_DOCTOR_VERSION = 1
+COURSE_DOCTOR_VERSION = 2
 DEFAULT_MAX_REVIEW_COURSES = 50
+LOCAL_REVIEW_INDEX_VERSION = 1
+
+
+def describe_finding_reason(reason_code: str) -> str:
+    """Return a reviewer-friendly explanation for one stable reason code."""
+
+    return {
+        "evidence_stale": "Source is older than the allowed freshness window.",
+        "evidence_verification_unknown": "Source age could not be verified.",
+        "evidence_wrong_source": "Evidence came from a source that is not approved.",
+        "source_drift": "Source no longer matches the expected integrity digest.",
+        "claim_unsupported": "The source does not support this claim.",
+        "claim_conflict": "The available evidence conflicts for this claim.",
+        "claim_ambiguous": "The available evidence is ambiguous for this claim.",
+        "evidence_missing": "Required evidence was not available.",
+        "unapproved_source_host": "The source host is outside the approved boundary.",
+        "worker_result_missing": "The worker returned no review result.",
+        "worker_unavailable": "The worker was unavailable, so this was not reviewed.",
+    }.get(reason_code, f"Review stopped for reason `{reason_code}`.")
 
 
 class ReviewDisposition(str, Enum):
@@ -92,6 +112,7 @@ class ReviewFinding:
     finding_id: str
     reason_code: str
     evidence_ids: tuple[str, ...] = ()
+    locators: tuple[PipelineFindingLocator, ...] = ()
     status: str = "open"
 
     def to_dict(self) -> dict[str, object]:
@@ -101,6 +122,7 @@ class ReviewFinding:
             "finding_id": self.finding_id,
             "reason_code": self.reason_code,
             "evidence_ids": list(self.evidence_ids),
+            "locators": [locator.to_dict() for locator in self.locators],
             "status": self.status,
             "what_it_does_not_show": (
                 "This finding does not reproduce course text or prove that "
@@ -270,6 +292,44 @@ class ReviewPacketReport:
                 "Human approval remains required before any future content change.",
             ]
         )
+        finding_rows = [
+            (packet, finding, locator)
+            for packet in self.packets
+            for finding in packet.findings
+            for locator in (finding.locators or (None,))
+        ]
+        if finding_rows:
+            lines.extend(
+                [
+                    "",
+                    "## Findings requiring attention",
+                    "",
+                    "These locations use identifiers rather than source excerpts. "
+                    "Use the optional local review index to open a local file.",
+                    "",
+                ]
+            )
+            for packet, finding, locator in finding_rows:
+                lines.append(
+                    f"- `{packet.course_id}` — "
+                    f"**{describe_finding_reason(finding.reason_code)}**"
+                )
+                if locator is None:
+                    lines.append(
+                        "  - Location: unavailable; this finding occurred before "
+                        "a claim-level location could be established."
+                    )
+                    continue
+                lines.extend(
+                    [
+                        f"  - Claim: `{locator.claim_id}`",
+                        f"  - Section: `{locator.section_id}`",
+                        f"  - Evidence: `{locator.evidence_id or 'unavailable'}`",
+                        f"  - Source: `{locator.source_id}`",
+                        f"  - Check: `{locator.check_id}`",
+                        f"  - Condition: {_locator_condition(locator)}",
+                    ]
+                )
         return "\n".join(lines)
 
 
@@ -343,6 +403,73 @@ class LocalCourseSourceLoad:
     course_revision: str
     request: CourseDoctorRequest | None
     refusal_code: str | None = None
+
+
+def write_local_review_index(
+    path: Path,
+    report: ReviewPacketReport,
+    specs: Iterable[LocalCourseSourceSpec],
+) -> None:
+    """Write an explicit local navigation index without changing the report.
+
+    The index is a caller-requested local artifact. It may contain the
+    manifest's relative source path and optional line range, but it must never
+    be uploaded as the public Course Doctor report.
+    """
+
+    specs_by_course = {spec.course_id: spec for spec in specs}
+    entries: list[dict[str, object]] = []
+    for packet in report.packets:
+        spec = specs_by_course.get(packet.course_id)
+        for finding in packet.findings:
+            if not finding.locators:
+                entries.append(
+                    {
+                        "packet_id": packet.packet_id,
+                        "finding_id": finding.finding_id,
+                        "reason_code": finding.reason_code,
+                        "navigation_available": False,
+                        "what_it_does_not_show": (
+                            "No claim-level source location was available for "
+                            "this finding."
+                        ),
+                    }
+                )
+                continue
+            for locator in finding.locators:
+                entry: dict[str, object] = {
+                    "packet_id": packet.packet_id,
+                    "finding_id": finding.finding_id,
+                    "reason_code": finding.reason_code,
+                    "claim_id": locator.claim_id,
+                    "section_id": locator.section_id,
+                    "evidence_id": locator.evidence_id,
+                    "source_id": locator.source_id,
+                    "source_digest": locator.source_digest,
+                    "line_start": locator.line_start,
+                    "line_end": locator.line_end,
+                    "navigation_available": spec is not None,
+                }
+                if spec is not None:
+                    entry["source_path"] = spec.source_path
+                entries.append(entry)
+    payload = {
+        "local_review_index_version": LOCAL_REVIEW_INDEX_VERSION,
+        "entries": entries,
+        "diagnostics": {
+            "warnings": [
+                "This file is local-only navigation metadata and is not a "
+                "public assurance report.",
+                "Source paths are copied from the caller-supplied manifest; "
+                "source content is never copied.",
+            ],
+            "what_it_does_not_show": (
+                "A path or line range helps a reviewer navigate locally; it "
+                "does not prove semantic truth or publication readiness."
+            ),
+        },
+    }
+    _write_json(path, payload)
 
 
 class LocalCourseSourceAdapter:
@@ -728,21 +855,37 @@ def load_local_course_manifest(
 ) -> tuple[CourseDoctorRequest, ...]:
     """Load a metadata-only manifest and read no source bytes yet."""
 
+    requests, _ = load_local_course_manifest_with_specs(
+        manifest_path,
+        source_root=source_root,
+    )
+    return requests
+
+
+def load_local_course_manifest_with_specs(
+    manifest_path: Path,
+    *,
+    source_root: Path,
+) -> tuple[tuple[CourseDoctorRequest, ...], tuple[LocalCourseSourceSpec, ...]]:
+    """Load requests plus local-only manifest specs for explicit navigation."""
+
     payload = json.loads(manifest_path.read_text(encoding="utf-8"))
     records = payload.get("courses") if isinstance(payload, dict) else payload
     if not isinstance(records, list) or not records:
         raise ValueError("Manifest must contain a non-empty courses list.")
     requests: list[CourseDoctorRequest] = []
+    specs: list[LocalCourseSourceSpec] = []
     adapter = LocalCourseSourceAdapter(source_root)
     for record in records:
         if not isinstance(record, dict):
             raise ValueError("Every manifest course must be an object.")
         spec = _local_spec_from_dict(record)
+        specs.append(spec)
         loaded = adapter.load(spec)
         if loaded.request is None:
             raise ValueError("Local source adapter returned no request.")
         requests.append(loaded.request)
-    return tuple(requests)
+    return tuple(requests), tuple(specs)
 
 
 def _prepare_proposals(
@@ -907,11 +1050,7 @@ def _packet_for_request(
             proposal_refusal_code=request.proposal_refusal_code,
         )
     findings = tuple(
-        ReviewFinding(
-            finding_id=f"{packet_id}:{reason}",
-            reason_code=reason,
-            evidence_ids=result.claim_evidence_ids,
-        )
+        _finding_for_reason(packet_id, reason, result.finding_locators)
         for reason in result.abstention_reasons
     )
     if result.refusal_code is not None:
@@ -919,7 +1058,6 @@ def _packet_for_request(
             ReviewFinding(
                 finding_id=f"{packet_id}:{result.refusal_code}",
                 reason_code=result.refusal_code,
-                evidence_ids=result.claim_evidence_ids,
             ),
         )
     if result.decision is PipelineDecision.APPROVED:
@@ -941,6 +1079,30 @@ def _packet_for_request(
         failure_code=result.refusal_code,
         proposal_status=request.proposal_status,
         proposal_refusal_code=request.proposal_refusal_code,
+    )
+
+
+def _finding_for_reason(
+    packet_id: str,
+    reason: str,
+    locators: tuple[PipelineFindingLocator, ...],
+) -> ReviewFinding:
+    """Join one reason to only the claim checks that produced it."""
+
+    matching = tuple(locator for locator in locators if locator.reason_code == reason)
+    evidence_ids = tuple(
+        evidence_id
+        for evidence_id in dict.fromkeys(
+            locator.evidence_id
+            for locator in matching
+            if locator.evidence_id is not None
+        )
+    )
+    return ReviewFinding(
+        finding_id=f"{packet_id}:{reason}",
+        reason_code=reason,
+        evidence_ids=evidence_ids,
+        locators=matching,
     )
 
 
@@ -991,6 +1153,8 @@ def _local_spec_from_dict(record: Mapping[str, object]) -> LocalCourseSourceSpec
                 claim_id=_required_string(claim, "claim_id"),
                 section_id=_required_string(claim, "section_id"),
                 support_status=_required_string(claim, "support_status"),
+                line_start=_optional_int(claim.get("line_start")),
+                line_end=_optional_int(claim.get("line_end")),
             )
         )
     approved = record.get("approved_source_ids")
@@ -1043,6 +1207,14 @@ def _optional_float(value: object) -> float | None:
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         raise ValueError("Manifest optional age_seconds must be numeric.")
     return float(value)
+
+
+def _optional_int(value: object) -> int | None:
+    if value is None:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool):
+        raise ValueError("Manifest optional line positions must be integers.")
+    return value
 
 
 def _optional_string(value: object) -> str | None:
@@ -1103,6 +1275,40 @@ def _doctor_request_metadata(request: CourseDoctorRequest) -> dict[str, object]:
 
 def _safe_identifier(value: str) -> bool:
     return all(character.isalnum() or character in "._:-/" for character in value)
+
+
+def _locator_condition(locator: PipelineFindingLocator) -> str:
+    """Summarise the failed comparison without reproducing source content."""
+
+    if locator.reason_code == "evidence_stale":
+        return (
+            f"{_format_number(locator.age_seconds)} seconds observed; "
+            f"{_format_number(locator.max_age_seconds)} seconds allowed"
+        )
+    if locator.reason_code == "evidence_verification_unknown":
+        return "source age was not available"
+    if locator.reason_code == "source_drift":
+        return (
+            f"actual {_short_digest(locator.source_digest)}; "
+            f"expected {_short_digest(locator.expected_source_digest)}"
+        )
+    if locator.reason_code == "evidence_wrong_source":
+        return f"source `{locator.source_id}` is outside the approved source set"
+    return "claim-level evidence check did not pass"
+
+
+def _format_number(value: float | int | None) -> str:
+    if value is None:
+        return "unknown"
+    return f"{value:g}"
+
+
+def _short_digest(value: str | None) -> str:
+    if value is None:
+        return "unavailable"
+    if value.startswith("sha256:"):
+        return f"sha256:{value[7:19]}..."
+    return f"{value[:16]}..."
 
 
 def _write_json(path: Path, value: Mapping[str, object]) -> None:

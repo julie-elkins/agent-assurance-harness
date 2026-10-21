@@ -219,6 +219,21 @@ It combines the guarded synthetic assurance path, evaluator and mutation control
 one metadata-only Course Doctor packet. `SHOWCASE.md` also documents the optional
 public-course demonstration and the screen-recording path.
 
+Phase 33 adds claim-level finding locators. Reports identify the affected claim, section,
+failed check, evidence, source, digest, and freshness condition without exporting course
+text or source paths. An explicitly requested local review index may map those identifiers
+to caller-supplied relative paths and optional line ranges; it is not a CI artifact. The
+Markdown renderer translates stable reason codes into plain-language review guidance.
+
+Phase 34 adds a provider-neutral adapter for a separately checked-out public Claude
+course verifier. It reuses that verifier's claim extraction and citation checks, records
+the pinned checkout revision and bounded page fetches, and preserves guide, verbatim,
+identifier, uncovered, and unavailable evidence states. It emits only metadata and safe
+lesson/claim locators. A missing quote is a human-review signal, not an automatic
+staleness verdict. The optional full-course run is local-only; CI remains synthetic and
+offline. Private rough drafts without structured claim/source metadata are not fixtures
+and must not be given invented dates or locations.
+
 Phase 15 adds production-readiness checks without enabling live execution in CI:
 
 ```bash

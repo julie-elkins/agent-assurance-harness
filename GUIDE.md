@@ -279,6 +279,53 @@ Public CI never uses private files or live source retrieval. This phase provides
 rewriter or publisher; it stops at the explicit human decision required before a later
 content change.
 
+Phase 33 adds safe finding locations. A finding now identifies the affected claim and
+section, failed check, evidence and source identifiers, source digest, and freshness
+values when the underlying claim-level check provides them. This makes a stale or
+wrong-source result actionable without exporting the lesson text.
+
+For a private local review, add `--local-index-output` to the manifest command. The
+resulting local-only index joins finding identifiers to the manifest's relative source
+path and optional line range. It is a navigation aid, not assurance evidence, and must
+not be uploaded with CI artifacts. Findings created before a claim-level check exists
+remain valid but explicitly have no precise content location.
+
+Use `--markdown` when presenting results to a reviewer. The renderer translates stable
+reason codes into plain-language explanations and lists the claim, section, evidence,
+source, and freshness condition. The JSON output remains the complete machine-readable
+record.
+
+## Public-course verifier adapter
+
+Phase 34 adds a provider-neutral adapter for a public course that already owns a
+checked-in verifier. A provider-neutral adapter is a connector that changes the source
+system without changing the harness's evidence and reporting contract.
+
+Run it against an explicit local checkout:
+
+```bash
+uv run python tools/claude_course_adapter.py \
+  --course-root /path/to/claude-architect-lab \
+  --output /tmp/claude-course-adapter.json \
+  --markdown
+```
+
+The adapter imports the course verifier as the source of truth for claim extraction and
+citation checking. It preserves guide references, verbatim checks, identifier presence,
+and uncovered claims as separate evidence states. A missing quote or identifier becomes
+a human-review signal; it is not automatically called stale.
+
+The report records the pinned Git revision, lesson and claim-row locators, source URLs,
+source read dates, states, counts, and bounded fetch totals. It never emits lesson text,
+quotes, source bytes, raw exceptions, credentials, or private source paths. Use
+`--offline` to inspect the complete row inventory without fetching documentation; an
+offline inventory is intentionally `review_required`, not a passing verification.
+
+The public Claude course is an explicit demonstration target, not a CI dependency. Future
+courses should follow the same structured claim/source verification contract. An older
+private draft without that structure needs a local-only manifest and human approval; the
+adapter does not guess missing timestamps or locations.
+
 ## Untrusted claim proposals
 
 Phase 31 adds a proposal worker before evidence evaluation. A proposal worker is an agent

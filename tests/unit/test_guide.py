@@ -6,6 +6,7 @@ GUIDE = REPOSITORY / "GUIDE.md"
 BUILD_GUIDE = REPOSITORY / "BUILD_GUIDE.md"
 DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
 ASSURANCE_SKILL = REPOSITORY / "skills" / "agent-assurance-harness" / "SKILL.md"
+SHOWCASE = REPOSITORY / "SHOWCASE.md"
 
 
 def test_guide_exists_and_local_references_are_present():
@@ -27,6 +28,10 @@ def test_guide_exists_and_local_references_are_present():
     standard = DELIVERY_STANDARD.read_text(encoding="utf-8")
     assert "# Production Delivery Standard" in standard
     assert "The ten controls" in standard
+    showcase = SHOWCASE.read_text(encoding="utf-8")
+    assert "tools/claude_course_adapter.py" in showcase
+    assert "REVIEW_REQUIRED" in showcase
+    assert "rows_total" in showcase
 
     for relative_path in (
         "README.md",
@@ -38,6 +43,7 @@ def test_guide_exists_and_local_references_are_present():
         "tools",
         "tools/render_assurance_summary.py",
         "tools/golden_trace_report.py",
+        "SHOWCASE.md",
         "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",
         "skills/agent-assurance-harness/SKILL.md",

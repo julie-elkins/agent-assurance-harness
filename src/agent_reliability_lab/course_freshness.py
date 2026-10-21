@@ -23,13 +23,14 @@ from typing import Callable, Iterable
 from .content_pipeline import (
     ContentPipelineReport,
     ContentPipelineRequest,
+    PipelineFindingLocator,
     PipelineDecision,
     reference_content_pipeline_cases,
     run_content_assurance_pipeline,
 )
 
 
-COURSE_FRESHNESS_VERSION = 1
+COURSE_FRESHNESS_VERSION = 2
 DEFAULT_MAX_WORKERS = 4
 DEFAULT_MAX_COURSES = 50
 DEFAULT_MAX_ELAPSED_SECONDS = 30.0
@@ -64,6 +65,7 @@ class CourseReviewResult:
     refusal_code: str | None = None
     source_digest: str | None = None
     claim_evidence_ids: tuple[str, ...] = ()
+    finding_locators: tuple[PipelineFindingLocator, ...] = ()
     failure_code: str | None = None
 
     @property
@@ -84,6 +86,9 @@ class CourseReviewResult:
             "refusal_code": self.refusal_code,
             "source_digest": self.source_digest,
             "claim_evidence_ids": list(self.claim_evidence_ids),
+            "finding_locators": [
+                locator.to_dict() for locator in self.finding_locators
+            ],
             "failure_code": self.failure_code,
         }
 
@@ -445,6 +450,7 @@ def _worker_result(
         refusal_code=report.refusal_code,
         source_digest=report.source_digest,
         claim_evidence_ids=report.claim_evidence_ids,
+        finding_locators=report.finding_locators,
     )
 
 

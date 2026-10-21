@@ -47,6 +47,20 @@ Expected successful output:
 - Review packets passed: `PASS`
 - Packet counts: `{"completed": 1, "counts_reconcile": true, "failed": 0, "not_reviewed": 0, "packets_emitted": 1, "requested": 1, "timed_out": 0, "truncated": false}`
 
+## Example blocked finding (synthetic)
+
+- Course: `course-pipeline-stale-source`
+- What needs attention: Source is older than the allowed freshness window.
+- Claim: `claim-pipeline-supported`
+- Section: `section-synthetic-guidance`
+- Evidence: `source-approved-docs`
+- Source: `source-approved-docs`
+- Freshness: `7200` seconds observed; `3600` seconds allowed
+
+This deliberately blocked example shows where a review starts without exposing lesson
+text or a source path. The full JSON report retains the complete machine-readable
+metadata; the Markdown output uses plain-language labels and shortened detail.
+
 This demo is synthetic, offline, and metadata-only.
 ```
 
@@ -59,30 +73,97 @@ The public-course lane reads a pinned local checkout of
 [Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab). The course
 remains its own source of truth; this repository does not copy or vendor its lessons.
 
-Clone the course beside the harness, then run:
+Clone the course beside the harness, confirm the checkout revision, then run:
 
 ```bash
 git -C /path/to/claude-architect-lab rev-parse HEAD
-uv run python tools/course_doctor_report.py \
-  --manifest examples/public-course-demo/manifest.json \
-  --source-root /path/to/claude-architect-lab \
-  --workspace /tmp/agent-assurance-public-course \
-  --output /tmp/agent-assurance-public-course.json \
+uv run python tools/claude_course_adapter.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --max-rows 1000 \
+  --max-requests 50 \
+  --output /tmp/claude-course-adapter-full.json \
   --markdown
 ```
 
-The manifest pins the public course revision to
+The reviewed public course revision is
 `f34d21087db73dd4f6b5bbd2b8a55601ace1d6fe`. If the checkout is at another revision,
-the command is still a useful local demonstration, but it is no longer a reproducible
-run of the reviewed course state.
+the command remains useful, but it is no longer a reproducible run of the reviewed
+course state. The command intentionally omits `--fail-on-findings`: the expected result
+is a review worklist, not a clean pass.
 
-The example manifest selects one public lesson and supplies only metadata about the
-claim-to-source relationship. The local adapter reads the bounded lesson bytes in
-memory, fingerprints them, and discards them before producing the review packet.
+This command reads the course's checked-in verifier and reports every claim row under
+bounded limits. It keeps guide references, verbatim checks, identifier checks, and
+uncovered claims separate. A missing quote or identifier becomes a review location, not
+an automatic stale-content verdict. The report contains lesson and claim-row
+identifiers, source URLs, read dates, states, and counts, but not course text or source
+paths.
 
-This lane demonstrates the use case rather than proving the course is semantically
-correct. The course repository's own citation, verification, accessibility, and
-production checks remain responsible for course-specific quality.
+The full-course adapter is a local demonstration because its documentation sources can
+change. The required showcase and CI gate remain synthetic and offline. A private,
+rough draft without structured claim/source metadata is not a suitable public fixture;
+the adapter will not invent dates, freshness windows, or locations.
+
+Expected result for the pinned checkout:
+
+```text
+# Claude Course Verification
+
+Decision: `REVIEW_REQUIRED`
+
+- Course: `claude-architect-lab`
+- Revision: `f34d21087db73dd4f6b5bbd2b8a55601ace1d6fe`
+- Pages fetched: `13`
+- Offline: `False`
+- Counts: `{"counts_reconcile": true, "guide_reference_only": 205, "identifier_missing": 1, "identifier_present_only": 50, "offline": false, "rows_total": 335, "unable_to_check": 0, "uncovered": 44, "verbatim_not_found": 6, "verbatim_verified": 29}`
+
+A `review_required` result means at least one row was not proven by the strongest
+available check. It is not a claim that every unverified row is wrong.
+
+## Findings with a concrete review signal
+
+- `course/domain-1-agentic-architecture/lesson-1-3-subagent-invocation.md` —
+  exact documentation wording was not found; human review is required.
+  Claim row: `9`; evidence tier: `VERBATIM`;
+  source: `https://code.claude.com/docs/en/sub-agents`
+- `course/domain-1-agentic-architecture/lesson-1-7-session-state.md` —
+  exact documentation wording was not found; human review is required.
+  Claim row: `10`; evidence tier: `VERBATIM`;
+  source: `https://code.claude.com/docs/en/sessions`
+- `course/domain-1-agentic-architecture/lesson-1-7-session-state.md` —
+  exact documentation wording was not found; human review is required.
+  Claim row: `16`; evidence tier: `VERBATIM`;
+  source: `https://code.claude.com/docs/en/sessions`
+- `course/domain-2-tools-and-mcp/lesson-2-4-mcp-integration.md` —
+  a documented identifier was not found; check for rename or removal.
+  Claim row: `8`; evidence tier: `IDENTIFIER`;
+  source: `https://code.claude.com/docs/en/mcp`
+- `course/domain-4-prompting-and-output/lesson-4-3-structured-output.md` —
+  exact documentation wording was not found; human review is required.
+  Claim row: `10`; evidence tier: `VERBATIM`;
+  source: `https://platform.claude.com/docs/en/build-with-claude/structured-outputs`
+- `course/domain-4-prompting-and-output/lesson-4-3-structured-output.md` —
+  exact documentation wording was not found; human review is required.
+  Claim row: `12`; evidence tier: `VERBATIM`;
+  source: `https://platform.claude.com/docs/en/build-with-claude/structured-outputs`
+- `course/domain-4-prompting-and-output/lesson-4-3-structured-output.md` —
+  exact documentation wording was not found; human review is required.
+  Claim row: `16`; evidence tier: `VERBATIM`;
+  source: `https://platform.claude.com/docs/en/build-with-claude/structured-outputs`
+
+## Evidence that remains incomplete
+
+- `guide_reference_only` rows are not independent claim verification.
+- `identifier_present_only` rows do not prove the claim's meaning.
+- `uncovered` rows have no automated evidence tier.
+
+This report contains identifiers, dates, URLs, states, and counts only; it does not
+contain claim or source text.
+```
+
+The exact counts are a demonstration snapshot, not a permanent CI expectation. A
+documentation change can legitimately change the result; the important behavior is
+that the adapter preserves the evidence tiers and routes unresolved rows to review.
 
 ## What to show in a screen recording
 

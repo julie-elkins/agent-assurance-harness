@@ -310,6 +310,10 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/course_freshness_report.py` — metadata-only multi-course freshness sweep.
 - `tools/course_doctor_report.py` — synthetic or explicitly local review packet report.
 - `tools/refresh_public_sources.py` — explicit real-source refresh without body persistence.
+- `src/agent_reliability_lab/claude_course_adapter.py` — provider-neutral bridge to a
+  separately checked-out public Claude-course verifier.
+- `tools/claude_course_adapter.py` — bounded local adapter command with JSON and Markdown
+  metadata-only output.
 
 ### Audit evidence binding
 
@@ -660,6 +664,60 @@ retry, and preserves the existing explicit network, credential-name, request, ou
 token, timeout, and estimated-spend controls. Injected transports remain the only path
 used by tests and CI. This proves the boundary behavior without claiming live-model
 quality.
+
+### Safe finding locations
+
+Phase 33 carries claim-level finding locations through the content pipeline and Course
+Doctor. A locator is metadata (identifiers and decision inputs, not course text): claim
+ID, section ID, failed check, reason, evidence ID, source ID, source digest, and the
+observed age versus the freshness window. A source-drift locator also exposes the
+expected digest so a reviewer can see which integrity comparison failed.
+
+Public JSON and Markdown reports do not contain source paths. A caller performing an
+authorised local review may request a separate index:
+
+```bash
+uv run python tools/course_doctor_report.py \
+  --manifest /private/path/course-manifest.json \
+  --source-root /private/path/course-sources \
+  --workspace /tmp/course-doctor \
+  --output /tmp/course-doctor.json \
+  --local-index-output /tmp/course-doctor-local-index.json \
+  --fail-on-findings
+```
+
+The index contains only manifest-supplied relative paths and optional line ranges.
+It is a local navigation aid, not a proof of correctness, and is not part of the
+metadata-only CI artifact. A finding without a claim-level check remains visible and
+reports that an exact content location was unavailable.
+
+The Markdown renderer is intentionally reviewer-friendly: it translates stable reason
+codes into plain-language explanations and shows where the review should begin without
+printing excerpts. JSON remains the authoritative machine-readable record.
+
+### Public-course verifier adapter
+
+Phase 34 reuses an existing course verifier instead of creating a second citation
+parser. That choice matters because two parsers can disagree while both appear green;
+the course remains responsible for extracting its claim rows, while this repository is
+responsible for preserving evidence states and enforcing the public output boundary.
+
+The adapter accepts an explicit checkout containing `scripts/verify_claims.py`, records
+the checkout revision, applies row and unique-page request limits, and exports only safe
+locators and outcomes. It preserves the difference between guide references, verbatim
+checks, identifier presence, uncovered rows, and unavailable checks. A missing quote is
+routed to human review; it is not silently reclassified as stale content.
+
+The full public Claude-course run at the reviewed revision produced 335 rows: 205 guide
+references, 35 verbatim rows, 51 identifier rows, and 44 uncovered rows. The optional
+network check found 29 verbatim matches, 6 verbatim rows requiring human review, and 1
+missing identifier across 13 fetched pages. Those numbers describe the current
+verification evidence, not general course correctness.
+
+An older private draft without structured claim IDs, source references, read dates, and
+review locations is outside this adapter's contract. Feeding it directly would create
+false precision, so it needs a separate local-only manifest and human approval. No
+private draft or Google document is a public fixture.
 
 ### Operational ship gate
 

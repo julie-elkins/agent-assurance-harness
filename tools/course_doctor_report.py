@@ -9,8 +9,9 @@ from pathlib import Path
 from agent_reliability_lab.course_doctor import (
     DEFAULT_MAX_REVIEW_COURSES,
     CourseDoctorCoordinator,
-    load_local_course_manifest,
+    load_local_course_manifest_with_specs,
     run_reference_course_doctor_suite,
+    write_local_review_index,
 )
 
 
@@ -28,6 +29,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument("--manifest", type=Path)
     parser.add_argument("--source-root", type=Path)
+    parser.add_argument(
+        "--local-index-output",
+        type=Path,
+        help=(
+            "Optional local-only navigation index for manifest-backed runs. "
+            "Never upload this file with the public report."
+        ),
+    )
     parser.add_argument(
         "--max-courses",
         type=int,
@@ -52,13 +61,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.source_root is None:
             parser.error("--source-root is required with --manifest")
         try:
-            requests = load_local_course_manifest(
+            requests, specs = load_local_course_manifest_with_specs(
                 args.manifest,
                 source_root=args.source_root,
             )
         except (OSError, TypeError, ValueError, json.JSONDecodeError):
             output_value = {
-                "course_doctor_version": 1,
+                "course_doctor_version": 2,
                 "passed": False,
                 "packets": [],
                 "counts": {
@@ -95,6 +104,12 @@ def main(argv: list[str] | None = None) -> int:
             output_value = report.to_dict()
             rendered = report.to_markdown() if args.markdown else _json(output_value)
             passed = report.passed
+            if args.local_index_output is not None:
+                write_local_review_index(
+                    args.local_index_output,
+                    report,
+                    specs,
+                )
 
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

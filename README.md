@@ -19,6 +19,10 @@ offline synthetic assurance demo and documents the optional metadata-only demons
 against a local checkout of the public
 [Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab).
 
+The showcase currently reports 9 scenarios, a passing guarded agent, 1 evaluator
+control caught, 3 mutation controls caught, and 1 complete Course Doctor packet. See
+the [expected output](SHOWCASE.md#one-command-offline-showcase) before running it.
+
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
 answer. It is whether the agent can show:

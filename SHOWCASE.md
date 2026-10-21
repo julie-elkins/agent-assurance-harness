@@ -30,6 +30,29 @@ changed synthetic result used to prove that the evaluator catches a known failur
 The output contains identifiers, statuses, counts, and hashes only. It does not contain
 lesson text, prompts, credentials, provider output, or source paths.
 
+Expected successful output:
+
+```text
+# Agent Assurance Harness Showcase
+
+## Offline assurance
+
+- Scenarios checked: `9`
+- Guarded agent: `PASS`
+- Evaluator controls caught: `1`
+- Mutation controls caught: `3`
+
+## Course Doctor
+
+- Review packets passed: `PASS`
+- Packet counts: `{"completed": 1, "counts_reconcile": true, "failed": 0, "not_reviewed": 0, "packets_emitted": 1, "requested": 1, "timed_out": 0, "truncated": false}`
+
+This demo is synthetic, offline, and metadata-only.
+```
+
+The exact counts are part of the current synthetic fixture contract. A changed count
+should prompt a deliberate fixture or scenario review, not a README-only update.
+
 ## Public Claude course demonstration
 
 The public-course lane reads a pinned local checkout of

@@ -110,10 +110,25 @@ missing, and what the result does not prove.
   requested course, including failed or not-reviewed work, and must keep human
   adjudication separate from automated recommendations. A generated claim is a
   proposal, not publication authority; no packet may rewrite or publish content.
+- Claim-level findings must preserve the affected claim, section, check, evidence,
+  source, digest, and freshness metadata when available. Source paths and line
+  navigation belong only in an explicitly requested local index, never in public
+  reports or CI artifacts.
+- Reviewer-facing Markdown must translate stable reason codes into plain-language
+  guidance and show the claim and section where review should begin; JSON remains
+  the complete machine-readable record.
 - The local course-source adapter must read only beneath an explicitly supplied root,
   enforce a source-size ceiling, process bytes in memory, and never emit source paths,
   source text, or source errors containing content. Public CI must use synthetic
   fixtures.
+- The public-course verifier adapter may import a separately checked-out verifier as
+  the source of truth, but must preserve its evidence tiers and unresolved states,
+  record the checkout revision and bounded fetch counts, and emit only safe
+  lesson/claim locators, URLs, dates, states, and counts. It must not maintain a
+  second citation parser or convert a missing quote into an automatic stale verdict.
+- A rough private draft without structured claim/source metadata is not a public
+  fixture. The adapter must not invent timestamps, freshness windows, or source paths;
+  use a separate local-only manifest with human approval.
 - `SHOWCASE.md` must keep the required demo offline and synthetic. The optional public
   course demonstration may read a separately checked-out public repository through the
   root-confined local adapter, but must emit metadata only and must not vendor course

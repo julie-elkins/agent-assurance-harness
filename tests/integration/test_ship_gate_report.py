@@ -204,7 +204,7 @@ def _run(
     content_pipeline.write_text(
         json.dumps(
             {
-                "content_pipeline_version": 1,
+                "content_pipeline_version": 2,
                 "passed": True,
                 "controls_missed": [],
                 "cases": [
@@ -246,7 +246,7 @@ def _run(
     course_freshness.write_text(
         json.dumps(
             {
-                "course_freshness_version": 1,
+                "course_freshness_version": 2,
                 "passed": True,
                 "controls_missed": [],
                 "counts": {
@@ -274,7 +274,7 @@ def _run(
     course_doctor.write_text(
         json.dumps(
             {
-                "course_doctor_version": 1,
+                "course_doctor_version": 2,
                 "passed": True,
                 "controls_missed": [],
                 "counts": {

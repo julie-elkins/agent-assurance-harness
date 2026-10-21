@@ -1,4 +1,5 @@
 import json
+from dataclasses import replace
 
 from agent_reliability_lab.course_doctor import (
     CourseDoctorCoordinator,
@@ -65,6 +66,13 @@ def test_reference_course_doctor_emits_review_packets_without_source_text(tmp_pa
         packets["course-pipeline-stale-source"].recommended_disposition
         is ReviewDisposition.NEEDS_REVISION
     )
+    stale_finding = packets["course-pipeline-stale-source"].findings[0]
+    assert stale_finding.locators[0].to_dict()["claim_id"] == (
+        "claim-pipeline-supported"
+    )
+    assert stale_finding.locators[0].age_seconds == 7200
+    assert stale_finding.locators[0].max_age_seconds == 3600
+    assert stale_finding.locators[0].section_id == "section-synthetic-guidance"
     serialized = json.dumps(suite.to_dict())
     assert "Approved technical guidance fixture" not in serialized
     assert (tmp_path / "outputs" / "review-packets.json").exists()
@@ -73,6 +81,39 @@ def test_reference_course_doctor_emits_review_packets_without_source_text(tmp_pa
     ).read_text(encoding="utf-8")
     assert events.count('"event": "packet_emitted"') == 5
     assert "Approved technical guidance fixture" not in events
+
+
+def test_local_review_index_is_opt_in_and_contains_navigation_only(tmp_path):
+    case = reference_course_doctor_cases()[2]
+    pipeline = case.request.freshness_request.pipeline_request
+    source = tmp_path / "course.md"
+    source.write_bytes(pipeline.source_bytes)
+    spec = _spec_from_case(case, "course.md")
+    claim = replace(pipeline.claims[0], line_start=12, line_end=18)
+    spec = replace(spec, claims=(claim,))
+    loaded = LocalCourseSourceAdapter(tmp_path).load(spec)
+
+    assert loaded.request is not None
+    report = CourseDoctorCoordinator().review(
+        (loaded.request,),
+        workspace=tmp_path / "workspace",
+    )
+    from agent_reliability_lab.course_doctor import write_local_review_index
+
+    index_path = tmp_path / "local-review-index.json"
+    write_local_review_index(index_path, report, (spec,))
+
+    public_report = json.dumps(report.to_dict())
+    local_index = json.loads(index_path.read_text(encoding="utf-8"))
+    assert "course.md" not in public_report
+    assert local_index["local_review_index_version"] == 1
+    entry = local_index["entries"][0]
+    assert entry["source_path"] == "course.md"
+    assert entry["line_start"] == 12
+    assert entry["line_end"] == 18
+    assert "Approved technical guidance fixture" not in index_path.read_text(
+        encoding="utf-8"
+    )
 
 
 def test_worker_failure_still_emits_not_reviewed_packet(tmp_path):

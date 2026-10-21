@@ -50,9 +50,26 @@ negative control and make the delivery gate fail when it is not caught.
   identifier uniqueness, source binding, required coverage, and raw-content absence
   before routing proposals to the content pipeline. Invalid proposals must stop
   downstream evaluation and produce a stable reason code.
+- Findings must identify the affected claim, section, evidence, source, digest, and
+  freshness condition when claim-level checks provide them. Keep any source path or
+  line navigation in an explicitly requested local-only index; never put it in a
+  public report.
+- Reviewer-facing Markdown should translate reason codes into plain-language guidance
+  and show where review starts; retain the complete structured representation in JSON.
 - The live provider boundary is local-only and opt-in. It must use only fixed official
   endpoints, reject redirects and retries, require request/token/time/spend ceilings,
   and accept only the reviewed identifier-only structured response shape.
+- A public-course verifier adapter may reuse a separately checked-out verifier as its
+  source of truth, but it must preserve the verifier's evidence tiers and unresolved
+  states instead of maintaining a second parser. It must record the checkout revision,
+  bounded row/page counts, source URLs, read dates, and safe lesson/claim locators
+  without exporting claim text, quotes, source bytes, credentials, or private paths.
+- A missing verbatim quote is a human-review signal, not proof of staleness. Identifier
+  presence is weaker than claim verification. An offline row inventory is incomplete
+  evidence and must not pass.
+- An unstructured private draft is not a public fixture. Do not infer timestamps,
+  freshness windows, or source locations that the draft does not provide; require a
+  separate local-only manifest and human approval before adapting it.
 
 ## Build path
 
@@ -74,18 +91,27 @@ negative control and make the delivery gate fail when it is not caught.
    still emits a not-reviewed packet.
 9. Add the proposal worker and validator before evidence evaluation; test empty,
    duplicate, fabricated, incomplete, source-drifted, and raw-content-bearing output.
-10. Add the control to the blocking CI workflow and preserve the stable
+10. Preserve claim-level finding locators through the pipeline and Course Doctor;
+    test stale, wrong-source, drift, unsupported, and unavailable-location cases.
+11. Add an opt-in local review index for caller-supplied relative paths and optional
+    line ranges. Keep it separate from the CI report and test that source paths never
+    appear in public output.
+12. Add the control to the blocking CI workflow and preserve the stable
    `Agent reliability gate` job name.
-11. For consumer or action changes, run consumer validation, independent provenance
+13. For consumer or action changes, run consumer validation, independent provenance
    verification, compatibility verification, and pinned-action content-parity
    verification. The parity check must inspect the immutable Git object, not only the
    current action file.
-12. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
+14. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
    the workflow or repository contract changes.
-13. Run the full test suite, repository boundary check, dependency audit, release check,
+15. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
-14. Run `uv run python tools/showcase_demo.py --markdown` and verify that the output
-    remains offline, metadata-only, and useful to an outside reviewer.
+16. Run `uv run python tools/showcase_demo.py --markdown` and verify that the output
+    remains offline, metadata-only, and useful to an outside reviewer, including one
+    clearly labelled synthetic blocked-finding example.
+17. If adapting an existing public verifier, run the full adapter locally against a
+    pinned checkout, report evidence tiers separately, inspect every concrete finding,
+    and keep the network path outside CI.
 
 ## Limits
 

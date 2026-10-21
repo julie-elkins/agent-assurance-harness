@@ -14,7 +14,9 @@ from pathlib import Path
 
 from agent_reliability_lab.course_doctor import (
     CourseDoctorCoordinator,
+    describe_finding_reason,
     load_local_course_manifest,
+    run_reference_course_doctor_suite,
 )
 from agent_reliability_lab.runner import run_comparison
 
@@ -49,12 +51,22 @@ def main(argv: list[str] | None = None) -> int:
             max_workers=1,
             max_elapsed_seconds=10.0,
         )
+        control_suite = run_reference_course_doctor_suite(
+            workspace=Path(path) / "synthetic-controls",
+        )
 
     guarded = next(
         report for report in comparison.reports if report.agent_id == "guarded"
     )
+    example_packet = next(
+        packet
+        for packet in control_suite.report.packets
+        if packet.course_id == "course-pipeline-stale-source"
+    )
+    example_finding = example_packet.findings[0]
+    example_locator = example_finding.locators[0]
     summary = {
-        "showcase_version": 1,
+        "showcase_version": 2,
         "offline": True,
         "synthetic_assurance": {
             "scenario_count": comparison.scenario_count,
@@ -83,6 +95,19 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 for packet in course_report.packets
             ],
+        },
+        "synthetic_finding_example": {
+            "course_id": example_packet.course_id,
+            "what_needs_attention": describe_finding_reason(
+                example_finding.reason_code
+            ),
+            "reason_code": example_finding.reason_code,
+            "claim_id": example_locator.claim_id,
+            "section_id": example_locator.section_id,
+            "evidence_id": example_locator.evidence_id,
+            "source_id": example_locator.source_id,
+            "observed_age_seconds": example_locator.age_seconds,
+            "allowed_age_seconds": example_locator.max_age_seconds,
         },
         "diagnostics": {
             "warnings": [
@@ -122,7 +147,12 @@ def _markdown(summary: dict[str, object]) -> str:
 
     synthetic = summary["synthetic_assurance"]
     course = summary["course_doctor"]
-    if not isinstance(synthetic, dict) or not isinstance(course, dict):
+    example = summary["synthetic_finding_example"]
+    if (
+        not isinstance(synthetic, dict)
+        or not isinstance(course, dict)
+        or not isinstance(example, dict)
+    ):
         raise ValueError("showcase summary has an invalid internal shape")
     lines = [
         "# Agent Assurance Harness Showcase",
@@ -138,6 +168,20 @@ def _markdown(summary: dict[str, object]) -> str:
         "",
         f"- Review packets passed: `{'PASS' if course['passed'] else 'BLOCKED'}`",
         f"- Packet counts: `{json.dumps(course['counts'], sort_keys=True)}`",
+        "",
+        "## Example blocked finding (synthetic)",
+        "",
+        f"- Course: `{example['course_id']}`",
+        f"- What needs attention: {example['what_needs_attention']}",
+        f"- Claim: `{example['claim_id']}`",
+        f"- Section: `{example['section_id']}`",
+        f"- Evidence: `{example['evidence_id']}`",
+        f"- Source: `{example['source_id']}`",
+        f"- Freshness: `{example['observed_age_seconds']}` seconds observed; "
+        f"`{example['allowed_age_seconds']}` seconds allowed",
+        "",
+        "This example is deliberately blocked to prove the harness can identify "
+        "where a review must start. It contains no lesson text or source path.",
         "",
         "This demo is synthetic, offline, and metadata-only.",
         "",

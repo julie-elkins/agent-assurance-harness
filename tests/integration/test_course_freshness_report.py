@@ -28,7 +28,7 @@ def test_course_freshness_report_is_metadata_only(tmp_path):
     )
 
     report = json.loads(result.stdout)
-    assert report["course_freshness_version"] == 1
+    assert report["course_freshness_version"] == 2
     assert report["passed"] is True
     assert report["counts"] == {
         "completed": 5,

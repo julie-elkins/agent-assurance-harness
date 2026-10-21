@@ -27,12 +27,13 @@ from .content_assurance import (
     ContentClaim,
     ContentDecision,
     ContentSource,
+    FindingStatus,
     TechnicalContentAssuranceAgent,
 )
 from .public_sources import OFFICIAL_DOCUMENTATION_HOSTS
 
 
-CONTENT_PIPELINE_VERSION = 1
+CONTENT_PIPELINE_VERSION = 2
 DEFAULT_MAX_SOURCE_BYTES = 2_000_000
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -56,6 +57,52 @@ class PipelineClaim:
     claim_id: str
     section_id: str
     support_status: str
+    line_start: int | None = None
+    line_end: int | None = None
+
+
+@dataclass(frozen=True)
+class PipelineFindingLocator:
+    """A metadata-only location for one failed claim-level assurance check.
+
+    The locator deliberately uses identifiers, hashes, and freshness metadata
+    instead of source text or paths. A caller may join it to a separately
+    generated local review index when navigation to a private source file is
+    authorised.
+    """
+
+    claim_id: str
+    section_id: str
+    check_id: str
+    reason_code: str
+    evidence_id: str | None
+    source_id: str
+    source_digest: str | None
+    expected_source_digest: str | None
+    age_seconds: float | None
+    max_age_seconds: float
+    line_start: int | None = None
+    line_end: int | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        """Return the safe public locator representation."""
+
+        return {
+            "claim_id": self.claim_id,
+            "section_id": self.section_id,
+            "check_id": self.check_id,
+            "reason_code": self.reason_code,
+            "evidence_id": self.evidence_id,
+            "source_id": self.source_id,
+            "source_digest": self.source_digest,
+            "expected_source_digest": self.expected_source_digest,
+            "age_seconds": self.age_seconds,
+            "max_age_seconds": self.max_age_seconds,
+            "what_it_does_not_show": (
+                "This locator identifies the failed metadata contract; it does "
+                "not reproduce source content or prove semantic truth."
+            ),
+        }
 
 
 @dataclass(frozen=True)
@@ -92,6 +139,7 @@ class ContentPipelineReport:
     normalized_byte_count: int | None
     section_ids: tuple[str, ...]
     claim_evidence_ids: tuple[str, ...]
+    finding_locators: tuple[PipelineFindingLocator, ...] = ()
     abstention_reasons: tuple[str, ...] = ()
     refusal_code: str | None = None
 
@@ -116,6 +164,9 @@ class ContentPipelineReport:
             "normalized_byte_count": self.normalized_byte_count,
             "section_ids": list(self.section_ids),
             "claim_evidence_ids": list(self.claim_evidence_ids),
+            "finding_locators": [
+                locator.to_dict() for locator in self.finding_locators
+            ],
             "abstention_reasons": list(self.abstention_reasons),
             "refusal_code": self.refusal_code,
             "diagnostics": {
@@ -456,6 +507,24 @@ def _validate_request(request: ContentPipelineRequest) -> str | None:
             return "invalid_section_id"
         if claim.support_status not in _SUPPORT_STATES:
             return "invalid_claim_support_status"
+        if claim.line_start is not None and (
+            isinstance(claim.line_start, bool)
+            or not isinstance(claim.line_start, int)
+            or claim.line_start < 1
+        ):
+            return "invalid_claim_line_start"
+        if claim.line_end is not None and (
+            isinstance(claim.line_end, bool)
+            or not isinstance(claim.line_end, int)
+            or claim.line_end < 1
+        ):
+            return "invalid_claim_line_end"
+        if (
+            claim.line_start is not None
+            and claim.line_end is not None
+            and claim.line_end < claim.line_start
+        ):
+            return "invalid_claim_line_range"
     if not request.approved_source_ids or len(
         request.approved_source_ids
     ) != len(set(request.approved_source_ids)):
@@ -483,6 +552,25 @@ def _pipeline_report_from_assurance(
         f"evidence:{request.source_id}:{claim.claim_id}:{claim.section_id}"
         for claim in request.claims
     )
+    claims_by_id = {claim.claim_id: claim for claim in request.claims}
+    finding_locators = tuple(
+        PipelineFindingLocator(
+            claim_id=check.claim_id,
+            section_id=claims_by_id[check.claim_id].section_id,
+            check_id=check.check_id,
+            reason_code=check.failure_reason or "assurance_check_failed",
+            evidence_id=check.evidence_id,
+            source_id=request.source_id,
+            source_digest=source_digest,
+            expected_source_digest=request.expected_source_digest,
+            age_seconds=request.age_seconds,
+            max_age_seconds=request.max_age_seconds,
+            line_start=claims_by_id[check.claim_id].line_start,
+            line_end=claims_by_id[check.claim_id].line_end,
+        )
+        for check in assurance.checks
+        if check.status is FindingStatus.FAILED
+    )
     return ContentPipelineReport(
         case_id=request.case_id,
         decision=PipelineDecision(assurance.decision.value),
@@ -493,6 +581,7 @@ def _pipeline_report_from_assurance(
         normalized_byte_count=normalized_byte_count,
         section_ids=tuple(claim.section_id for claim in request.claims),
         claim_evidence_ids=evidence_ids,
+        finding_locators=finding_locators,
         abstention_reasons=assurance.abstention_reasons,
         refusal_code=assurance.refusal_code,
     )

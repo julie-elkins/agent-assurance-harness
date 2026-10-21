@@ -35,9 +35,11 @@ def test_pipeline_emits_only_metadata():
         "evidence:source-approved-docs:claim-pipeline-supported:"
         "section-synthetic-guidance",
     )
+    assert report.finding_locators == ()
     assert "Approved technical guidance fixture" not in serialized
     assert "source_bytes" not in serialized
     assert "normalized_text" not in serialized
+    assert "line_start" not in serialized
 
 
 def test_pipeline_refuses_oversized_source_before_normalization():
@@ -50,3 +52,22 @@ def test_pipeline_refuses_oversized_source_before_normalization():
     assert report.refusal_code == "source_too_large"
     assert report.source_digest is None
     assert report.normalized_digest is None
+
+
+def test_pipeline_locator_identifies_stale_claim_without_source_text():
+    case = next(
+        case
+        for case in reference_content_pipeline_cases()
+        if case.case_id == "pipeline-stale-source"
+    )
+
+    report = run_content_assurance_pipeline(case.request)
+
+    assert report.finding_locators[0].reason_code == "evidence_stale"
+    assert report.finding_locators[0].claim_id == "claim-pipeline-supported"
+    assert report.finding_locators[0].section_id == "section-synthetic-guidance"
+    assert report.finding_locators[0].age_seconds == 7200
+    assert report.finding_locators[0].max_age_seconds == 3600
+    assert "Approved technical guidance fixture" not in json.dumps(
+        report.to_dict()
+    )

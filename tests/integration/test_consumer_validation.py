@@ -27,6 +27,7 @@ def test_consumer_fixture_passes_and_catches_negative_control(tmp_path):
     assert completed.returncode == 0
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["passed"] is True
+    assert data["consumer_validation_version"] == 3
     assert data["action_ref"] == "5141cf58695a4ed4f45bfbcf106ce559340c61aa"
     assert all(data["workflow_contract"].values())
     assert data["positive_run"]["decision"] == "pass"
@@ -71,6 +72,8 @@ def test_consumer_fixture_passes_and_catches_negative_control(tmp_path):
         "blocked",
         "pass",
     ]
+    assert data["compatibility"]["passed"] is True
+    assert data["compatibility"]["failure_reasons"] == []
     assert str(REPOSITORY) not in output.read_text(encoding="utf-8")
     assert "guarded_adapter.py" not in output.read_text(encoding="utf-8")
 

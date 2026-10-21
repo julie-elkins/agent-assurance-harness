@@ -1,0 +1,7 @@
+{
+  "compatibility_version": 1,
+  "required_action_ref": "5141cf58695a4ed4f45bfbcf106ce559340c61aa",
+  "required_reusable_action_version": 1,
+  "required_consumer_validation_version": 3,
+  "required_policy_manifest_version": 1
+}

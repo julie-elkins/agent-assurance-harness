@@ -51,6 +51,7 @@ def test_verifier_recomputes_current_consumer_provenance(tmp_path):
     assert completed.returncode == 0
     result = json.loads(completed.stdout)
     assert result["verified"] is True
+    assert result["consumer_validation_version"] == 3
     assert result["rollback_restored"] is True
     assert [item["decision"] for item in result["state_sequence"]] == [
         "pass",

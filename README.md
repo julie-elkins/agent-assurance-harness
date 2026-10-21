@@ -621,6 +621,13 @@ uv run python tools/verify_consumer_provenance.py \
 This is an independent consistency check, not signed provenance or production
 rollback proof. It emits only hashes, identifiers, and result states.
 
+### Check action and contract compatibility
+
+Phase 23 adds a checked-in compatibility manifest. It records the required
+action commit and report versions, then checks every positive, negative, drift,
+and restored consumer run. This is a migration gate: an action pin or evidence
+schema change must be updated deliberately rather than being accepted silently.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

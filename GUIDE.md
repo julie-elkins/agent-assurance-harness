@@ -531,6 +531,17 @@ that declares its own evidence valid. The verifier proves report-to-checkout
 consistency; it does not prove signed provenance, production rollback, or live
 authorization state.
 
+### Action-pin and contract migration
+
+Phase 23 adds `compatibility-manifest.json`, which declares the reviewed action
+commit and the required versions for the action report, consumer validation
+report, and policy manifest. The consumer validator checks all four run paths,
+including the degraded and restored controls.
+
+This is a migration gate: it blocks an older action or incompatible report shape
+before merge. Update the manifest and action pin together in one reviewed
+dependency change when the contract intentionally changes.
+
 ### Evidence-quality abstention
 
 Phase 17 separates two evidence failures that a single freshness check can confuse:

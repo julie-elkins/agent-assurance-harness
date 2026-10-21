@@ -86,6 +86,7 @@ The current progression is intentionally operational:
 | 20 | Policy-drift replay and restoration | Whether policy drift blocks the consumer path and restoring the approved policy returns it to pass |
 | 21 | Policy replay provenance | Whether the replay identifies the exact checkout, action revision, manifest bytes, and result sequence |
 | 22 | Independent replay provenance verification | Whether a separate pull-request check recomputes and enforces the replay evidence |
+| 23 | Action-pin and contract migration | Whether consumers explicitly declare compatible action and evidence schema versions |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -269,6 +270,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `examples/consumer-repository/policy-manifest-drifted.json` — valid but deliberately mismatched policy declaration.
 - `tools/consumer_validation.py` — local metadata-only consumer validation and workflow contract check.
 - `tools/verify_consumer_provenance.py` — independent metadata-only verifier for consumer replay evidence.
+- `src/agent_reliability_lab/consumer_compatibility.py` — action-pin and report-version compatibility evaluator.
+- `examples/consumer-repository/compatibility-manifest.json` — checked-in consumer migration contract.
 
 ### Audit evidence binding
 
@@ -448,6 +451,17 @@ requires the complete `pass → blocked → pass` sequence.
 The verifier exists as a separate process because a report producer must not be
 the only code deciding that its own provenance is correct. It reports hashes,
 identifiers, and states only; it does not inspect or export adapter payloads.
+
+### Action-pin and contract migration
+
+Phase 23 adds an explicit compatibility manifest for the synthetic consumer.
+It requires the reviewed action commit, reusable-action report version,
+consumer-validation report version, and policy-manifest version. Every positive,
+negative, drift, and restored run must satisfy those requirements.
+
+This makes an action upgrade or downgrade a reviewed migration decision. A
+consumer cannot silently use an older action that lacks the policy-manifest
+input while the local validator evaluates newer code.
 
 ### Operational ship gate
 

@@ -12,6 +12,11 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+from agent_reliability_lab.consumer_compatibility import (
+    evaluate_consumer_compatibility,
+    load_consumer_compatibility_manifest,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CONSUMER = ROOT / "examples" / "consumer-repository"
@@ -26,6 +31,7 @@ ACTION_USE = (
 )
 APPROVED_MANIFEST = CONSUMER / "policy-manifest.json"
 DRIFTED_MANIFEST = CONSUMER / "policy-manifest-drifted.json"
+COMPATIBILITY_MANIFEST = CONSUMER / "compatibility-manifest.json"
 
 
 def _git_commit() -> str:
@@ -108,6 +114,7 @@ def _run_consumer(
                 "github_outputs_present": False,
                 "consumer_contract_passed": False,
                 "consumer_contract_failure_reasons": ["report_unavailable"],
+                "policy_manifest_version": None,
             }
         output_text = (
             github_output.read_text(encoding="utf-8")
@@ -130,6 +137,12 @@ def _run_consumer(
                 report["consumer_contract"].get("failure_reasons", [])
                 if isinstance(report.get("consumer_contract"), dict)
                 else ["report_missing_consumer_contract"]
+            ),
+            "policy_manifest_version": (
+                report["consumer_contract"]["manifest"].get("manifest_version")
+                if isinstance(report.get("consumer_contract"), dict)
+                and isinstance(report["consumer_contract"].get("manifest"), dict)
+                else None
             ),
         }
 
@@ -165,6 +178,20 @@ def build_report() -> dict[str, object]:
         and policy_restored["decision"] == "pass"
         and policy_restored["passed"] is True
         and policy_restored["consumer_contract_passed"] is True
+    )
+    compatibility_manifest = load_consumer_compatibility_manifest(
+        COMPATIBILITY_MANIFEST
+    )
+    compatibility = evaluate_consumer_compatibility(
+        compatibility_manifest,
+        action_ref=ACTION_REF,
+        consumer_validation_version=3,
+        runs={
+            "positive": positive,
+            "negative": negative,
+            "policy-drift": policy_drift,
+            "policy-restored": policy_restored,
+        },
     )
     policy_replay_provenance = {
         "provenance_version": 1,
@@ -214,9 +241,10 @@ def build_report() -> dict[str, object]:
         and policy_drift_caught
         and policy_rollback_restored
         and policy_replay_provenance["passed"] is True
+        and compatibility.passed
     )
     return {
-        "consumer_validation_version": 2,
+        "consumer_validation_version": 3,
         "consumer_fixture": "synthetic-consumer-repository",
         "action_ref": ACTION_REF,
         "workflow_contract": workflow,
@@ -238,6 +266,7 @@ def build_report() -> dict[str, object]:
             "rollback_restored": policy_rollback_restored,
         },
         "policy_replay_provenance": policy_replay_provenance,
+        "compatibility": compatibility.to_dict(),
         "passed": passed,
         "diagnostics": {
             "warnings": [
@@ -270,6 +299,7 @@ def _markdown(data: dict[str, object]) -> str:
             f"- **Policy drift caught:** `{data['policy_drift_replay']['drifted']['caught']}`",
             f"- **Approved policy restored:** `{data['policy_drift_replay']['rollback_restored']}`",
             f"- **Policy replay provenance:** `{data['policy_replay_provenance']['passed']}`",
+            f"- **Compatibility gate:** `{data['compatibility']['passed']}`",
             "",
             "The fixture is synthetic and metadata-only; credentials, prompts, "
             "payloads, and provider output are not exported.",

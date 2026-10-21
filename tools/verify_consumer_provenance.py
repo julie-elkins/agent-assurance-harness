@@ -22,6 +22,10 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from agent_reliability_lab.consumer_compatibility import (
+    load_consumer_compatibility_manifest,
+)
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = (
@@ -37,6 +41,9 @@ DEFAULT_APPROVED_MANIFEST = (
 )
 DEFAULT_DRIFTED_MANIFEST = (
     ROOT / "examples" / "consumer-repository" / "policy-manifest-drifted.json"
+)
+DEFAULT_COMPATIBILITY_MANIFEST = (
+    ROOT / "examples" / "consumer-repository" / "compatibility-manifest.json"
 )
 _ACTION_PATTERN = re.compile(r"uses:\s+\S+@([0-9a-f]{40})(?:\s|$)")
 _COMMIT_PATTERN = re.compile(r"^[0-9a-f]{40}$")
@@ -90,13 +97,17 @@ def _verify(
     *,
     approved_manifest: Path,
     drifted_manifest: Path,
+    compatibility_manifest: Path,
 ) -> dict[str, object]:
     current_commit = _git_commit()
     action_ref = _workflow_action_ref()
     approved_sha256 = _sha256(approved_manifest)
     drifted_sha256 = _sha256(drifted_manifest)
 
-    if report.get("consumer_validation_version") != 2:
+    compatibility = load_consumer_compatibility_manifest(compatibility_manifest)
+    if report.get("consumer_validation_version") != (
+        compatibility.required_consumer_validation_version
+    ):
         raise ValueError("Consumer validation report version is not supported.")
     if report.get("passed") is not True:
         raise ValueError("Consumer validation did not pass.")
@@ -136,12 +147,31 @@ def _verify(
         raise ValueError("Policy replay did not prove restoration.")
     if provenance.get("rollback_restored") is not True:
         raise ValueError("Replay provenance did not prove restoration.")
+    compatibility_report = _object(
+        report.get("compatibility"),
+        "compatibility",
+    )
+    if compatibility_report.get("passed") is not True:
+        raise ValueError("Consumer compatibility gate did not pass.")
+    if compatibility.required_action_ref != action_ref:
+        raise ValueError("Compatibility manifest action revision is not pinned.")
+    if compatibility_report.get("manifest") != compatibility.to_dict():
+        raise ValueError("Compatibility report does not match its manifest.")
+    for name, run in _compatibility_runs(report).items():
+        if run.get("report_version") != compatibility.required_reusable_action_version:
+            raise ValueError(f"Consumer run {name} uses an unsupported action version.")
+        if run.get("policy_manifest_version") != (
+            compatibility.required_policy_manifest_version
+        ):
+            raise ValueError(f"Consumer run {name} uses an unsupported policy version.")
 
     if not _COMMIT_PATTERN.fullmatch(current_commit):
         raise ValueError("Current Git revision is not a commit identifier.")
     return {
         "verified": True,
-        "consumer_validation_version": 2,
+        "consumer_validation_version": (
+            compatibility.required_consumer_validation_version
+        ),
         "git_commit": current_commit,
         "action_ref": action_ref,
         "manifest_fingerprints": {
@@ -150,6 +180,23 @@ def _verify(
         },
         "state_sequence": list(EXPECTED_STATES),
         "rollback_restored": True,
+    }
+
+
+def _compatibility_runs(report: dict[str, Any]) -> dict[str, dict[str, object]]:
+    """Return every run whose version contract must be independently checked."""
+
+    replay = _object(report.get("policy_drift_replay"), "policy_drift_replay")
+    drifted = _object(replay.get("drifted"), "policy_drift_replay.drifted")
+    restored = _object(
+        replay.get("approved_after"),
+        "policy_drift_replay.approved_after",
+    )
+    return {
+        "positive": _object(report.get("positive_run"), "positive_run"),
+        "negative": _object(report.get("negative_control"), "negative_control"),
+        "policy-drift": drifted,
+        "policy-restored": restored,
     }
 
 
@@ -168,6 +215,11 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=DEFAULT_DRIFTED_MANIFEST,
     )
+    parser.add_argument(
+        "--compatibility-manifest",
+        type=Path,
+        default=DEFAULT_COMPATIBILITY_MANIFEST,
+    )
     parser.add_argument("--fail-on-unverified", action="store_true")
     args = parser.parse_args(argv)
 
@@ -176,6 +228,7 @@ def main(argv: list[str] | None = None) -> int:
             _read_report(args.report),
             approved_manifest=args.approved_manifest,
             drifted_manifest=args.drifted_manifest,
+            compatibility_manifest=args.compatibility_manifest,
         )
     except (OSError, RuntimeError, ValueError, json.JSONDecodeError) as error:
         result = {

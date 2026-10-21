@@ -519,6 +519,18 @@ revision, `5141cf58695a4ed4f45bfbcf106ce559340c61aa`, because that is the
 first revision that contains the policy-manifest input. A consumer should
 advance that pin through a reviewed dependency change.
 
+### Independent replay provenance verification
+
+Phase 22 runs `tools/verify_consumer_provenance.py` after consumer validation.
+The verifier independently recomputes the current Git commit and manifest
+fingerprints, reads the immutable action pin from the consumer workflow, and
+requires the `pass → blocked → pass` state sequence.
+
+This separation matters because the report producer cannot be the only code
+that declares its own evidence valid. The verifier proves report-to-checkout
+consistency; it does not prove signed provenance, production rollback, or live
+authorization state.
+
 ### Evidence-quality abstention
 
 Phase 17 separates two evidence failures that a single freshness check can confuse:

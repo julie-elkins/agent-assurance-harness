@@ -76,6 +76,13 @@ jobs:
           --fail-on-block
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Independently verify consumer replay provenance
+        run: >-
+          uv run python tools/verify_consumer_provenance.py
+          --report /tmp/agent-reliability-consumer-validation.json
+          --fail-on-unverified
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Compare candidate with Golden Trace
         run: >-
           uv run python tools/golden_trace_report.py

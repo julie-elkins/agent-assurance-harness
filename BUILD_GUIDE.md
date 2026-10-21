@@ -85,6 +85,7 @@ The current progression is intentionally operational:
 | 19 | Consumer policy and escalation | Whether a consumer binds adapter evidence to policy, scope, and escalation expectations |
 | 20 | Policy-drift replay and restoration | Whether policy drift blocks the consumer path and restoring the approved policy returns it to pass |
 | 21 | Policy replay provenance | Whether the replay identifies the exact checkout, action revision, manifest bytes, and result sequence |
+| 22 | Independent replay provenance verification | Whether a separate pull-request check recomputes and enforces the replay evidence |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -267,6 +268,7 @@ The harness can support that path, but its synthetic gate does not replace those
 - `examples/consumer-repository/policy-manifest.json` — checked-in synthetic consumer policy declaration and digest.
 - `examples/consumer-repository/policy-manifest-drifted.json` — valid but deliberately mismatched policy declaration.
 - `tools/consumer_validation.py` — local metadata-only consumer validation and workflow contract check.
+- `tools/verify_consumer_provenance.py` — independent metadata-only verifier for consumer replay evidence.
 
 ### Audit evidence binding
 
@@ -435,6 +437,17 @@ These are local identity fingerprints, not signed provenance and not proof of
 production state. The consumer fixture now pins the action to the reviewed
 Phase 20 commit because that is the first revision containing the policy-manifest
 input.
+
+### Independent replay provenance verification
+
+Phase 22 runs a separate verifier after consumer validation in the pull-request
+workflow. It recomputes the current Git commit and both manifest fingerprints,
+derives the expected action revision from the checked-in consumer workflow, and
+requires the complete `pass → blocked → pass` sequence.
+
+The verifier exists as a separate process because a report producer must not be
+the only code deciding that its own provenance is correct. It reports hashes,
+identifiers, and states only; it does not inspect or export adapter payloads.
 
 ### Operational ship gate
 

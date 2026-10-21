@@ -603,6 +603,24 @@ files, and the `pass → blocked → pass` state sequence. A fingerprint is a
 one-way hash identifying the exact file bytes; it does not prove who signed
 them.
 
+### Independently verify consumer replay evidence
+
+Phase 22 adds a separate pull-request verifier. It recomputes the current
+checkout revision and manifest fingerprints, reads the action pin from the
+consumer workflow, and blocks if the report is stale, altered, or missing the
+approved → drifted → restored sequence.
+
+Run it locally after generating the consumer report:
+
+```bash
+uv run python tools/verify_consumer_provenance.py \
+  --report /tmp/agent-reliability-consumer-validation.json \
+  --fail-on-unverified
+```
+
+This is an independent consistency check, not signed provenance or production
+rollback proof. It emits only hashes, identifiers, and result states.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

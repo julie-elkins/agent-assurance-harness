@@ -24,6 +24,12 @@ Scenario-pack JSON is also data rather than instructions. Keep packs limited to 
 documented declarative fields; do not add executable predicates, dynamic imports, or
 implicit file discovery.
 
+The public technical-content reference path may refresh only the fixed official AWS,
+Anthropic, and OpenAI documentation roots when a caller explicitly invokes its refresh
+tool. It must follow redirects only to an allow-listed official host, enforce timeout and
+response-size ceilings, hash response bytes, discard the body, and emit metadata only.
+CI must use synthetic source fixtures rather than a live network request.
+
 ## Reliability contract
 
 An absent event is not evidence that a check passed. Reports must distinguish:

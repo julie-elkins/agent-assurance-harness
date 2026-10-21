@@ -155,6 +155,48 @@ blocker.
 It remains a release assurance layer, not a substitute for integration tests, deployment
 controls, monitoring, incident response, or live-model evaluation.
 
+## Technical content assurance
+
+The reference use case is technical training and enablement: a lesson, lab, or
+architecture guide should not be published as current merely because an agent produced
+polished wording. The content-assurance agent checks the evidence behind each synthetic
+claim and returns one of three decisions:
+
+- `approved` — every claim has an approved, fresh source whose fingerprint matches the
+  recorded contract;
+- `abstain` — the request is valid, but the evidence is missing, stale, from the wrong
+  source, or has drifted; or
+- `refused` — the input contract is malformed or names an unapproved source boundary.
+
+Run the public synthetic reference path with:
+
+```bash
+uv run python tools/content_assurance_report.py \
+  --output /tmp/agent-reliability-content-assurance.json \
+  --markdown \
+  --fail-on-findings
+```
+
+This is the bridge to the smaller public projects: the reuse key represents the
+content-corpus question of whether material already exists; the source fingerprint and
+freshness checks represent the driftwood and course-doctor concerns; and abstention and
+metadata-only reporting reuse the harness contract.
+
+The real-source path is explicit and bounded:
+
+```bash
+uv run python tools/refresh_public_sources.py \
+  --output /tmp/agent-reliability-public-sources.json \
+  --markdown \
+  --fail-on-findings
+```
+
+It reads only the fixed official AWS, Anthropic, and OpenAI documentation roots, follows
+redirects only when the final host remains on the official allow-list, hashes the response,
+and discards the body. CI uses synthetic fixtures instead of network calls so source
+changes cannot make a pull request nondeterministic. A source refresh is metadata evidence,
+not proof that the documentation is correct or that a lesson teaches effectively.
+
 ## Make efficiency enforceable
 
 The mocked provider path now reports an execution budget: numeric usage plus the explicit

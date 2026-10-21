@@ -276,6 +276,10 @@ The harness can support that path, but its synthetic gate does not replace those
 - `src/agent_reliability_lab/action_parity.py` — required reusable-action contract markers and metadata-only parity result.
 - `tools/verify_pinned_action.py` — verifies the required action behavior at the exact pinned Git revision.
 - `skills/agent-assurance-harness/SKILL.md` — reusable workflow instructions for future harness changes.
+- `src/agent_reliability_lab/content_assurance.py` — synthetic technical-content assurance agent and controls.
+- `src/agent_reliability_lab/public_sources.py` — bounded official-source metadata refresh.
+- `tools/content_assurance_report.py` — metadata-only content assurance suite.
+- `tools/refresh_public_sources.py` — explicit real-source refresh without body persistence.
 
 ### Audit evidence binding
 
@@ -479,6 +483,37 @@ is not byte-for-byte equality with the current action file, because unrelated
 comments or implementation improvements should not force a consumer migration.
 The CI checkout uses full history so the verifier can inspect that historical Git
 object without network access or credentials. A missing marker blocks the gate.
+
+### Technical content assurance and official-source refresh
+
+Phase 25 adds the first production-shaped reference agent for the public flagship use
+case: technical training and enablement content. The agent checks synthetic content
+claims against a source registry and makes the publication decision explicit:
+`approved`, `abstain`, or `refused`.
+
+The checks separate four failure modes:
+
+- missing or unknown verification evidence;
+- evidence outside the freshness window;
+- fresh evidence from a source that is not approved; and
+- source drift, where the current source fingerprint no longer matches the claim
+  contract.
+
+This deliberately reuses the smaller builds instead of merging their repositories:
+the artifact `reuse_key` carries the content-corpus reuse question, source age and
+fingerprints carry the course-doctor and driftwood concerns, and the harness retains
+the shared abstention and metadata-only evidence contract.
+
+The real-data boundary is explicit. `tools/refresh_public_sources.py` can read the
+fixed official AWS, Anthropic, and OpenAI documentation roots on demand. It enforces
+HTTPS, an official-host allow-list, a response-size ceiling, and a timeout; it hashes
+the response bytes and discards the body. The generated manifest contains only URLs,
+timestamps, byte counts, and hashes. CI uses synthetic fixtures so the blocking gate
+remains deterministic and credential-free.
+
+This phase does not yet parse or rewrite documentation, infer claim truth from prose,
+or publish a course update. Those are later adapters and require their own evidence
+contracts.
 
 ### Operational ship gate
 

@@ -1,5 +1,12 @@
 # Agent Assurance Harness
 
+## Technical content assurance
+
+The public reference agent may use real official AWS, Anthropic, and OpenAI documentation
+only through the bounded metadata refresh path. It records URLs, retrieval timestamps,
+byte counts, and hashes, never documentation bodies. Synthetic fixtures remain the CI
+source for deterministic stale, wrong-source, and drift controls.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

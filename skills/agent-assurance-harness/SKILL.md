@@ -19,6 +19,10 @@ negative control and make the delivery gate fail when it is not caught.
 - Use public synthetic data only. Never add credentials, unpublished exam content,
   prompts, raw traces, provider payloads, or private URLs.
 - Keep provider integrations mocked or injected. Do not add live network calls to CI.
+- Real public documentation may be refreshed only through the fixed official-source
+  boundary; follow redirects only to an allow-listed official host, enforce timeout and
+  response-size limits, hash the response, and discard its body. CI must use synthetic
+  fixtures for deterministic controls.
 - Reports may contain identifiers, states, counts, hashes, and stable failure reasons;
   they must not contain raw evidence, commands, payloads, or secrets.
 - If a reusable GitHub Action changes, pin consumer examples to an immutable commit.

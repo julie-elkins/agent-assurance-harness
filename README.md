@@ -45,6 +45,43 @@ synthetic agent cases:
    not permit an answer, and the report records `evidence_wrong_source` as the blocking
    condition.
 
+## Technical content assurance reference agent
+
+The first public reference agent applies the same evidence discipline to technical
+training and enablement content. Technical content assurance means checking whether a
+claim is supported by an approved source, remains within its freshness window, and still
+matches the source fingerprint before publication.
+
+Run the deterministic synthetic suite:
+
+```bash
+uv run python tools/content_assurance_report.py \
+  --output /tmp/agent-reliability-content-assurance.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The suite approves fresh evidence and requires abstention for stale evidence and fresh
+evidence from the wrong source. It also detects source drift (a changed source
+fingerprint) and refuses an unapproved source host. The output contains identifiers,
+statuses, and hashes only; it does not contain lesson text.
+
+The public-source refresh path can read the current official AWS, Anthropic, and OpenAI
+documentation roots when explicitly invoked:
+
+```bash
+uv run python tools/refresh_public_sources.py \
+  --output /tmp/agent-reliability-public-sources.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The refresh hashes and discards the response body. It records only the official URL,
+retrieval time, byte count, and SHA-256 fingerprint. CI does not depend on this network
+path; it uses the synthetic suite so a pull request has repeatable positive and negative
+controls. A future content-ingestion adapter can turn an approved refresh record into
+the content-assurance source contract without exposing the documentation body.
+
 An abstention is a deliberate refusal to answer because the available evidence is
 insufficient.
 

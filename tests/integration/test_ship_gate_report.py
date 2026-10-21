@@ -133,7 +133,7 @@ def _run(
     content_assurance.write_text(
         json.dumps(
             {
-                "content_assurance_version": 1,
+                "content_assurance_version": 2,
                 "passed": True,
                 "controls_missed": ["stale-approved"] if block_content else [],
                 "cases": [
@@ -157,6 +157,21 @@ def _run(
                         "decision": "abstain",
                         "abstention_reasons": ["source_drift"],
                     },
+                    {
+                        "case_id": "claim-unsupported",
+                        "decision": "abstain",
+                        "abstention_reasons": ["claim_unsupported"],
+                    },
+                    {
+                        "case_id": "claim-conflict",
+                        "decision": "abstain",
+                        "abstention_reasons": ["claim_conflict"],
+                    },
+                    {
+                        "case_id": "claim-ambiguous",
+                        "decision": "abstain",
+                        "abstention_reasons": ["claim_ambiguous"],
+                    },
                 ],
             }
         ),
@@ -168,12 +183,15 @@ def _run(
                 "conformance_id": "custom-pack-conformance-v2",
                 "passed": True,
                 "refusal_count": 0,
-                "pack_count": 4,
+                "pack_count": 7,
                 "pack_ids": [
                     "fresh-approved",
                     "fresh-wrong-source",
                     "source-drift",
                     "stale-approved",
+                    "claim-unsupported",
+                    "claim-conflict",
+                    "claim-ambiguous",
                 ],
             }
         ),

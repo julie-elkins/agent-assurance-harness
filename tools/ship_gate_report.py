@@ -292,6 +292,9 @@ def _content_assurance_observation(
         "stale-approved": ("abstain", ("evidence_stale",)),
         "fresh-wrong-source": ("abstain", ("evidence_wrong_source",)),
         "source-drift": ("abstain", ("source_drift",)),
+        "claim-unsupported": ("abstain", ("claim_unsupported",)),
+        "claim-conflict": ("abstain", ("claim_conflict",)),
+        "claim-ambiguous": ("abstain", ("claim_ambiguous",)),
     }
     cases_passed = all(
         isinstance(case_map.get(case_id), dict)
@@ -301,7 +304,7 @@ def _content_assurance_observation(
     )
     passed = (
         expected == "pass"
-        and report.get("content_assurance_version") == 1
+        and report.get("content_assurance_version") == 2
         and report.get("passed") is True
         and report.get("controls_missed") == []
         and cases_passed
@@ -325,6 +328,9 @@ def _content_adapter_observation(
         "stale-approved",
         "fresh-wrong-source",
         "source-drift",
+        "claim-unsupported",
+        "claim-conflict",
+        "claim-ambiguous",
     }
     passed = (
         expected == "pass"

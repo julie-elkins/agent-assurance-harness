@@ -37,6 +37,15 @@ def test_content_assurance_adapter_passes_all_reference_packs(tmp_path):
     report = json.loads(completed.stdout)
     assert report["conformance_id"] == "custom-pack-conformance-v2"
     assert report["passed"] is True
-    assert report["pack_count"] == 4
+    assert report["pack_count"] == 7
     assert report["refusal_count"] == 0
+    assert set(report["pack_ids"]) == {
+        "fresh-approved",
+        "stale-approved",
+        "fresh-wrong-source",
+        "source-drift",
+        "claim-unsupported",
+        "claim-conflict",
+        "claim-ambiguous",
+    }
     assert json.loads(output.read_text(encoding="utf-8")) == report

@@ -1,4 +1,5 @@
 from agent_reliability_lab.content_assurance import (
+    ClaimSupport,
     ContentDecision,
     ContentSource,
     TechnicalContentAssuranceAgent,
@@ -16,6 +17,9 @@ def test_reference_suite_approves_fresh_source_and_catches_degraded_controls():
         "stale-approved",
         "fresh-wrong-source",
         "source-drift",
+        "claim-unsupported",
+        "claim-conflict",
+        "claim-ambiguous",
     )
     assert report.controls_missed == ()
     decisions = {
@@ -26,6 +30,9 @@ def test_reference_suite_approves_fresh_source_and_catches_degraded_controls():
         "stale-approved": ContentDecision.ABSTAIN,
         "fresh-wrong-source": ContentDecision.ABSTAIN,
         "source-drift": ContentDecision.ABSTAIN,
+        "claim-unsupported": ContentDecision.ABSTAIN,
+        "claim-conflict": ContentDecision.ABSTAIN,
+        "claim-ambiguous": ContentDecision.ABSTAIN,
     }
 
 
@@ -77,6 +84,34 @@ def test_source_drift_is_reported_without_source_payload():
     assert "source payload" not in json_text(data)
 
 
+def test_claim_support_failures_are_distinguished():
+    agent = TechnicalContentAssuranceAgent()
+
+    reports = {
+        case.case_id: agent.review(case.request, case.artifact, case.sources)
+        for case in reference_content_assurance_cases()
+        if case.case_id.startswith("claim-")
+    }
+
+    assert reports["claim-unsupported"].abstention_reasons == (
+        "claim_unsupported",
+    )
+    assert reports["claim-conflict"].abstention_reasons == (
+        "claim_conflict",
+    )
+    assert reports["claim-ambiguous"].abstention_reasons == (
+        "claim_ambiguous",
+    )
+    assert all(
+        any(
+            check.check_id == "claim-support"
+            and check.status.value == "failed"
+            for check in report.checks
+        )
+        for report in reports.values()
+    )
+
+
 def test_malformed_request_is_refused_not_abstained():
     agent = TechnicalContentAssuranceAgent()
     case = reference_content_assurance_cases()[0]
@@ -90,6 +125,26 @@ def test_malformed_request_is_refused_not_abstained():
 
     assert report.decision is ContentDecision.REFUSED
     assert report.refusal_code == "artifact_id_mismatch"
+
+
+def test_invalid_claim_support_status_is_refused():
+    agent = TechnicalContentAssuranceAgent()
+    case = reference_content_assurance_cases()[0]
+    source = ContentSource(
+        source_id="source-approved-docs",
+        authority="public-reference-docs",
+        source_url="https://docs.aws.amazon.com/",
+        source_digest=case.artifact.claims[0].expected_source_digest,
+        age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "not-a-support-state"),
+        ),
+    )
+
+    report = agent.review(case.request, case.artifact, (source,))
+
+    assert report.decision is ContentDecision.REFUSED
+    assert report.refusal_code == "invalid_claim_support_status"
 
 
 def test_non_official_source_host_is_refused_at_the_boundary():

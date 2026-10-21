@@ -165,7 +165,7 @@ claim and returns one of three decisions:
 - `approved` — every claim has an approved, fresh source whose fingerprint matches the
   recorded contract;
 - `abstain` — the request is valid, but the evidence is missing, stale, from the wrong
-  source, or has drifted; or
+  source, has drifted, or does not support the claim; or
 - `refused` — the input contract is malformed or names an unapproved source boundary.
 
 Run the public synthetic reference path with:
@@ -195,10 +195,17 @@ uv run python tools/custom_pack_report.py \
   --fail-on-findings
 ```
 
-The four packs cover fresh approval, stale evidence, fresh wrong-source evidence, and
-source drift. The custom-pack conformance report is a metadata-only harness result; the
+The seven packs cover fresh approval, stale evidence, fresh wrong-source evidence, source
+drift, unsupported claims, conflicting evidence, and ambiguous evidence. The
+custom-pack conformance report is a metadata-only harness result; the
 ship gate requires it alongside the direct content-assurance report because a correct
 domain decision is not enough if it fails at the adapter serialization boundary.
+
+Claim-level assurance is intentionally metadata-only. Each synthetic source declares a
+support state for a claim identifier; the evaluator never receives or emits the claim
+text. An official, fresh source may still lead to abstention when the support state is
+`unsupported`, `conflicting`, or `ambiguous`, because source authority alone does not
+prove that a specific statement is safe to publish.
 
 The real-source path is explicit and bounded:
 

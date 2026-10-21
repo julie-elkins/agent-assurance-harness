@@ -31,6 +31,9 @@ negative control and make the delivery gate fail when it is not caught.
 - A freshness check does not establish trust by itself. Test stale evidence and fresh
   evidence from an unapproved source separately, and require abstention (a deliberate
   refusal to answer when evidence cannot support the claim) for both.
+- Claim support is a separate contract from source authority. Test supported,
+  unsupported, conflicting, and ambiguous claim evidence, and preserve the reason that
+  caused abstention.
 
 ## Build path
 
@@ -40,15 +43,18 @@ negative control and make the delivery gate fail when it is not caught.
 4. Run external reference agents through declarative custom packs when the capability
    needs to prove adapter-boundary behavior; record stable abstention reasons rather
    than relying on a generic refusal.
-5. Add the control to the blocking CI workflow and preserve the stable
+5. For technical-content assurance, require both source-level controls and claim-level
+   controls. An official and fresh source is not sufficient when it does not support the
+   declared claim.
+6. Add the control to the blocking CI workflow and preserve the stable
    `Agent reliability gate` job name.
-6. For consumer or action changes, run consumer validation, independent provenance
+7. For consumer or action changes, run consumer validation, independent provenance
    verification, compatibility verification, and pinned-action content-parity
    verification. The parity check must inspect the immutable Git object, not only the
    current action file.
-7. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
+8. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
    the workflow or repository contract changes.
-8. Run the full test suite, repository boundary check, dependency audit, release check,
+9. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
 
 ## Limits

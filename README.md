@@ -61,12 +61,13 @@ uv run python tools/content_assurance_report.py \
   --fail-on-findings
 ```
 
-The suite approves fresh evidence and requires abstention for stale evidence and fresh
-evidence from the wrong source. It also detects source drift (a changed source
-fingerprint) and refuses an unapproved source host. The output contains identifiers,
-statuses, and hashes only; it does not contain lesson text.
+The suite approves fresh evidence only when the source also supports the declared claim.
+It requires abstention for stale evidence, fresh evidence from the wrong source, source
+drift (a changed source fingerprint), unsupported claims, conflicting evidence, and
+ambiguous evidence. The output contains identifiers, statuses, and hashes only; it does
+not contain lesson text.
 
-The reference agent also runs through the existing adapter contract and four declarative
+The reference agent also runs through the existing adapter contract and seven declarative
 scenario packs:
 
 ```bash

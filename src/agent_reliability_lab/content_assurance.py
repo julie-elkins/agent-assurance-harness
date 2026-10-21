@@ -29,9 +29,12 @@ from .protocol import AdapterRefusal, AdapterRun, ScenarioRequest
 from .recorder import TraceRecorder
 
 
-CONTENT_ASSURANCE_VERSION = 1
+CONTENT_ASSURANCE_VERSION = 2
 _IDENTIFIER = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.:/-]*$")
 _DIGEST = re.compile(r"^sha256:[0-9a-f]{64}$")
+_CLAIM_SUPPORT_STATUSES = frozenset(
+    {"supported", "unsupported", "conflicting", "ambiguous"}
+)
 _OFFICIAL_DOCUMENTATION_HOSTS = frozenset(
     {
         "docs.aws.amazon.com",
@@ -82,6 +85,15 @@ class ContentSource:
     source_url: str
     source_digest: str
     age_seconds: float | None
+    claim_support: tuple["ClaimSupport", ...] = ()
+
+
+@dataclass(frozen=True)
+class ClaimSupport:
+    """Synthetic source metadata describing support for one claim identifier."""
+
+    claim_id: str
+    status: str
 
 
 @dataclass(frozen=True)
@@ -212,7 +224,8 @@ class ContentAssuranceSuiteReport:
             "diagnostics": {
                 "warnings": [
                     "The suite uses one approval path and explicit degraded "
-                    "controls for stale, wrong-source, and drifted evidence."
+                    "controls for stale, wrong-source, drifted, unsupported, "
+                    "conflicting, and ambiguous claim evidence."
                 ],
                 "what_it_does_not_show": (
                     "It does not establish live-model quality, source truth, "
@@ -294,10 +307,11 @@ class TechnicalContentAssuranceAgent:
                 _append_unique(reasons, "evidence_missing")
                 continue
 
-            if (
+            source_authorized = (
                 source.source_id not in approved_sources
                 or not _official_documentation_url(source.source_url)
-            ):
+            )
+            if source_authorized:
                 checks.append(
                     ContentCheck(
                         check_id="source-authority",
@@ -318,9 +332,10 @@ class TechnicalContentAssuranceAgent:
                     )
                 )
 
-            if source.age_seconds is None or (
-                source.age_seconds > request.max_age_seconds
-            ):
+            source_fresh = source.age_seconds is not None and (
+                source.age_seconds <= request.max_age_seconds
+            )
+            if not source_fresh:
                 checks.append(
                     ContentCheck(
                         check_id="source-freshness",
@@ -352,7 +367,10 @@ class TechnicalContentAssuranceAgent:
                     )
                 )
 
-            if source.source_digest != claim.expected_source_digest:
+            source_integrity_matches = (
+                source.source_digest == claim.expected_source_digest
+            )
+            if not source_integrity_matches:
                 checks.append(
                     ContentCheck(
                         check_id="source-integrity",
@@ -372,6 +390,45 @@ class TechnicalContentAssuranceAgent:
                         evidence_id=evidence_id,
                     )
                 )
+
+            if source_authorized or not source_fresh or not source_integrity_matches:
+                checks.append(
+                    ContentCheck(
+                        check_id="claim-support",
+                        claim_id=claim.claim_id,
+                        status=FindingStatus.SKIPPED,
+                        evidence_id=evidence_id,
+                    )
+                )
+                continue
+
+            support_status = _claim_support_status(source, claim.claim_id)
+            if support_status == "supported":
+                checks.append(
+                    ContentCheck(
+                        check_id="claim-support",
+                        claim_id=claim.claim_id,
+                        status=FindingStatus.COMPLETED,
+                        evidence_id=evidence_id,
+                    )
+                )
+            else:
+                failure_reason = {
+                    None: "claim_unsupported",
+                    "unsupported": "claim_unsupported",
+                    "conflicting": "claim_conflict",
+                    "ambiguous": "claim_ambiguous",
+                }[support_status]
+                checks.append(
+                    ContentCheck(
+                        check_id="claim-support",
+                        claim_id=claim.claim_id,
+                        status=FindingStatus.FAILED,
+                        evidence_id=evidence_id,
+                        failure_reason=failure_reason,
+                    )
+                )
+                _append_unique(reasons, failure_reason)
 
         decision = (
             ContentDecision.ABSTAIN
@@ -475,6 +532,9 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
         source_url="https://docs.aws.amazon.com/",
         source_digest=expected_source_digest,
         age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "supported"),
+        ),
     )
     stale_source = ContentSource(
         source_id="source-approved-docs",
@@ -482,6 +542,9 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
         source_url="https://docs.aws.amazon.com/",
         source_digest=expected_source_digest,
         age_seconds=7200,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "supported"),
+        ),
     )
     wrong_source_artifact = ContentArtifact(
         artifact_id=artifact.artifact_id,
@@ -502,6 +565,9 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
         source_url="https://developers.openai.com/",
         source_digest=expected_source_digest,
         age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "supported"),
+        ),
     )
     drifted_source = ContentSource(
         source_id="source-approved-docs",
@@ -509,6 +575,39 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
         source_url="https://docs.aws.amazon.com/",
         source_digest="sha256:" + "0" * 64,
         age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "supported"),
+        ),
+    )
+    unsupported_source = ContentSource(
+        source_id="source-approved-docs",
+        authority="public-reference-docs",
+        source_url="https://docs.aws.amazon.com/",
+        source_digest=expected_source_digest,
+        age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "unsupported"),
+        ),
+    )
+    conflicting_source = ContentSource(
+        source_id="source-approved-docs",
+        authority="public-reference-docs",
+        source_url="https://docs.aws.amazon.com/",
+        source_digest=expected_source_digest,
+        age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "conflicting"),
+        ),
+    )
+    ambiguous_source = ContentSource(
+        source_id="source-approved-docs",
+        authority="public-reference-docs",
+        source_url="https://docs.aws.amazon.com/",
+        source_digest=expected_source_digest,
+        age_seconds=300,
+        claim_support=(
+            ClaimSupport("claim-root-confinement", "ambiguous"),
+        ),
     )
     request = ContentAssuranceRequest(
         artifact_id=artifact.artifact_id,
@@ -546,6 +645,30 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
             sources=(drifted_source,),
             expected_decision=ContentDecision.ABSTAIN,
             expected_reason="source_drift",
+        ),
+        ContentAssuranceCase(
+            case_id="claim-unsupported",
+            request=request,
+            artifact=artifact,
+            sources=(unsupported_source,),
+            expected_decision=ContentDecision.ABSTAIN,
+            expected_reason="claim_unsupported",
+        ),
+        ContentAssuranceCase(
+            case_id="claim-conflict",
+            request=request,
+            artifact=artifact,
+            sources=(conflicting_source,),
+            expected_decision=ContentDecision.ABSTAIN,
+            expected_reason="claim_conflict",
+        ),
+        ContentAssuranceCase(
+            case_id="claim-ambiguous",
+            request=request,
+            artifact=artifact,
+            sources=(ambiguous_source,),
+            expected_decision=ContentDecision.ABSTAIN,
+            expected_reason="claim_ambiguous",
         ),
     )
 
@@ -633,6 +756,14 @@ def _validate_request(
             or source.age_seconds < 0
         ):
             return "invalid_source_age"
+        support_claim_ids = [support.claim_id for support in source.claim_support]
+        if len(support_claim_ids) != len(set(support_claim_ids)):
+            return "duplicate_claim_support_id"
+        for support in source.claim_support:
+            if not _valid_identifier(support.claim_id):
+                return "invalid_claim_support_id"
+            if support.status not in _CLAIM_SUPPORT_STATUSES:
+                return "invalid_claim_support_status"
     return None
 
 
@@ -656,6 +787,18 @@ def _valid_identifier(value: object) -> bool:
 
 def _valid_digest(value: object) -> bool:
     return isinstance(value, str) and _DIGEST.fullmatch(value) is not None
+
+
+def _claim_support_status(
+    source: ContentSource,
+    claim_id: str,
+) -> str | None:
+    """Return the declared synthetic support state for one claim identifier."""
+
+    for support in source.claim_support:
+        if support.claim_id == claim_id:
+            return support.status
+    return None
 
 
 def _official_documentation_url(value: object) -> bool:

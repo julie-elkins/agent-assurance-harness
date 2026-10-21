@@ -88,6 +88,7 @@ The current progression is intentionally operational:
 | 22 | Independent replay provenance verification | Whether a separate pull-request check recomputes and enforces the replay evidence |
 | 23 | Action-pin and contract migration | Whether consumers explicitly declare compatible action and evidence schema versions |
 | 24 | Pinned action content parity | Whether the exact immutable action revision contains the required consumer-policy input and runner wiring |
+| 27 | Claim-level content assurance | Whether a fresh approved source actually supports each declared claim |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -115,6 +116,14 @@ Phase 17 makes the rejection paths explicit. It tests approved-but-stale evidenc
 fresh-but-wrong-source evidence separately, requires abstention for each, and records
 `evidence_stale` or `evidence_wrong_source` so a freshness-only evaluator cannot pass the
 wrong-source case. The failure reason is an identifier, not the retrieved record.
+
+Phase 27 adds the claim-support layer. A source can be official, fresh, and unchanged
+while still failing to support a particular statement. The synthetic source registry
+therefore records only a claim identifier and one of four support states:
+`supported`, `unsupported`, `conflicting`, or `ambiguous`. The agent approves only
+`supported`; the other states produce `claim_unsupported`, `claim_conflict`, or
+`claim_ambiguous` abstention reasons. If source authority, freshness, or integrity
+fails first, claim support is marked `skipped` rather than treated as a pass.
 
 ## How to add a control
 
@@ -277,8 +286,9 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/verify_pinned_action.py` — verifies the required action behavior at the exact pinned Git revision.
 - `skills/agent-assurance-harness/SKILL.md` — reusable workflow instructions for future harness changes.
 - `src/agent_reliability_lab/content_assurance.py` — synthetic technical-content assurance agent and controls.
-- `examples/content-assurance-packs/` — four declarative synthetic packs for fresh,
-  stale, wrong-source, and source-drift evidence.
+- `examples/content-assurance-packs/` — seven declarative synthetic packs for fresh,
+  stale, wrong-source, source-drift, unsupported-claim, conflicting-claim, and
+  ambiguous-claim evidence.
 - `examples/content_assurance_adapter.py` — JSONL adapter that exercises the content
   assurance agent through the same external protocol used by CI.
 - `src/agent_reliability_lab/public_sources.py` — bounded official-source metadata refresh.
@@ -519,7 +529,7 @@ This phase does not yet parse or rewrite documentation, infer claim truth from p
 or publish a course update. Those are later adapters and require their own evidence
 contracts.
 
-The reference agent is now exercised through the existing adapter boundary with four
+The reference agent is now exercised through the existing adapter boundary with seven
 declarative packs under `examples/content-assurance-packs/`. A custom-pack conformance
 report proves the approval and abstention reasons survive JSONL serialization. The
 operational ship gate requires both the domain report and the adapter-conformance

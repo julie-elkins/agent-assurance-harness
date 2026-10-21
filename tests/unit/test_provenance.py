@@ -29,7 +29,7 @@ def test_provenance_verification_requires_exact_artifact_subjects(
     tmp_path,
     monkeypatch,
 ):
-    artifact = tmp_path / "agent-reliability-lab-0.51.0-py3-none-any.whl"
+    artifact = tmp_path / "agent-reliability-lab-0.52.0-py3-none-any.whl"
     artifact.write_bytes(b"synthetic wheel")
     digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
     commands: list[list[str]] = []
@@ -68,7 +68,7 @@ def test_provenance_verification_blocks_subject_digest_mismatch(
     tmp_path,
     monkeypatch,
 ):
-    artifact = tmp_path / "agent-reliability-lab-0.51.0.tar.gz"
+    artifact = tmp_path / "agent-reliability-lab-0.52.0.tar.gz"
     artifact.write_bytes(b"synthetic source distribution")
 
     def fake_run(command, **kwargs):

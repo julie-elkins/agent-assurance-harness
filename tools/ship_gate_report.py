@@ -396,6 +396,55 @@ def _content_pipeline_observation(
     )
 
 
+def _course_freshness_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    results = report.get("results")
+    expected_courses = {
+        "course-pipeline-approved",
+        "course-pipeline-unsupported-claim",
+        "course-pipeline-stale-source",
+        "course-pipeline-source-drift",
+        "course-pipeline-unapproved-host",
+    }
+    result_ids = {
+        item.get("course_id")
+        for item in results
+        if isinstance(item, dict)
+    } if isinstance(results, list) else set()
+    workers_completed = (
+        isinstance(results, list)
+        and len(results) == len(expected_courses)
+        and all(
+            isinstance(item, dict)
+            and item.get("worker_status") == "completed"
+            for item in results
+        )
+    )
+    counts = report.get("counts")
+    passed = (
+        expected == "pass"
+        and report.get("course_freshness_version") == 1
+        and report.get("passed") is True
+        and report.get("controls_missed") == []
+        and isinstance(counts, dict)
+        and counts.get("requested") == len(expected_courses)
+        and counts.get("completed") == len(expected_courses)
+        and counts.get("unavailable") == 0
+        and result_ids == expected_courses
+        and workers_completed
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "course-freshness-failed",
+    )
+
+
 def _release_artifact_observation(
     check_id: str,
     path: Path,
@@ -550,6 +599,12 @@ def _observations(
                 path,
                 expected=check.expected,
             )
+        elif check.report_kind == "course-freshness":
+            observations[check.check_id] = _course_freshness_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
         elif check.report_kind == "release-artifact":
             observations[check.check_id] = _release_artifact_observation(
                 check.check_id,
@@ -617,6 +672,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--content-assurance", type=Path)
     parser.add_argument("--content-assurance-conformance", type=Path)
     parser.add_argument("--content-assurance-pipeline", type=Path)
+    parser.add_argument("--course-freshness", type=Path)
     parser.add_argument("--release-artifact", type=Path)
     parser.add_argument("--rollback-rehearsal", type=Path)
     parser.add_argument("--output", type=Path)
@@ -634,6 +690,7 @@ def main(argv: list[str] | None = None) -> int:
         "content-assurance-reference": args.content_assurance,
         "content-assurance-adapter": args.content_assurance_conformance,
         "content-assurance-pipeline": args.content_assurance_pipeline,
+        "course-freshness-sweep": args.course_freshness,
         "release-artifact-integrity": args.release_artifact,
         "rollback-rehearsal": args.rollback_rehearsal,
     }

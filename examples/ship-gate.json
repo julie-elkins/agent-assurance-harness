@@ -59,6 +59,12 @@
       "blocking": true
     },
     {
+      "check_id": "course-freshness-sweep",
+      "report_kind": "course-freshness",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "release-artifact-integrity",
       "report_kind": "release-artifact",
       "expected": "pass",

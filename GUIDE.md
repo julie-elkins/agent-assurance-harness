@@ -224,6 +224,28 @@ and an unapproved host. A refusal is a blocked input decision; an abstention is 
 request where the evidence cannot justify publication. Neither result contains source
 text.
 
+## Course freshness orchestration
+
+Phase 29 demonstrates a bounded multi-course review. A coordinator (the agent that
+assigns and aggregates work) sends one typed request to a worker (the agent that reviews
+one course revision). Each worker runs the content pipeline; the coordinator joins the
+metadata-only results and writes inspectable checkpoints.
+
+Run the synthetic course sweep with:
+
+```bash
+uv run python tools/course_freshness_report.py \
+  --workspace /tmp/agent-reliability-course-sweep \
+  --output /tmp/agent-reliability-course-freshness.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The sweep enforces course, worker, and elapsed-time limits. If one worker fails or times
+out, the result is marked unavailable and the other completed reviews remain visible, but
+the sweep is blocked rather than reported as clean. The workspace contains metadata
+checkpoints only; no course text is written there.
+
 The real-source path is explicit and bounded:
 
 ```bash

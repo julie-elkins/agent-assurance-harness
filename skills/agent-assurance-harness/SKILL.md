@@ -36,6 +36,9 @@ negative control and make the delivery gate fail when it is not caught.
   caused abstention.
 - Source ingestion must be bounded and ephemeral: process bytes in memory, emit only
   metadata, and keep CI on synthetic fixtures.
+- A course-freshness sweep must separate the coordinator from one-course workers,
+  enforce course, worker, and elapsed-time limits, persist metadata checkpoints, and
+  mark failed or timed-out workers unavailable rather than treating them as clean.
 
 ## Build path
 
@@ -50,15 +53,17 @@ negative control and make the delivery gate fail when it is not caught.
    declared claim.
 6. Route source ingestion through the existing content-assurance contract and test
    oversized, unapproved-host, stale, drifted, and unsupported-claim controls.
-7. Add the control to the blocking CI workflow and preserve the stable
+7. For a multi-course sweep, fan out only independent course reviews, join before
+   aggregating, and test both complete results and lateral worker failure.
+8. Add the control to the blocking CI workflow and preserve the stable
    `Agent reliability gate` job name.
-8. For consumer or action changes, run consumer validation, independent provenance
+9. For consumer or action changes, run consumer validation, independent provenance
    verification, compatibility verification, and pinned-action content-parity
    verification. The parity check must inspect the immutable Git object, not only the
    current action file.
-9. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
+10. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
    the workflow or repository contract changes.
-10. Run the full test suite, repository boundary check, dependency audit, release check,
+11. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
 
 ## Limits

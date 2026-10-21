@@ -101,6 +101,21 @@ This proves the agent's decisions survive the same JSONL (JSON Lines, one JSON o
 per line) boundary used by external adapters. The ship gate requires both the direct
 content report and this adapter-conformance report.
 
+Phase 29 adds a bounded course-freshness coordinator and one-course workers:
+
+```bash
+uv run python tools/course_freshness_report.py \
+  --workspace /tmp/agent-reliability-course-sweep \
+  --output /tmp/agent-reliability-course-freshness.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The coordinator fans out independent synthetic course reviews, joins the results, and
+keeps metadata checkpoints for inspection. A failed or timed-out worker is marked
+unavailable; it cannot make the sweep appear clean. The public inventory contains
+synthetic bytes only and never rewrites or publishes course content.
+
 The public-source refresh path can read the current official AWS, Anthropic, and OpenAI
 documentation roots when explicitly invoked:
 

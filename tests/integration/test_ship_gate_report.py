@@ -57,6 +57,7 @@ def _run(
     content_assurance = tmp_path / "content-assurance.json"
     content_conformance = tmp_path / "content-conformance.json"
     content_pipeline = tmp_path / "content-pipeline.json"
+    course_freshness = tmp_path / "course-freshness.json"
     release_artifact = tmp_path / "release-manifest.json"
     rollback_rehearsal = tmp_path / "rollback-rehearsal.json"
     output = tmp_path / "ship-gate.json"
@@ -240,6 +241,34 @@ def _run(
         ),
         encoding="utf-8",
     )
+    course_freshness.write_text(
+        json.dumps(
+            {
+                "course_freshness_version": 1,
+                "passed": True,
+                "controls_missed": [],
+                "counts": {
+                    "requested": 5,
+                    "completed": 5,
+                    "unavailable": 0,
+                },
+                "results": [
+                    {
+                        "course_id": course_id,
+                        "worker_status": "completed",
+                    }
+                    for course_id in (
+                        "course-pipeline-approved",
+                        "course-pipeline-unsupported-claim",
+                        "course-pipeline-stale-source",
+                        "course-pipeline-source-drift",
+                        "course-pipeline-unapproved-host",
+                    )
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
     release_artifact.write_text(
         json.dumps(
             {
@@ -317,6 +346,8 @@ def _run(
         str(content_conformance),
         "--content-assurance-pipeline",
         str(content_pipeline),
+        "--course-freshness",
+        str(course_freshness),
         "--release-artifact",
         str(release_artifact),
         "--rollback-rehearsal",

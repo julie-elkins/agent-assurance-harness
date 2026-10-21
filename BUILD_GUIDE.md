@@ -90,6 +90,7 @@ The current progression is intentionally operational:
 | 24 | Pinned action content parity | Whether the exact immutable action revision contains the required consumer-policy input and runner wiring |
 | 27 | Claim-level content assurance | Whether a fresh approved source actually supports each declared claim |
 | 28 | In-memory content pipeline | Whether source retrieval, normalization, claim evidence, and abstention remain inside the bounded assurance path |
+| 29 | Course freshness orchestration | Whether independent course workers can sweep revisions under bounded limits without hiding unavailable results |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -289,6 +290,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `src/agent_reliability_lab/content_assurance.py` — synthetic technical-content assurance agent and controls.
 - `src/agent_reliability_lab/content_pipeline.py` — bounded in-memory source ingestion
   and metadata-only routing into claim assurance.
+- `src/agent_reliability_lab/course_freshness.py` — bounded coordinator, one-course
+  worker contract, metadata checkpoints, and graceful-degradation results.
 - `examples/content-assurance-packs/` — seven declarative synthetic packs for fresh,
   stale, wrong-source, source-drift, unsupported-claim, conflicting-claim, and
   ambiguous-claim evidence.
@@ -297,6 +300,7 @@ The harness can support that path, but its synthetic gate does not replace those
 - `src/agent_reliability_lab/public_sources.py` — bounded official-source metadata refresh.
 - `tools/content_assurance_report.py` — metadata-only content assurance suite.
 - `tools/content_assurance_pipeline_report.py` — metadata-only in-memory pipeline suite.
+- `tools/course_freshness_report.py` — metadata-only multi-course freshness sweep.
 - `tools/refresh_public_sources.py` — explicit real-source refresh without body persistence.
 
 ### Audit evidence binding
@@ -557,6 +561,25 @@ The synthetic pipeline controls cover approved ingestion, unsupported claims, st
 sources, source drift, and an unapproved host. The blocking ship gate requires this
 pipeline report in addition to the direct domain report and the adapter-conformance
 report.
+
+### Course freshness orchestration
+
+Phase 29 adds the first multi-course agent-system path. A coordinator receives a bounded
+synthetic course inventory and dispatches one typed request to an independent worker per
+course. Each worker runs the Phase 28 pipeline; the coordinator joins the results and
+emits only course IDs, revisions, decisions, source fingerprints, claim-evidence IDs,
+and stable reason codes.
+
+The coordinator writes metadata checkpoints to `inputs/`, `intermediate/`, and
+`outputs/`. It enforces maximum course count, worker count, and elapsed time. A lateral
+worker failure (one course review failing while independent reviews can still finish)
+produces an unavailable result and does not erase the other results. The sweep remains
+blocked rather than clean when any worker is unavailable.
+
+The reference sweep covers five synthetic course revisions: approved, unsupported
+claim, stale source, source drift, and unapproved host. It does not rewrite, publish, or
+claim that a course teaches effectively. A private adapter may supply internal course
+bytes in memory later; the public CI path remains synthetic.
 
 ### Operational ship gate
 

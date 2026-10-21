@@ -103,6 +103,9 @@ missing, and what the result does not prove.
   hashes, sizes, section identifiers, and claim-evidence identifiers, and route its
   decision through the existing content-assurance agent. CI must use synthetic bytes;
   no fetched documentation body may be persisted or exported.
+- The course-freshness coordinator must use typed course-to-worker handoffs, bounded
+  worker count and elapsed time, metadata-only workspace checkpoints, and explicit
+  unavailable-worker results. A partial sweep must never be reported as clean.
 - `tools/adapter_regression_report.py` must run baseline and candidate adapters through
   the existing replay comparator, keep traces in memory, and emit only identifier-only
   regression metadata. It must block safety/evidence regressions and refusals while

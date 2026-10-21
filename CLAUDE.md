@@ -7,6 +7,11 @@ only through the bounded metadata refresh path. It records URLs, retrieval times
 byte counts, and hashes, never documentation bodies. Synthetic fixtures remain the CI
 source for deterministic stale, wrong-source, and drift controls.
 
+The course-freshness coordinator is a bounded orchestration example: it dispatches one
+typed request per synthetic course to independent workers, writes metadata-only
+checkpoints, and marks failed or timed-out workers unavailable. It never rewrites or
+publishes course content.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

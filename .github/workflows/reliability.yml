@@ -214,6 +214,15 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run course freshness sweep
+        run: >-
+          uv run python tools/course_freshness_report.py
+          --workspace /tmp/agent-reliability-course-sweep
+          --output /tmp/agent-reliability-course-freshness.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Rehearse rollback
         run: >-
           uv run python tools/rollback_rehearsal.py
@@ -235,6 +244,7 @@ jobs:
           --content-assurance /tmp/agent-reliability-content-assurance.json
           --content-assurance-conformance /tmp/agent-reliability-content-conformance.json
           --content-assurance-pipeline /tmp/agent-reliability-content-pipeline.json
+          --course-freshness /tmp/agent-reliability-course-freshness.json
           --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
@@ -264,6 +274,7 @@ jobs:
           --content-assurance /tmp/agent-reliability-content-assurance.json
           --content-assurance-conformance /tmp/agent-reliability-content-conformance.json
           --content-assurance-pipeline /tmp/agent-reliability-content-pipeline.json
+          --course-freshness /tmp/agent-reliability-course-freshness.json
           --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
@@ -286,6 +297,8 @@ jobs:
             /tmp/agent-reliability-content-assurance.json
             /tmp/agent-reliability-content-conformance.json
             /tmp/agent-reliability-content-pipeline.json
+            /tmp/agent-reliability-course-freshness.json
+            /tmp/agent-reliability-course-sweep/
             /tmp/agent-reliability-consumer-validation.json
             /tmp/agent-reliability-release-manifest.json
             /tmp/agent-reliability-runtime-sbom.json

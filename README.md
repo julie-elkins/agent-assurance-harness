@@ -628,6 +628,21 @@ action commit and report versions, then checks every positive, negative, drift,
 and restored consumer run. This is a migration gate: an action pin or evidence
 schema change must be updated deliberately rather than being accepted silently.
 
+### Verify pinned action content
+
+Phase 24 verifies content parity (the required behavior exists at the exact
+immutable action revision), not only the declared commit SHA. It inspects the
+historical action object for the consumer-policy input, environment wiring,
+reusable runner path, and policy-manifest argument. The pull-request workflow
+uses a full-history checkout so this check remains local and credential-free.
+
+Run the same check locally with:
+
+```bash
+uv run python tools/verify_pinned_action.py \
+  --fail-on-unverified
+```
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

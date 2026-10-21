@@ -102,6 +102,13 @@ missing, and what the result does not prove.
   include traces, prompts, commands, credentials, provider output, or raw finding
   messages. It identifies what was checked; it is not a signed provenance claim or
   live-provider quality result.
+- `tools/verify_pinned_action.py` must inspect the immutable Git object named by the
+  synthetic consumer workflow and verify the required reusable-action contract markers.
+  Checking only the current action file or the declared SHA is insufficient: content
+  parity means the required behavior exists at the exact pinned revision.
+- The reusable `skills/agent-assurance-harness/SKILL.md` is the public workflow summary
+  for future harness changes. Keep it aligned with `GUIDE.md`, `BUILD_GUIDE.md`, and the
+  consumer-action verification path.
 - The pull-request workflow must write positive and negative-control reports and
   attestations, verify them against the current Git revision and built-in pack set with
   `tools/verify_assurance_evidence.py`, and upload the metadata-only files with

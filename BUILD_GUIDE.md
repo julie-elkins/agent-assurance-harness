@@ -87,6 +87,7 @@ The current progression is intentionally operational:
 | 21 | Policy replay provenance | Whether the replay identifies the exact checkout, action revision, manifest bytes, and result sequence |
 | 22 | Independent replay provenance verification | Whether a separate pull-request check recomputes and enforces the replay evidence |
 | 23 | Action-pin and contract migration | Whether consumers explicitly declare compatible action and evidence schema versions |
+| 24 | Pinned action content parity | Whether the exact immutable action revision contains the required consumer-policy input and runner wiring |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -272,6 +273,9 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/verify_consumer_provenance.py` — independent metadata-only verifier for consumer replay evidence.
 - `src/agent_reliability_lab/consumer_compatibility.py` — action-pin and report-version compatibility evaluator.
 - `examples/consumer-repository/compatibility-manifest.json` — checked-in consumer migration contract.
+- `src/agent_reliability_lab/action_parity.py` — required reusable-action contract markers and metadata-only parity result.
+- `tools/verify_pinned_action.py` — verifies the required action behavior at the exact pinned Git revision.
+- `skills/agent-assurance-harness/SKILL.md` — reusable workflow instructions for future harness changes.
 
 ### Audit evidence binding
 
@@ -462,6 +466,19 @@ negative, drift, and restored run must satisfy those requirements.
 This makes an action upgrade or downgrade a reviewed migration decision. A
 consumer cannot silently use an older action that lacks the policy-manifest
 input while the local validator evaluates newer code.
+
+### Pinned action content parity
+
+Phase 24 verifies the action object at the exact immutable commit named by the
+consumer workflow. It requires the policy-manifest input, its environment wiring,
+the reusable runner path, and the policy-manifest argument to be present at that
+revision.
+
+This is content parity: the required behavior exists in the pinned revision. It
+is not byte-for-byte equality with the current action file, because unrelated
+comments or implementation improvements should not force a consumer migration.
+The CI checkout uses full history so the verifier can inspect that historical Git
+object without network access or credentials. A missing marker blocks the gate.
 
 ### Operational ship gate
 

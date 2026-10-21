@@ -277,6 +277,12 @@ provider-shaped adapters, blocking safety and evidence regressions, explicit usa
 ceilings, credential-name validation, privacy-preserving reports, and repeatable CI gates.
 It must distinguish offline provider-shaped tests from the separately bounded local live path.
 
+Phase 24 verifies pinned action content parity (the required behavior exists at the exact
+immutable action revision), not only the action SHA and compatibility manifest. It checks
+the historical action object for the policy-manifest input, environment wiring, runner
+path, and policy argument. The workflow fetches full Git history so the check is
+deterministic and credential-free.
+
 For integrations, use `TraceRecorder` rather than a provider SDK. It emits the existing
 identifier-only `AdapterRun` protocol, pairs tool calls with results, and returns
 structured refusals for raw arguments, raw result payloads, and free-form claims or

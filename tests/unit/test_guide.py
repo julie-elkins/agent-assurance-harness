@@ -5,6 +5,7 @@ REPOSITORY = Path(__file__).parents[2]
 GUIDE = REPOSITORY / "GUIDE.md"
 BUILD_GUIDE = REPOSITORY / "BUILD_GUIDE.md"
 DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
+ASSURANCE_SKILL = REPOSITORY / "skills" / "agent-assurance-harness" / "SKILL.md"
 
 
 def test_guide_exists_and_local_references_are_present():
@@ -20,6 +21,9 @@ def test_guide_exists_and_local_references_are_present():
     assert "# Building the Agent Assurance Harness" in build_guide
     assert "How to add a control" in build_guide
     assert "Costs if wrong:" in build_guide
+    skill = ASSURANCE_SKILL.read_text(encoding="utf-8")
+    assert "name: agent-assurance-harness" in skill
+    assert "pinned-action content-parity" in skill
     standard = DELIVERY_STANDARD.read_text(encoding="utf-8")
     assert "# Production Delivery Standard" in standard
     assert "The ten controls" in standard
@@ -36,5 +40,6 @@ def test_guide_exists_and_local_references_are_present():
         "tools/golden_trace_report.py",
         "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",
+        "skills/agent-assurance-harness/SKILL.md",
     ):
         assert (REPOSITORY / relative_path).exists(), relative_path

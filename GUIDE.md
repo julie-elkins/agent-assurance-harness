@@ -542,6 +542,29 @@ This is a migration gate: it blocks an older action or incompatible report shape
 before merge. Update the manifest and action pin together in one reviewed
 dependency change when the contract intentionally changes.
 
+### Pinned action content parity
+
+Phase 24 verifies the required reusable-action behavior at the exact immutable
+commit referenced by the consumer workflow. The check looks for the policy-manifest
+input, environment-variable wiring, runner path, and policy-manifest argument in
+that historical action object.
+
+This closes a subtle gap: a SHA-only compatibility check can pass while the pinned
+action silently ignores a newer input. The check is structural content parity (the
+required behavior exists at the pinned revision), not byte-for-byte comparison of
+the entire action file. CI checks out full Git history so the verification is local,
+deterministic, and credential-free.
+
+Run it locally with:
+
+```bash
+uv run python tools/verify_pinned_action.py \
+  --fail-on-unverified
+```
+
+The report contains only the action identifier, required markers, and statuses. It
+does not print the action source.
+
 ### Evidence-quality abstention
 
 Phase 17 separates two evidence failures that a single freshness check can confuse:

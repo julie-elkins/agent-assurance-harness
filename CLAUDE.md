@@ -12,6 +12,12 @@ typed request per synthetic course to independent workers, writes metadata-only
 checkpoints, and marks failed or timed-out workers unavailable. It never rewrites or
 publishes course content.
 
+The Course Doctor workflow turns those results into metadata-only review packets. A
+packet is a recommendation, not approval: unresolved findings require human
+adjudication (a recorded reviewer decision) before any future content change. The local
+source adapter reads only beneath an explicit root, processes bytes in memory, and
+emits no source paths or content. Public CI remains synthetic-only.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

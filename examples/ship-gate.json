@@ -65,6 +65,12 @@
       "blocking": true
     },
     {
+      "check_id": "course-doctor-review",
+      "report_kind": "course-doctor",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "release-artifact-integrity",
       "report_kind": "release-artifact",
       "expected": "pass",

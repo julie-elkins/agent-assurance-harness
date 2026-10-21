@@ -1,7 +1,11 @@
 # Agent Assurance Harness
 
+Production-shaped assurance and review workflows for AI agents and technical-content
+systems.
+
 A provider-neutral harness for testing whether tool-using AI agents have the evidence to
-act, abstain, and report honestly.
+act, abstain, and report honestly, plus a bounded Course Doctor workflow for deciding
+when technical training content is ready for human approval.
 
 Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
 then read [Building the Agent Assurance Harness](BUILD_GUIDE.md) for the design rationale
@@ -115,6 +119,38 @@ The coordinator fans out independent synthetic course reviews, joins the results
 keeps metadata checkpoints for inspection. A failed or timed-out worker is marked
 unavailable; it cannot make the sweep appear clean. The public inventory contains
 synthetic bytes only and never rewrites or publishes course content.
+
+Phase 30 adds the Course Doctor review workflow. It converts each course result into a
+metadata-only review packet with a recommended disposition:
+
+```bash
+uv run python tools/course_doctor_report.py \
+  --workspace /tmp/agent-reliability-course-doctor \
+  --output /tmp/agent-reliability-course-doctor.json \
+  --markdown \
+  --fail-on-findings
+```
+
+A review packet contains course and revision identifiers, source fingerprints, claim
+proposal identifiers, evidence identifiers, stable finding reasons, and whether a worker
+completed. A proposal is not a verified claim, and a recommendation is not human
+approval. Failed work becomes `not_reviewed`, so it cannot disappear from the worklist.
+The public command uses synthetic fixtures only.
+
+Private local runs may supply a manifest and an explicit source root:
+
+```bash
+uv run python tools/course_doctor_report.py \
+  --manifest /private/path/course-manifest.json \
+  --source-root /private/path/course-sources \
+  --workspace /tmp/course-doctor \
+  --output /tmp/course-doctor.json \
+  --fail-on-findings
+```
+
+The local adapter reads only beneath the supplied root, enforces a byte ceiling, processes
+source bytes in memory, and exports metadata only. It does not rewrite or publish course
+content. A human adjudication record is required before a later publisher could act.
 
 The public-source refresh path can read the current official AWS, Anthropic, and OpenAI
 documentation roots when explicitly invoked:

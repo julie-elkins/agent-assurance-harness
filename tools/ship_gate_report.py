@@ -445,6 +445,63 @@ def _course_freshness_observation(
     )
 
 
+def _course_doctor_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    packets = report.get("packets")
+    expected_courses = {
+        "course-pipeline-approved",
+        "course-pipeline-unsupported-claim",
+        "course-pipeline-stale-source",
+        "course-pipeline-source-drift",
+        "course-pipeline-unapproved-host",
+    }
+    packet_map = {
+        item.get("course_id"): item
+        for item in packets
+        if isinstance(item, dict)
+    } if isinstance(packets, list) else {}
+    expected_dispositions = {
+        "course-pipeline-approved": "approved",
+        "course-pipeline-unsupported-claim": "needs_revision",
+        "course-pipeline-stale-source": "needs_revision",
+        "course-pipeline-source-drift": "needs_revision",
+        "course-pipeline-unapproved-host": "blocked",
+    }
+    packets_passed = (
+        set(packet_map) == expected_courses
+        and all(
+            packet_map[course_id].get("worker_status") == "completed"
+            and packet_map[course_id].get("recommended_disposition")
+            == disposition
+            and packet_map[course_id].get("human_approval_required") is True
+            for course_id, disposition in expected_dispositions.items()
+        )
+    )
+    counts = report.get("counts")
+    passed = (
+        expected == "pass"
+        and report.get("course_doctor_version") == 1
+        and report.get("passed") is True
+        and report.get("controls_missed") == []
+        and isinstance(counts, dict)
+        and counts.get("requested") == len(expected_courses)
+        and counts.get("packets_emitted") == len(expected_courses)
+        and counts.get("not_reviewed") == 0
+        and counts.get("counts_reconcile") is True
+        and packets_passed
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "course-doctor-failed",
+    )
+
+
 def _release_artifact_observation(
     check_id: str,
     path: Path,
@@ -605,6 +662,12 @@ def _observations(
                 path,
                 expected=check.expected,
             )
+        elif check.report_kind == "course-doctor":
+            observations[check.check_id] = _course_doctor_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
         elif check.report_kind == "release-artifact":
             observations[check.check_id] = _release_artifact_observation(
                 check.check_id,
@@ -673,6 +736,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--content-assurance-conformance", type=Path)
     parser.add_argument("--content-assurance-pipeline", type=Path)
     parser.add_argument("--course-freshness", type=Path)
+    parser.add_argument("--course-doctor", type=Path)
     parser.add_argument("--release-artifact", type=Path)
     parser.add_argument("--rollback-rehearsal", type=Path)
     parser.add_argument("--output", type=Path)
@@ -691,6 +755,7 @@ def main(argv: list[str] | None = None) -> int:
         "content-assurance-adapter": args.content_assurance_conformance,
         "content-assurance-pipeline": args.content_assurance_pipeline,
         "course-freshness-sweep": args.course_freshness,
+        "course-doctor-review": args.course_doctor,
         "release-artifact-integrity": args.release_artifact,
         "rollback-rehearsal": args.rollback_rehearsal,
     }

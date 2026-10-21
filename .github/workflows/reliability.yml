@@ -223,6 +223,15 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Generate Course Doctor review packets
+        run: >-
+          uv run python tools/course_doctor_report.py
+          --workspace /tmp/agent-reliability-course-doctor
+          --output /tmp/agent-reliability-course-doctor.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Rehearse rollback
         run: >-
           uv run python tools/rollback_rehearsal.py
@@ -245,6 +254,7 @@ jobs:
           --content-assurance-conformance /tmp/agent-reliability-content-conformance.json
           --content-assurance-pipeline /tmp/agent-reliability-content-pipeline.json
           --course-freshness /tmp/agent-reliability-course-freshness.json
+          --course-doctor /tmp/agent-reliability-course-doctor.json
           --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
@@ -275,6 +285,7 @@ jobs:
           --content-assurance-conformance /tmp/agent-reliability-content-conformance.json
           --content-assurance-pipeline /tmp/agent-reliability-content-pipeline.json
           --course-freshness /tmp/agent-reliability-course-freshness.json
+          --course-doctor /tmp/agent-reliability-course-doctor.json
           --release-artifact /tmp/agent-reliability-release-manifest.json
           --rollback-rehearsal /tmp/agent-reliability-rollback.json
           --output /tmp/agent-reliability-ship-gate.json
@@ -299,6 +310,8 @@ jobs:
             /tmp/agent-reliability-content-pipeline.json
             /tmp/agent-reliability-course-freshness.json
             /tmp/agent-reliability-course-sweep/
+            /tmp/agent-reliability-course-doctor.json
+            /tmp/agent-reliability-course-doctor/
             /tmp/agent-reliability-consumer-validation.json
             /tmp/agent-reliability-release-manifest.json
             /tmp/agent-reliability-runtime-sbom.json

@@ -47,6 +47,7 @@ def _run(
     *,
     block: bool = False,
     block_content: bool = False,
+    block_course_doctor: bool = False,
 ) -> subprocess.CompletedProcess[str]:
     positive_regression = tmp_path / "positive-regression.json"
     positive_golden = tmp_path / "positive-golden.json"
@@ -58,6 +59,7 @@ def _run(
     content_conformance = tmp_path / "content-conformance.json"
     content_pipeline = tmp_path / "content-pipeline.json"
     course_freshness = tmp_path / "course-freshness.json"
+    course_doctor = tmp_path / "course-doctor.json"
     release_artifact = tmp_path / "release-manifest.json"
     rollback_rehearsal = tmp_path / "rollback-rehearsal.json"
     output = tmp_path / "ship-gate.json"
@@ -269,6 +271,57 @@ def _run(
         ),
         encoding="utf-8",
     )
+    course_doctor.write_text(
+        json.dumps(
+            {
+                "course_doctor_version": 1,
+                "passed": True,
+                "controls_missed": [],
+                "counts": {
+                    "requested": 5,
+                    "packets_emitted": 5,
+                    "completed": 5,
+                    "failed": 0,
+                    "timed_out": 0,
+                    "not_reviewed": 0,
+                    "truncated": False,
+                    "counts_reconcile": True,
+                },
+                "packets": [
+                    {
+                        "course_id": course_id,
+                        "worker_status": "completed",
+                        "recommended_disposition": disposition,
+                        "human_approval_required": True,
+                    }
+                    for course_id, disposition in (
+                        ("course-pipeline-approved", "approved"),
+                        (
+                            "course-pipeline-unsupported-claim",
+                            "needs_revision",
+                        ),
+                        ("course-pipeline-stale-source", "needs_revision"),
+                        ("course-pipeline-source-drift", "needs_revision"),
+                        ("course-pipeline-unapproved-host", "blocked"),
+                    )
+                ],
+            }
+        ),
+        encoding="utf-8",
+    )
+    if block_course_doctor:
+        course_doctor_payload = json.loads(
+            course_doctor.read_text(encoding="utf-8")
+        )
+        course_doctor_payload["passed"] = False
+        course_doctor_payload["controls_missed"] = [
+            "course-pipeline-stale-source"
+        ]
+        course_doctor_payload["packets"][2]["recommended_disposition"] = "approved"
+        course_doctor.write_text(
+            json.dumps(course_doctor_payload),
+            encoding="utf-8",
+        )
     release_artifact.write_text(
         json.dumps(
             {
@@ -348,6 +401,8 @@ def _run(
         str(content_pipeline),
         "--course-freshness",
         str(course_freshness),
+        "--course-doctor",
+        str(course_doctor),
         "--release-artifact",
         str(release_artifact),
         "--rollback-rehearsal",
@@ -398,5 +453,16 @@ def test_ship_gate_report_blocks_when_content_control_is_missed(tmp_path):
     data = json.loads(completed.stdout)
     assert data["decision"] == "blocked"
     assert "content-assurance-reference:content-assurance-failed" in data[
+        "blocking_reasons"
+    ]
+
+
+def test_ship_gate_report_blocks_when_course_doctor_control_is_missed(tmp_path):
+    completed = _run(tmp_path, block_course_doctor=True)
+
+    assert completed.returncode == 1
+    data = json.loads(completed.stdout)
+    assert data["decision"] == "blocked"
+    assert "course-doctor-review:course-doctor-failed" in data[
         "blocking_reasons"
     ]

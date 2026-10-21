@@ -14,8 +14,8 @@ TOOL = REPOSITORY / "tools" / "provenance_report.py"
 def test_provenance_report_verifies_metadata_only_subjects(tmp_path, monkeypatch):
     artifacts = tmp_path / "artifacts"
     artifacts.mkdir()
-    wheel = artifacts / "agent-reliability-lab-0.54.0-py3-none-any.whl"
-    source = artifacts / "agent-reliability-lab-0.54.0.tar.gz"
+    wheel = artifacts / "agent-reliability-lab-0.55.0-py3-none-any.whl"
+    source = artifacts / "agent-reliability-lab-0.55.0.tar.gz"
     wheel.write_bytes(b"synthetic wheel")
     source.write_bytes(b"synthetic source distribution")
     fake_gh = tmp_path / "gh"

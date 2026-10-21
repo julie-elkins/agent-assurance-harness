@@ -91,6 +91,7 @@ The current progression is intentionally operational:
 | 27 | Claim-level content assurance | Whether a fresh approved source actually supports each declared claim |
 | 28 | In-memory content pipeline | Whether source retrieval, normalization, claim evidence, and abstention remain inside the bounded assurance path |
 | 29 | Course freshness orchestration | Whether independent course workers can sweep revisions under bounded limits without hiding unavailable results |
+| 30 | Course Doctor review workflow | Whether findings become complete, metadata-only review packets and unresolved findings require human adjudication |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -292,6 +293,8 @@ The harness can support that path, but its synthetic gate does not replace those
   and metadata-only routing into claim assurance.
 - `src/agent_reliability_lab/course_freshness.py` — bounded coordinator, one-course
   worker contract, metadata checkpoints, and graceful-degradation results.
+- `src/agent_reliability_lab/course_doctor.py` — local source adapter, review packets,
+  adjudication gate, and state-reconciling packet counts.
 - `examples/content-assurance-packs/` — seven declarative synthetic packs for fresh,
   stale, wrong-source, source-drift, unsupported-claim, conflicting-claim, and
   ambiguous-claim evidence.
@@ -301,6 +304,7 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/content_assurance_report.py` — metadata-only content assurance suite.
 - `tools/content_assurance_pipeline_report.py` — metadata-only in-memory pipeline suite.
 - `tools/course_freshness_report.py` — metadata-only multi-course freshness sweep.
+- `tools/course_doctor_report.py` — synthetic or explicitly local review packet report.
 - `tools/refresh_public_sources.py` — explicit real-source refresh without body persistence.
 
 ### Audit evidence binding
@@ -580,6 +584,27 @@ The reference sweep covers five synthetic course revisions: approved, unsupporte
 claim, stale source, source drift, and unapproved host. It does not rewrite, publish, or
 claim that a course teaches effectively. A private adapter may supply internal course
 bytes in memory later; the public CI path remains synthetic.
+
+### Course Doctor review workflow
+
+Phase 30 adds the operational last mile after freshness detection. The Course Doctor
+wraps each completed course result in a metadata-only review packet. The packet carries
+the course and revision identifiers, source and evidence fingerprints, claim proposal
+identifiers, stable finding reasons, a recommended disposition, and an explicit
+`human_approval_required` flag.
+
+The workflow preserves one packet for every requested course. Failed or timed-out work
+is `not_reviewed`, and the report publishes requested, emitted, completed, failed,
+timed-out, and not-reviewed counts so a shorter worklist cannot masquerade as progress.
+The packet generator is a projection over the existing course-freshness contract; it
+does not create a second content evaluator.
+
+The local source adapter is confined to an explicitly supplied root and reads bounded
+source bytes only in memory. Its reports contain hashes, identifiers, statuses, and
+stable reason codes, never source text or paths. A human adjudication record is
+append-only and cannot approve a packet with unresolved findings. No publisher or
+rewriter exists in this phase, so the public build demonstrates the control without
+creating an unauthorized content side effect.
 
 ### Operational ship gate
 

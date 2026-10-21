@@ -246,6 +246,35 @@ out, the result is marked unavailable and the other completed reviews remain vis
 the sweep is blocked rather than reported as clean. The workspace contains metadata
 checkpoints only; no course text is written there.
 
+## Course Doctor review packets
+
+Phase 30 adds the operational review boundary. A Course Doctor packet is a
+metadata-only record that turns one course result into a reviewer work item. It names
+the course revision, source fingerprint, claim proposal identifiers, evidence identifiers,
+stable finding reasons, and a recommended disposition. A proposal is not truth, and an
+automated recommendation is not human approval.
+
+Run the public synthetic workflow with:
+
+```bash
+uv run python tools/course_doctor_report.py \
+  --workspace /tmp/agent-reliability-course-doctor \
+  --output /tmp/agent-reliability-course-doctor.json \
+  --markdown \
+  --fail-on-findings
+```
+
+Every requested course receives a packet. A failed worker produces `not_reviewed`
+instead of disappearing, and reconciled counts show requested, completed, failed,
+timed-out, and not-reviewed work. The workflow blocks unresolved findings from receiving
+an `approved` human adjudication.
+
+Private runs can use `--manifest` plus `--source-root`. The adapter accepts only files
+under that root, reads bounded bytes in memory, and emits no source text or source path.
+Public CI never uses private files or live source retrieval. This phase provides no
+rewriter or publisher; it stops at the explicit human decision required before a later
+content change.
+
 The real-source path is explicit and bounded:
 
 ```bash
@@ -773,10 +802,13 @@ process groups; they are not a complete network sandbox.
 - [`README.md`](README.md) — full command reference and feature history.
 - [`SECURITY.md`](SECURITY.md) — vulnerability reporting and public data boundary.
 - [`src/agent_reliability_lab/`](src/agent_reliability_lab/) — protocol, packs,
-  evaluators, adapters, replay, regression, and attestation implementation.
+  evaluators, adapters, replay, regression, attestation, and content-assurance
+  implementation.
+- [`src/agent_reliability_lab/course_doctor.py`](src/agent_reliability_lab/course_doctor.py)
+  — local source boundary, review packets, and human-adjudication gate.
 - [`examples/`](examples/) — deterministic synthetic adapters and replay fixtures.
 - [`tools/`](tools/) — CI-facing reports, boundary checks, release checks, and evidence
-  verification.
+  verification, including the Course Doctor report.
 - [`.github/workflows/reliability.yml`](.github/workflows/reliability.yml) — required
   test and evidence workflow.
 - [`AGENTS.md`](AGENTS.md) — public-repository safety and development constraints.

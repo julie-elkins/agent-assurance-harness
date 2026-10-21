@@ -106,6 +106,14 @@ missing, and what the result does not prove.
 - The course-freshness coordinator must use typed course-to-worker handoffs, bounded
   worker count and elapsed time, metadata-only workspace checkpoints, and explicit
   unavailable-worker results. A partial sweep must never be reported as clean.
+- The Course Doctor review workflow must emit one metadata-only review packet per
+  requested course, including failed or not-reviewed work, and must keep human
+  adjudication separate from automated recommendations. A generated claim is a
+  proposal, not publication authority; no packet may rewrite or publish content.
+- The local course-source adapter must read only beneath an explicitly supplied root,
+  enforce a source-size ceiling, process bytes in memory, and never emit source paths,
+  source text, or source errors containing content. Public CI must use synthetic
+  fixtures.
 - `tools/adapter_regression_report.py` must run baseline and candidate adapters through
   the existing replay comparator, keep traces in memory, and emit only identifier-only
   regression metadata. It must block safety/evidence regressions and refusals while

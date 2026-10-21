@@ -39,6 +39,10 @@ negative control and make the delivery gate fail when it is not caught.
 - A course-freshness sweep must separate the coordinator from one-course workers,
   enforce course, worker, and elapsed-time limits, persist metadata checkpoints, and
   mark failed or timed-out workers unavailable rather than treating them as clean.
+- Course Doctor review packets must preserve one packet per requested course, expose
+  reconciled counts, keep claim proposals unverified, and require human adjudication
+  before any future content change. Local source adapters must stay root-confined,
+  bounded, in-memory, and metadata-only at the output boundary.
 
 ## Build path
 
@@ -55,15 +59,18 @@ negative control and make the delivery gate fail when it is not caught.
    oversized, unapproved-host, stale, drifted, and unsupported-claim controls.
 7. For a multi-course sweep, fan out only independent course reviews, join before
    aggregating, and test both complete results and lateral worker failure.
-8. Add the control to the blocking CI workflow and preserve the stable
+8. Turn course findings into review packets without copying source content; test that
+   unresolved findings cannot receive an approved adjudication and that failed work
+   still emits a not-reviewed packet.
+9. Add the control to the blocking CI workflow and preserve the stable
    `Agent reliability gate` job name.
-9. For consumer or action changes, run consumer validation, independent provenance
+10. For consumer or action changes, run consumer validation, independent provenance
    verification, compatibility verification, and pinned-action content-parity
    verification. The parity check must inspect the immutable Git object, not only the
    current action file.
-10. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
+11. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
    the workflow or repository contract changes.
-11. Run the full test suite, repository boundary check, dependency audit, release check,
+12. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
 
 ## Limits

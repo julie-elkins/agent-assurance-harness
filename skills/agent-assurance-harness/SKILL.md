@@ -19,6 +19,9 @@ negative control and make the delivery gate fail when it is not caught.
 - Use public synthetic data only. Never add credentials, unpublished exam content,
   prompts, raw traces, provider payloads, or private URLs.
 - Keep provider integrations mocked or injected. Do not add live network calls to CI.
+- Keep the primary showcase deterministic and offline. An optional public-course
+  demonstration may use a separately checked-out repository through the root-confined
+  local adapter, but never vendor lesson text or export source content.
 - Real public documentation may be refreshed only through the fixed official-source
   boundary; follow redirects only to an allow-listed official host, enforce timeout and
   response-size limits, hash the response, and discard its body. CI must use synthetic
@@ -47,6 +50,9 @@ negative control and make the delivery gate fail when it is not caught.
   identifier uniqueness, source binding, required coverage, and raw-content absence
   before routing proposals to the content pipeline. Invalid proposals must stop
   downstream evaluation and produce a stable reason code.
+- The live provider boundary is local-only and opt-in. It must use only fixed official
+  endpoints, reject redirects and retries, require request/token/time/spend ceilings,
+  and accept only the reviewed identifier-only structured response shape.
 
 ## Build path
 
@@ -78,6 +84,8 @@ negative control and make the delivery gate fail when it is not caught.
    the workflow or repository contract changes.
 13. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
+14. Run `uv run python tools/showcase_demo.py --markdown` and verify that the output
+    remains offline, metadata-only, and useful to an outside reviewer.
 
 ## Limits
 

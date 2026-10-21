@@ -1,0 +1,29 @@
+{
+  "courses": [
+    {
+      "course_id": "synthetic-agent-course",
+      "course_revision": "synthetic-agent-course-revision-001",
+      "source_path": "source/lesson-001.md",
+      "case_id": "showcase-course-approved",
+      "artifact_id": "synthetic-agent-lesson-001",
+      "artifact_revision": "lesson-001-revision-001",
+      "artifact_digest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "reuse_key": "showcase-synthetic-agent-course",
+      "source_id": "source-approved-docs",
+      "authority": "official-documentation-fixture",
+      "source_url": "https://docs.aws.amazon.com/",
+      "age_seconds": 300,
+      "claims": [
+        {
+          "claim_id": "claim:synthetic-agent-course-supported",
+          "section_id": "section:lesson-001",
+          "support_status": "supported"
+        }
+      ],
+      "approved_source_ids": [
+        "source-approved-docs"
+      ],
+      "max_age_seconds": 3600
+    }
+  ]
+}

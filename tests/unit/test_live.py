@@ -1,8 +1,16 @@
 import json
+import urllib.error
+import urllib.request
 from pathlib import Path
 
+import pytest
+
 from agent_reliability_lab.environment import environment_for_scenario
-from agent_reliability_lab.live import LiveProviderPolicy, live_provider_adapter
+from agent_reliability_lab.live import (
+    LiveProviderPolicy,
+    _NoRedirectHandler,
+    live_provider_adapter,
+)
 from agent_reliability_lab.packs import load_builtin_packs, request_from_pack
 from agent_reliability_lab.providers import ProviderLimits
 
@@ -258,3 +266,33 @@ def test_provider_contract_fixtures_remain_accepted(monkeypatch):
         assert result.trace is not None
         assert result.execution_budget is not None
         assert result.execution_budget.within_limits is True
+
+
+def test_live_adapter_refuses_non_bytes_transport_output(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
+
+    result = live_provider_adapter(
+        _policy(),
+        transport=lambda *args: "not-bytes",
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.trace is None
+    assert result.refusal is not None
+    assert result.refusal.error == "provider_transport_invalid_response"
+
+
+def test_live_transport_redirect_handler_refuses_redirects():
+    request = urllib.request.Request("https://api.openai.com/v1/responses")
+
+    with pytest.raises(urllib.error.HTTPError):
+        _NoRedirectHandler().redirect_request(
+            request,
+            None,
+            302,
+            "Found",
+            {},
+            "https://example.invalid/redirect",
+        )

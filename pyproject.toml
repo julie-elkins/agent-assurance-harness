@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-reliability-lab"
-version = "0.56.0"
+version = "0.57.0"
 description = "Provider-neutral harness for agent evidence and technical-content assurance before publication."
 readme = "README.md"
 requires-python = ">=3.11"

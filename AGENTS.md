@@ -114,6 +114,16 @@ missing, and what the result does not prove.
   enforce a source-size ceiling, process bytes in memory, and never emit source paths,
   source text, or source errors containing content. Public CI must use synthetic
   fixtures.
+- `SHOWCASE.md` must keep the required demo offline and synthetic. The optional public
+  course demonstration may read a separately checked-out public repository through the
+  root-confined local adapter, but must emit metadata only and must not vendor course
+  lessons into this repository.
+- `examples/course-doctor-demo/` is the public synthetic showcase fixture. Its manifest
+  and source bytes must remain deterministic, safe to run offline, and free of private
+  or copied third-party course content.
+- `examples/public-course-demo/manifest.json` may reference a separately checked-out
+  public course path for a local showcase only. It is not a CI input and its course
+  revision must be pinned by the person running the demonstration before recording it.
 - The claim-proposal worker is an untrusted upstream stage. Validate proposal shape,
   identifiers, source binding, uniqueness, and required coverage before passing claims
   to the evidence pipeline. Empty, fabricated, duplicate, incomplete, or raw-content
@@ -147,6 +157,9 @@ missing, and what the result does not prove.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.
+- The live provider boundary is local-only and opt-in. It must use the fixed official
+  endpoint map, reject redirects, make no retries, require explicit request/token/time/
+  spend ceilings, and accept only bounded structured bytes from its transport.
 - Custom packs use only the fixed declarative requirement prefixes: `tool:`,
   `successful_tool:`, `authorization:`, `side-effect:`, `output:`, and `abstain:`.
   Pack evaluation must never execute predicates, import pack code, or discover files.

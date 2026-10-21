@@ -14,6 +14,10 @@ The reusable delivery-path standard lives in
 harness; the standard is for deciding whether future builds can reach
 production safely.
 
+For an outside reviewer, start with [`SHOWCASE.md`](SHOWCASE.md). It separates the
+repeatable synthetic CI path from the optional public-course demonstration so a changing
+course checkout or live network cannot make the required gate unreliable.
+
 ## What this project does
 
 The Agent Assurance Harness tests whether a tool-using AI agent has enough observable

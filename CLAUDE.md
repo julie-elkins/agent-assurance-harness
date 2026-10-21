@@ -22,6 +22,15 @@ The proposal worker is an upstream, untrusted stage. It may suggest claim and se
 identifiers, but a validator must reject empty, duplicate, fabricated, incomplete,
 source-drifted, or raw-content-bearing output before the content pipeline runs.
 
+`SHOWCASE.md` is the outside-reviewer entry point. The required showcase is the
+offline synthetic path in `tools/showcase_demo.py`; the public-course path may read a
+separately checked-out revision of `claude-architect-lab` under an explicit root and
+must emit metadata only. Course lessons are not copied into this repository.
+
+The live provider boundary is local-only and explicitly opt-in. It uses fixed official
+endpoints, no retries, redirect rejection, one-request and token/time/spend ceilings,
+and injected transports in tests. It is never enabled by CI.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable
@@ -199,6 +208,16 @@ uv run agent-reliability \
 The live command reads only the fixed provider credential environment variable and sends
 only built-in synthetic identifiers. It is not run in CI, does not retry, and does not
 store raw provider requests, responses, or model text.
+
+Phase 32 adds the reviewer-facing showcase:
+
+```bash
+uv run python tools/showcase_demo.py --markdown
+```
+
+It combines the guarded synthetic assurance path, evaluator and mutation controls, and
+one metadata-only Course Doctor packet. `SHOWCASE.md` also documents the optional
+public-course demonstration and the screen-recording path.
 
 Phase 15 adds production-readiness checks without enabling live execution in CI:
 

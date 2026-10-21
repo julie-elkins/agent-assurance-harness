@@ -93,6 +93,7 @@ The current progression is intentionally operational:
 | 29 | Course freshness orchestration | Whether independent course workers can sweep revisions under bounded limits without hiding unavailable results |
 | 30 | Course Doctor review workflow | Whether findings become complete, metadata-only review packets and unresolved findings require human adjudication |
 | 31 | Untrusted claim-proposal worker | Whether agent-suggested claims are validated before they reach evidence evaluation |
+| 32 | Showcase hardening and bounded live-provider completion | Whether an outside reviewer can run the safe path quickly and the local live boundary refuses unsafe transport behavior |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -638,6 +639,27 @@ claim registry so CI can test the contract without pretending to measure semanti
 extraction quality. A future OpenAI, Anthropic, or other provider adapter can replace
 the worker behind the same typed boundary, with credentials, spend limits, and model
 quality reviewed separately.
+
+### Showcase hardening and bounded live-provider completion
+
+Phase 32 adds the outside-reviewer path. `SHOWCASE.md` gives one offline command that
+runs the guarded synthetic assurance comparison, evaluator controls, mutation controls,
+and a public synthetic Course Doctor packet. The synthetic lane remains the required
+CI (continuous integration, the automated pre-merge check) source of truth because it
+does not depend on a changing repository or a network.
+
+The same guide documents an optional local demonstration against a separately checked
+out revision of `claude-architect-lab`. The harness reads bounded lesson bytes under an
+explicit root, keeps them in memory, and emits only review metadata. The course remains
+the source of truth for its own citations, verification, accessibility, and production
+checks; this repository does not copy its lessons.
+
+The live provider boundary is also tightened in this phase. Its SDK-free transport uses
+the fixed official endpoint map, rejects redirects, requires a bytes response, makes no
+retry, and preserves the existing explicit network, credential-name, request, output
+token, timeout, and estimated-spend controls. Injected transports remain the only path
+used by tests and CI. This proves the boundary behavior without claiming live-model
+quality.
 
 ### Operational ship gate
 

@@ -13,6 +13,11 @@ and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIV
 defines the delivery controls to apply to future builds. This README remains the full
 command reference and feature history.
 
+For the shortest outside-reviewer path, use the [Showcase](SHOWCASE.md). It runs an
+offline synthetic assurance demo and documents the optional metadata-only demonstration
+against a local checkout of the public
+[Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab).
+
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
 answer. It is whether the agent can show:

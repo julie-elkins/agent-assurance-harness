@@ -1,0 +1,149 @@
+"""Run the short, offline Agent Assurance Harness showcase.
+
+The showcase combines the core synthetic assurance comparison with one
+metadata-only Course Doctor review packet. It is intentionally offline and
+does not read credentials, call a provider, or fetch documentation.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import tempfile
+from pathlib import Path
+
+from agent_reliability_lab.course_doctor import (
+    CourseDoctorCoordinator,
+    load_local_course_manifest,
+)
+from agent_reliability_lab.runner import run_comparison
+
+
+ROOT = Path(__file__).resolve().parents[1]
+DEMO_ROOT = ROOT / "examples" / "course-doctor-demo"
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Run the offline showcase and return a process status."""
+
+    parser = argparse.ArgumentParser(
+        description="Run the offline Agent Assurance Harness showcase."
+    )
+    parser.add_argument(
+        "--markdown",
+        action="store_true",
+        help="Render a short reviewer-facing Markdown summary.",
+    )
+    args = parser.parse_args(argv)
+
+    comparison = run_comparison(include_mutations=True)
+    with tempfile.TemporaryDirectory(prefix="agent-assurance-showcase-") as path:
+        requests = load_local_course_manifest(
+            DEMO_ROOT / "manifest.json",
+            source_root=DEMO_ROOT,
+        )
+        course_report = CourseDoctorCoordinator().review(
+            requests,
+            workspace=Path(path),
+            max_courses=1,
+            max_workers=1,
+            max_elapsed_seconds=10.0,
+        )
+
+    guarded = next(
+        report for report in comparison.reports if report.agent_id == "guarded"
+    )
+    summary = {
+        "showcase_version": 1,
+        "offline": True,
+        "synthetic_assurance": {
+            "scenario_count": comparison.scenario_count,
+            "guarded_agent_passed": guarded.passed,
+            "evaluator_controls_caught": [
+                result.case_id
+                for result in comparison.evaluator_validity
+                if result.caught
+            ],
+            "mutation_controls_caught": [
+                result.mutation_id
+                for result in comparison.mutation_tests
+                if result.caught
+            ],
+        },
+        "course_doctor": {
+            "passed": course_report.passed,
+            "counts": course_report.counts,
+            "packets": [
+                {
+                    "course_id": packet.course_id,
+                    "course_revision": packet.course_revision,
+                    "worker_status": packet.worker_status.value,
+                    "recommended_disposition": packet.recommended_disposition.value,
+                    "finding_count": len(packet.findings),
+                }
+                for packet in course_report.packets
+            ],
+        },
+        "diagnostics": {
+            "warnings": [
+                "The showcase uses synthetic source bytes and no provider credentials.",
+                "Course Doctor recommendations are not human approval or publication authority.",
+            ],
+            "what_it_does_not_show": (
+                "It does not establish live-model quality, semantic truth, "
+                "deployment health, or production monitoring."
+            ),
+        },
+    }
+    if args.markdown:
+        print(_markdown(summary), end="")
+    else:
+        print(json.dumps(summary, indent=2, sort_keys=True))
+    return 0 if _passed(summary) else 1
+
+
+def _passed(summary: dict[str, object]) -> bool:
+    """Return whether both showcase paths completed and controls were caught."""
+
+    synthetic = summary["synthetic_assurance"]
+    course = summary["course_doctor"]
+    if not isinstance(synthetic, dict) or not isinstance(course, dict):
+        return False
+    return (
+        synthetic["guarded_agent_passed"] is True
+        and bool(synthetic["evaluator_controls_caught"])
+        and bool(synthetic["mutation_controls_caught"])
+        and course["passed"] is True
+    )
+
+
+def _markdown(summary: dict[str, object]) -> str:
+    """Render only the safe showcase summary."""
+
+    synthetic = summary["synthetic_assurance"]
+    course = summary["course_doctor"]
+    if not isinstance(synthetic, dict) or not isinstance(course, dict):
+        raise ValueError("showcase summary has an invalid internal shape")
+    lines = [
+        "# Agent Assurance Harness Showcase",
+        "",
+        "## Offline assurance",
+        "",
+        f"- Scenarios checked: `{synthetic['scenario_count']}`",
+        f"- Guarded agent: `{'PASS' if synthetic['guarded_agent_passed'] else 'BLOCKED'}`",
+        f"- Evaluator controls caught: `{len(synthetic['evaluator_controls_caught'])}`",
+        f"- Mutation controls caught: `{len(synthetic['mutation_controls_caught'])}`",
+        "",
+        "## Course Doctor",
+        "",
+        f"- Review packets passed: `{'PASS' if course['passed'] else 'BLOCKED'}`",
+        f"- Packet counts: `{json.dumps(course['counts'], sort_keys=True)}`",
+        "",
+        "This demo is synthetic, offline, and metadata-only.",
+        "",
+    ]
+    return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,29 @@
+{
+  "courses": [
+    {
+      "course_id": "claude-architect-lab-public",
+      "course_revision": "f34d21087db73dd4f6b5bbd2b8a55601ace1d6fe",
+      "source_path": "course/domain-1-agentic-architecture/lesson-1-1-agentic-loops.md",
+      "case_id": "public-course-showcase",
+      "artifact_id": "claude-architect-lab-course",
+      "artifact_revision": "public-course-revision",
+      "artifact_digest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "reuse_key": "claude-architect-lab-public",
+      "source_id": "source-anthropic-docs",
+      "authority": "public-official-documentation",
+      "source_url": "https://docs.anthropic.com/",
+      "age_seconds": 300,
+      "claims": [
+        {
+          "claim_id": "claim:public-course-agentic-loops",
+          "section_id": "section:public-course-agentic-loops",
+          "support_status": "supported"
+        }
+      ],
+      "approved_source_ids": [
+        "source-anthropic-docs"
+      ],
+      "max_age_seconds": 3600
+    }
+  ]
+}

@@ -54,6 +54,22 @@ _LIVE_INSTRUCTIONS = (
 HttpTransport = Callable[[str, dict[str, str], bytes, float], bytes]
 
 
+class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
+    """Refuse redirects so the fixed official endpoint cannot change hosts."""
+
+    def redirect_request(self, request, file, code, msg, headers, newurl):
+        raise urllib.error.HTTPError(
+            request.full_url,
+            code,
+            "provider redirects are disabled",
+            headers,
+            None,
+        )
+
+
+_LIVE_OPENER = urllib.request.build_opener(_NoRedirectHandler())
+
+
 @dataclass(frozen=True)
 class LiveProviderPolicy:
     """Explicit controls required before one live synthetic request."""
@@ -185,6 +201,14 @@ class LiveProviderAdapter:
                 )
             )
         elapsed_seconds = time.monotonic() - started
+        if not isinstance(response_bytes, bytes):
+            return AdapterRun(
+                refusal=_refusal(
+                    "provider_transport_invalid_response",
+                    "The provider transport did not return bytes.",
+                    "Use a bytes response and keep provider parsing inside the adapter.",
+                )
+            )
         if len(response_bytes) > _MAX_RESPONSE_BYTES:
             return AdapterRun(
                 refusal=_refusal(
@@ -466,7 +490,7 @@ def _default_transport(
         method="POST",
     )
     try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        with _LIVE_OPENER.open(request, timeout=timeout_seconds) as response:
             return response.read(_MAX_RESPONSE_BYTES + 1)
     except urllib.error.HTTPError as error:
         raise urllib.error.URLError("provider returned an HTTP error") from error

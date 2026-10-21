@@ -584,6 +584,19 @@ This is a pre-merge contract check, not live IAM (Identity and Access
 Management), credential-vault, egress-gateway, deployment, or human-response
 proof. The public fixture contains synthetic identifiers only.
 
+### Replay policy drift and restoration
+
+Phase 20 exercises the same consumer path against an approved policy manifest,
+a valid but drifted manifest, and the approved manifest again. The drifted
+manifest has a valid SHA-256 fingerprint (a one-way identity hash) but does not
+match the policy version emitted by the adapter, so the run must block.
+Re-evaluating the approved manifest must pass and records
+`rollback_restored: true`.
+
+This is local restoration evidence for the pre-merge contract. It is not a
+production deployment rollback or proof that a live authorization registry was
+restored.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

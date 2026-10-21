@@ -39,7 +39,12 @@ def _workflow_contract() -> dict[str, object]:
     }
 
 
-def _run_consumer(adapter: str, *, fail_on_findings: bool) -> dict[str, object]:
+def _run_consumer(
+    adapter: str,
+    *,
+    fail_on_findings: bool,
+    manifest_name: str = "policy-manifest.json",
+) -> dict[str, object]:
     with tempfile.TemporaryDirectory(prefix="agent-assurance-consumer-") as directory:
         output = Path(directory) / "report.json"
         github_output = Path(directory) / "github-output"
@@ -57,7 +62,7 @@ def _run_consumer(adapter: str, *, fail_on_findings: bool) -> dict[str, object]:
             "--output",
             str(output),
             "--consumer-policy-manifest",
-            "policy-manifest.json",
+            manifest_name,
             "--mutations",
             "true",
             "--fail-on-findings",
@@ -112,10 +117,33 @@ def build_report() -> dict[str, object]:
     workflow = _workflow_contract()
     positive = _run_consumer("guarded_adapter.py", fail_on_findings=True)
     negative = _run_consumer("regressed_adapter.py", fail_on_findings=True)
+    policy_drift = _run_consumer(
+        "guarded_adapter.py",
+        fail_on_findings=True,
+        manifest_name="policy-manifest-drifted.json",
+    )
+    policy_restored = _run_consumer(
+        "guarded_adapter.py",
+        fail_on_findings=True,
+    )
     negative_caught = (
         negative["return_code"] != 0
         and negative["decision"] == "blocked"
         and negative["passed"] is False
+    )
+    policy_drift_caught = (
+        policy_drift["return_code"] != 0
+        and policy_drift["decision"] == "blocked"
+        and policy_drift["passed"] is False
+        and policy_drift["consumer_contract_passed"] is False
+        and policy_drift["consumer_contract_failure_reasons"]
+        == ["policy_version_mismatch", "policy_digest_mismatch"]
+    )
+    policy_rollback_restored = (
+        policy_restored["return_code"] == 0
+        and policy_restored["decision"] == "pass"
+        and policy_restored["passed"] is True
+        and policy_restored["consumer_contract_passed"] is True
     )
     passed = all(workflow.values()) and (
         positive["return_code"] == 0
@@ -125,6 +153,8 @@ def build_report() -> dict[str, object]:
         and positive["github_outputs_present"] is True
         and negative_caught
         and negative["consumer_contract_passed"] is False
+        and policy_drift_caught
+        and policy_rollback_restored
     )
     return {
         "consumer_validation_version": 1,
@@ -135,6 +165,18 @@ def build_report() -> dict[str, object]:
         "negative_control": {
             **negative,
             "caught": negative_caught,
+        },
+        "policy_drift_replay": {
+            "approved_before": positive,
+            "drifted": {
+                **policy_drift,
+                "caught": policy_drift_caught,
+            },
+            "approved_after": {
+                **policy_restored,
+                "restored": policy_rollback_restored,
+            },
+            "rollback_restored": policy_rollback_restored,
         },
         "passed": passed,
         "diagnostics": {
@@ -165,6 +207,8 @@ def _markdown(data: dict[str, object]) -> str:
             f"- **Positive policy contract:** `{positive['consumer_contract_passed']}`",
             f"- **Negative control caught:** `{negative['caught']}`",
             f"- **Negative contract failure reasons:** `{negative['consumer_contract_failure_reasons']}`",
+            f"- **Policy drift caught:** `{data['policy_drift_replay']['drifted']['caught']}`",
+            f"- **Approved policy restored:** `{data['policy_drift_replay']['rollback_restored']}`",
             "",
             "The fixture is synthetic and metadata-only; credentials, prompts, "
             "payloads, and provider output are not exported.",

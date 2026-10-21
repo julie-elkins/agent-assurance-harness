@@ -1,0 +1,9 @@
+{
+  "manifest_version": 1,
+  "policy_version": "consumer-policy-v2",
+  "policy_sha256": "sha256:008d1cea718ae80765aefc48ad888c8ce407d158c608b6b741f4f3d045ca3a99",
+  "required_authorization_scope": "orders:write",
+  "authorization_scenario_id": "ambiguous-side-effect-retry",
+  "required_escalation_status": "escalated",
+  "escalation_scenario_id": "inappropriate-answer"
+}

@@ -20,6 +20,11 @@ write scenario to report `orders:write`, and requires the unsupported-request
 scenario to report an escalation. The degraded adapter violates these controls
 as well as the evidence contract, so the action blocks it.
 
+`policy-manifest-drifted.json` is a valid but different policy declaration. The
+local consumer validation runs the same guarded adapter against the approved
+manifest, the drifted manifest, and the approved manifest again. The drifted
+state must block, and the restored approved state must pass.
+
 This fixture does not provide live credentials, IAM enforcement, a vault,
 an egress gateway, or a human escalation queue. It proves that those expectations
 are represented and enforced at the pre-merge boundary.

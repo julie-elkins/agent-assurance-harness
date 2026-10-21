@@ -494,6 +494,21 @@ merge. It does not prove live IAM (Identity and Access Management), a
 credential vault, an egress gateway, a deployment, or a human receiving an
 escalation.
 
+### Policy-drift replay and restoration
+
+Phase 20 adds a three-state replay to the consumer validation report:
+
+1. the approved policy manifest passes;
+2. a valid but changed manifest is blocked for policy-version and policy-digest
+   mismatch; and
+3. the approved manifest is restored and must pass again.
+
+This separates a malformed manifest from a policy that is syntactically valid
+but no longer agrees with the adapter. The report calls the final state
+`rollback_restored`; it is evidence that the local assurance contract recovered,
+not evidence of a production deployment rollback or live authorization-system
+restoration.
+
 ### Evidence-quality abstention
 
 Phase 17 separates two evidence failures that a single freshness check can confuse:

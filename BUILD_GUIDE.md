@@ -82,6 +82,8 @@ The current progression is intentionally operational:
 | 16 | Reusable GitHub Action | Whether another repository can consume the same bounded assurance contract and structured decision |
 | 17 | Evidence-quality abstention | Whether stale or wrong-source evidence produces abstention with a diagnostic failure reason |
 | 18 | Consumer repository validation | Whether a separate repository can invoke the pinned action, pass a guarded adapter, and block a degraded adapter |
+| 19 | Consumer policy and escalation | Whether a consumer binds adapter evidence to policy, scope, and escalation expectations |
+| 20 | Policy-drift replay and restoration | Whether policy drift blocks the consumer path and restoring the approved policy returns it to pass |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -262,6 +264,7 @@ The harness can support that path, but its synthetic gate does not replace those
 - `examples/consumer-repository/` — separate synthetic consumer fixture with positive and negative adapter workflows.
 - `src/agent_reliability_lab/consumer_contract.py` — metadata-only policy, scope, and escalation contract evaluator.
 - `examples/consumer-repository/policy-manifest.json` — checked-in synthetic consumer policy declaration and digest.
+- `examples/consumer-repository/policy-manifest-drifted.json` — valid but deliberately mismatched policy declaration.
 - `tools/consumer_validation.py` — local metadata-only consumer validation and workflow contract check.
 
 ### Audit evidence binding
@@ -407,6 +410,18 @@ metadata-only and uses stable failure reasons, which makes a pull request
 reviewable without exporting prompts, traces, provider output, credentials, or
 private content. This proves pre-merge representation and enforcement, not live
 IAM, vault, gateway, deployment, or human-response behaviour.
+
+### Policy-drift replay and restoration
+
+Phase 20 reuses the consumer action path to evaluate the same guarded adapter
+against three policy states: the approved manifest, a valid but drifted
+manifest, and the approved manifest again. The drifted state must block for
+policy-version and policy-digest mismatch. The final approved state must pass,
+which is the local rollback evidence.
+
+The report exposes only decisions, stable failure reasons, action identity, and
+the `rollback_restored` result. It does not claim that a live policy registry,
+deployment target, or production authorization system was rolled back.
 
 ### Operational ship gate
 

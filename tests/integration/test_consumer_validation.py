@@ -27,7 +27,7 @@ def test_consumer_fixture_passes_and_catches_negative_control(tmp_path):
     assert completed.returncode == 0
     data = json.loads(output.read_text(encoding="utf-8"))
     assert data["passed"] is True
-    assert data["action_ref"] == "0c84a8c442a4229206a05fee9eb9e07982a4f0c3"
+    assert data["action_ref"] == "5141cf58695a4ed4f45bfbcf106ce559340c61aa"
     assert all(data["workflow_contract"].values())
     assert data["positive_run"]["decision"] == "pass"
     assert data["positive_run"]["passed"] is True
@@ -52,6 +52,25 @@ def test_consumer_fixture_passes_and_catches_negative_control(tmp_path):
     assert replay["approved_after"]["decision"] == "pass"
     assert replay["approved_after"]["restored"] is True
     assert replay["rollback_restored"] is True
+    provenance = data["policy_replay_provenance"]
+    assert provenance["passed"] is True
+    assert provenance["git_commit"] == subprocess.check_output(
+        ["git", "rev-parse", "HEAD"],
+        cwd=REPOSITORY,
+        text=True,
+    ).strip()
+    assert provenance["action_ref"] == data["action_ref"]
+    assert (
+        provenance["manifest_fingerprints"]["approved_sha256"]
+        != provenance["manifest_fingerprints"]["drifted_sha256"]
+    )
+    assert len(provenance["manifest_fingerprints"]["approved_sha256"]) == 64
+    assert len(provenance["manifest_fingerprints"]["drifted_sha256"]) == 64
+    assert [item["decision"] for item in provenance["state_sequence"]] == [
+        "pass",
+        "blocked",
+        "pass",
+    ]
     assert str(REPOSITORY) not in output.read_text(encoding="utf-8")
     assert "guarded_adapter.py" not in output.read_text(encoding="utf-8")
 
@@ -68,5 +87,5 @@ def test_consumer_workflow_uses_fixed_action_revision():
 
     assert "@main" not in workflow
     assert workflow.count(
-        "@0c84a8c442a4229206a05fee9eb9e07982a4f0c3"
+        "@5141cf58695a4ed4f45bfbcf106ce559340c61aa"
     ) == 2

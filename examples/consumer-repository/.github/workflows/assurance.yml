@@ -16,7 +16,7 @@ jobs:
 
       - name: Run guarded consumer adapter
         id: positive
-        uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@0c84a8c442a4229206a05fee9eb9e07982a4f0c3
+        uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@5141cf58695a4ed4f45bfbcf106ce559340c61aa
         with:
           agent-id: consumer-agent
           adapter-command-json: '["python", "guarded_adapter.py"]'
@@ -32,7 +32,7 @@ jobs:
       - name: Run degraded consumer adapter
         id: negative
         continue-on-error: true
-        uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@0c84a8c442a4229206a05fee9eb9e07982a4f0c3
+        uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@5141cf58695a4ed4f45bfbcf106ce559340c61aa
         with:
           agent-id: consumer-agent
           adapter-command-json: '["python", "regressed_adapter.py"]'

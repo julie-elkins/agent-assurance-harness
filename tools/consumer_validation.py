@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import subprocess
@@ -17,12 +18,32 @@ CONSUMER = ROOT / "examples" / "consumer-repository"
 RUNNER = ROOT / "tools" / "reusable_action_runner.py"
 WORKFLOW = CONSUMER / ".github" / "workflows" / "assurance.yml"
 ACTION_REF = (
-    "0c84a8c442a4229206a05fee9eb9e07982a4f0c3"
+    "5141cf58695a4ed4f45bfbcf106ce559340c61aa"
 )
 ACTION_USE = (
     "julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@"
     + ACTION_REF
 )
+APPROVED_MANIFEST = CONSUMER / "policy-manifest.json"
+DRIFTED_MANIFEST = CONSUMER / "policy-manifest-drifted.json"
+
+
+def _git_commit() -> str:
+    """Return the current checkout revision without exporting repository paths."""
+
+    return subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def _sha256(path: Path) -> str:
+    """Return the exact fingerprint of one checked-in manifest file."""
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _workflow_contract() -> dict[str, object]:
@@ -145,6 +166,43 @@ def build_report() -> dict[str, object]:
         and policy_restored["passed"] is True
         and policy_restored["consumer_contract_passed"] is True
     )
+    policy_replay_provenance = {
+        "provenance_version": 1,
+        "passed": (
+            len(_git_commit()) == 40
+            and len(ACTION_REF) == 40
+            and _sha256(APPROVED_MANIFEST) != _sha256(DRIFTED_MANIFEST)
+            and [
+                positive["decision"],
+                policy_drift["decision"],
+                policy_restored["decision"],
+            ]
+            == ["pass", "blocked", "pass"]
+            and policy_rollback_restored
+        ),
+        "git_commit": _git_commit(),
+        "action_ref": ACTION_REF,
+        "manifest_fingerprints": {
+            "approved_sha256": _sha256(APPROVED_MANIFEST),
+            "drifted_sha256": _sha256(DRIFTED_MANIFEST),
+        },
+        "state_sequence": [
+            {"state": "approved_before", "decision": positive["decision"]},
+            {"state": "drifted", "decision": policy_drift["decision"]},
+            {"state": "approved_after", "decision": policy_restored["decision"]},
+        ],
+        "rollback_restored": policy_rollback_restored,
+        "diagnostics": {
+            "warnings": [
+                "The fingerprints identify the checked-in synthetic manifests and "
+                "the evaluated checkout; they are not signed provenance.",
+            ],
+            "what_it_does_not_show": (
+                "It does not prove a production deployment rollback, live policy "
+                "registry state, or authorization-system restoration."
+            ),
+        },
+    }
     passed = all(workflow.values()) and (
         positive["return_code"] == 0
         and positive["decision"] == "pass"
@@ -155,9 +213,10 @@ def build_report() -> dict[str, object]:
         and negative["consumer_contract_passed"] is False
         and policy_drift_caught
         and policy_rollback_restored
+        and policy_replay_provenance["passed"] is True
     )
     return {
-        "consumer_validation_version": 1,
+        "consumer_validation_version": 2,
         "consumer_fixture": "synthetic-consumer-repository",
         "action_ref": ACTION_REF,
         "workflow_contract": workflow,
@@ -178,6 +237,7 @@ def build_report() -> dict[str, object]:
             },
             "rollback_restored": policy_rollback_restored,
         },
+        "policy_replay_provenance": policy_replay_provenance,
         "passed": passed,
         "diagnostics": {
             "warnings": [
@@ -209,6 +269,7 @@ def _markdown(data: dict[str, object]) -> str:
             f"- **Negative contract failure reasons:** `{negative['consumer_contract_failure_reasons']}`",
             f"- **Policy drift caught:** `{data['policy_drift_replay']['drifted']['caught']}`",
             f"- **Approved policy restored:** `{data['policy_drift_replay']['rollback_restored']}`",
+            f"- **Policy replay provenance:** `{data['policy_replay_provenance']['passed']}`",
             "",
             "The fixture is synthetic and metadata-only; credentials, prompts, "
             "payloads, and provider output are not exported.",

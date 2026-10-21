@@ -434,7 +434,7 @@ outputs:
 ```yaml
 - name: Run reusable Agent Assurance
   id: assurance
-  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@0c84a8c442a4229206a05fee9eb9e07982a4f0c3 # Reviewed Phase 17 revision.
+  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@5141cf58695a4ed4f45bfbcf106ce559340c61aa # Reviewed Phase 20 revision.
   with:
     agent-id: external
     adapter-command-json: '["python", "examples/guarded_adapter.py"]'
@@ -508,6 +508,16 @@ but no longer agrees with the adapter. The report calls the final state
 `rollback_restored`; it is evidence that the local assurance contract recovered,
 not evidence of a production deployment rollback or live authorization-system
 restoration.
+
+The replay provenance binds those states to the current Git commit, the
+reviewed action revision, and exact SHA-256 fingerprints for both manifest
+files. This makes stale evidence visible; it does not turn local hashes into
+signed provenance or prove production state.
+
+The synthetic consumer workflow is pinned to the reviewed Phase 20 action
+revision, `5141cf58695a4ed4f45bfbcf106ce559340c61aa`, because that is the
+first revision that contains the policy-manifest input. A consumer should
+advance that pin through a reviewed dependency change.
 
 ### Evidence-quality abstention
 

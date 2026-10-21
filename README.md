@@ -529,7 +529,7 @@ Pin the action to a reviewed commit rather than a moving branch:
 ```yaml
 - name: Run reusable Agent Assurance
   id: assurance
-  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@0c84a8c442a4229206a05fee9eb9e07982a4f0c3 # Reviewed Phase 17 revision.
+  uses: julie-elkins/agent-assurance-harness/.github/actions/agent-assurance@5141cf58695a4ed4f45bfbcf106ce559340c61aa # Reviewed Phase 20 revision.
   with:
     agent-id: external
     adapter-command-json: '["python", "examples/guarded_adapter.py"]'
@@ -596,6 +596,12 @@ Re-evaluating the approved manifest must pass and records
 This is local restoration evidence for the pre-merge contract. It is not a
 production deployment rollback or proof that a live authorization registry was
 restored.
+
+The provenance section records the current Git commit, the pinned action
+revision, exact SHA-256 fingerprints for the approved and drifted manifest
+files, and the `pass → blocked → pass` state sequence. A fingerprint is a
+one-way hash identifying the exact file bytes; it does not prove who signed
+them.
 
 ### Run one bounded live synthetic scenario
 

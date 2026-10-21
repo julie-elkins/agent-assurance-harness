@@ -84,6 +84,7 @@ The current progression is intentionally operational:
 | 18 | Consumer repository validation | Whether a separate repository can invoke the pinned action, pass a guarded adapter, and block a degraded adapter |
 | 19 | Consumer policy and escalation | Whether a consumer binds adapter evidence to policy, scope, and escalation expectations |
 | 20 | Policy-drift replay and restoration | Whether policy drift blocks the consumer path and restoring the approved policy returns it to pass |
+| 21 | Policy replay provenance | Whether the replay identifies the exact checkout, action revision, manifest bytes, and result sequence |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -422,6 +423,18 @@ which is the local rollback evidence.
 The report exposes only decisions, stable failure reasons, action identity, and
 the `rollback_restored` result. It does not claim that a live policy registry,
 deployment target, or production authorization system was rolled back.
+
+### Policy replay provenance
+
+Phase 21 binds the three-state replay to the current Git commit, the reviewed
+action revision, and SHA-256 fingerprints of the approved and drifted manifest
+bytes. It records the `pass → blocked → pass` state sequence beside those
+identifiers so a reviewer can distinguish current evidence from a stale replay.
+
+These are local identity fingerprints, not signed provenance and not proof of
+production state. The consumer fixture now pins the action to the reviewed
+Phase 20 commit because that is the first revision containing the policy-manifest
+input.
 
 ### Operational ship gate
 

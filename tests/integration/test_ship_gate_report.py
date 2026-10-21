@@ -291,6 +291,8 @@ def _run(
                     {
                         "course_id": course_id,
                         "worker_status": "completed",
+                        "proposal_status": "completed",
+                        "claim_proposal_ids": [f"{course_id}:proposal"],
                         "recommended_disposition": disposition,
                         "human_approval_required": True,
                     }

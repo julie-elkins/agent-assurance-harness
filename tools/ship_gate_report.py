@@ -476,6 +476,9 @@ def _course_doctor_observation(
         set(packet_map) == expected_courses
         and all(
             packet_map[course_id].get("worker_status") == "completed"
+            and packet_map[course_id].get("proposal_status") == "completed"
+            and isinstance(packet_map[course_id].get("claim_proposal_ids"), list)
+            and packet_map[course_id].get("claim_proposal_ids")
             and packet_map[course_id].get("recommended_disposition")
             == disposition
             and packet_map[course_id].get("human_approval_required") is True

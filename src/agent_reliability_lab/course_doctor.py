@@ -20,11 +20,19 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 from pathlib import Path
 from typing import Iterable, Mapping
 
+from .claim_proposals import (
+    ClaimProposalRequest,
+    ClaimProposalWorker,
+    ProposalStatus,
+    SyntheticClaimProposalWorker,
+    proposed_pipeline_claims,
+    validate_claim_proposal_result,
+)
 from .content_pipeline import (
     DEFAULT_MAX_SOURCE_BYTES,
     ContentPipelineRequest,
@@ -62,6 +70,9 @@ class CourseDoctorRequest:
     freshness_request: CourseReviewRequest | None = None
     preflight_refusal_code: str | None = None
     source_ref: str | None = None
+    proposal_status: ProposalStatus = ProposalStatus.COMPLETED
+    proposal_refusal_code: str | None = None
+    claim_proposal_ids: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if not self.course_id or not self.course_revision:
@@ -112,6 +123,8 @@ class ReviewPacket:
     source_digest: str | None = None
     claim_evidence_ids: tuple[str, ...] = ()
     failure_code: str | None = None
+    proposal_status: ProposalStatus = ProposalStatus.COMPLETED
+    proposal_refusal_code: str | None = None
     human_approval_required: bool = True
 
     @property
@@ -135,6 +148,8 @@ class ReviewPacket:
             "source_digest": self.source_digest,
             "claim_evidence_ids": list(self.claim_evidence_ids),
             "failure_code": self.failure_code,
+            "proposal_status": self.proposal_status.value,
+            "proposal_refusal_code": self.proposal_refusal_code,
             "human_approval_required": self.human_approval_required,
             "ready_for_human_review": self.ready_for_human_review,
             "diagnostics": {
@@ -396,10 +411,12 @@ class CourseDoctorCoordinator:
         self,
         *,
         freshness_coordinator: CourseFreshnessCoordinator | None = None,
+        proposal_worker: ClaimProposalWorker | None = None,
     ) -> None:
         self._freshness_coordinator = (
             freshness_coordinator or CourseFreshnessCoordinator()
         )
+        self._proposal_worker = proposal_worker or SyntheticClaimProposalWorker()
 
     def review(
         self,
@@ -442,9 +459,15 @@ class CourseDoctorCoordinator:
             _write_json(output_dir / "review-packets.json", report.to_dict())
             return report
 
+        prepared_requests, proposal_events = _prepare_proposals(
+            request_tuple,
+            worker=self._proposal_worker,
+        )
+        for event in proposal_events:
+            _append_event(events_path, event)
         valid_requests = tuple(
             request.freshness_request
-            for request in request_tuple
+            for request in prepared_requests
             if request.freshness_request is not None
         )
         freshness_report = self._freshness_coordinator.sweep(
@@ -459,7 +482,7 @@ class CourseDoctorCoordinator:
         }
         packets = tuple(
             _packet_for_request(request, results.get(request.course_id))
-            for request in request_tuple
+            for request in prepared_requests
         )
         for packet in packets:
             _append_event(
@@ -722,6 +745,101 @@ def load_local_course_manifest(
     return tuple(requests)
 
 
+def _prepare_proposals(
+    requests: tuple[CourseDoctorRequest, ...],
+    *,
+    worker: ClaimProposalWorker,
+) -> tuple[tuple[CourseDoctorRequest, ...], tuple[dict[str, object], ...]]:
+    """Run and validate the upstream proposal stage before evidence review."""
+
+    prepared: list[CourseDoctorRequest] = []
+    events: list[dict[str, object]] = []
+    for request in requests:
+        if request.freshness_request is None:
+            prepared.append(request)
+            continue
+        pipeline = request.freshness_request.pipeline_request
+        proposal_request = ClaimProposalRequest(
+            course_id=request.course_id,
+            course_revision=request.course_revision,
+            source_id=pipeline.source_id,
+            source_bytes=pipeline.source_bytes,
+            known_claims=pipeline.claims,
+            required_claim_ids=tuple(claim.claim_id for claim in pipeline.claims),
+        )
+        events.append(
+            {
+                "direction": "orchestrator_to_proposal_worker",
+                "course_id": request.course_id,
+                "event": "proposal_requested",
+                "required_claim_count": len(proposal_request.required_claim_ids),
+            }
+        )
+        try:
+            result = worker.propose(proposal_request)
+        except Exception:
+            prepared.append(
+                replace(
+                    request,
+                    freshness_request=None,
+                    preflight_refusal_code="proposal_worker_failed",
+                    proposal_status=ProposalStatus.FAILED,
+                    proposal_refusal_code="proposal_worker_failed",
+                )
+            )
+            events.append(
+                {
+                    "direction": "proposal_worker_to_orchestrator",
+                    "course_id": request.course_id,
+                    "event": "proposal_worker_failed",
+                }
+            )
+            continue
+        validated = validate_claim_proposal_result(proposal_request, result)
+        proposal_ids = tuple(
+            proposal.proposal_id for proposal in validated.proposals
+        )
+        events.append(
+            {
+                "direction": "proposal_worker_to_orchestrator",
+                "course_id": request.course_id,
+                "event": validated.status.value,
+                "proposal_count": len(validated.proposals),
+                "refusal_code": validated.refusal_code,
+            }
+        )
+        if not validated.usable:
+            code = validated.refusal_code or validated.failure_code
+            prepared.append(
+                replace(
+                    request,
+                    freshness_request=None,
+                    preflight_refusal_code=f"proposal_{code or 'failed'}",
+                    proposal_status=validated.status,
+                    proposal_refusal_code=code or "proposal_failed",
+                    claim_proposal_ids=proposal_ids,
+                )
+            )
+            continue
+        proposed_claims = proposed_pipeline_claims(proposal_request, validated)
+        prepared.append(
+            replace(
+                request,
+                freshness_request=replace(
+                    request.freshness_request,
+                    pipeline_request=replace(
+                        pipeline,
+                        claims=proposed_claims,
+                    ),
+                ),
+                claim_proposal_ids=proposal_ids,
+                proposal_status=validated.status,
+                proposal_refusal_code=None,
+            )
+        )
+    return tuple(prepared), tuple(events)
+
+
 def _packet_for_request(
     request: CourseDoctorRequest,
     result: CourseReviewResult | None,
@@ -729,12 +847,18 @@ def _packet_for_request(
     proposal_ids = _proposal_ids(request)
     packet_id = _packet_id(request.course_id, request.course_revision)
     if request.preflight_refusal_code is not None:
+        proposal_refusal = request.proposal_status is ProposalStatus.REFUSED
+        disposition = (
+            ReviewDisposition.BLOCKED
+            if proposal_refusal
+            else ReviewDisposition.NOT_REVIEWED
+        )
         return ReviewPacket(
             packet_id=packet_id,
             course_id=request.course_id,
             course_revision=request.course_revision,
             worker_status=WorkerStatus.FAILED,
-            recommended_disposition=ReviewDisposition.NOT_REVIEWED,
+            recommended_disposition=disposition,
             claim_proposal_ids=proposal_ids,
             findings=(
                 ReviewFinding(
@@ -743,6 +867,8 @@ def _packet_for_request(
                 ),
             ),
             failure_code=request.preflight_refusal_code,
+            proposal_status=request.proposal_status,
+            proposal_refusal_code=request.proposal_refusal_code,
         )
     if result is None:
         return ReviewPacket(
@@ -759,6 +885,8 @@ def _packet_for_request(
                 ),
             ),
             failure_code="worker_result_missing",
+            proposal_status=request.proposal_status,
+            proposal_refusal_code=request.proposal_refusal_code,
         )
     if result.worker_status is not WorkerStatus.COMPLETED:
         return ReviewPacket(
@@ -775,6 +903,8 @@ def _packet_for_request(
                 ),
             ),
             failure_code=result.failure_code or "worker_unavailable",
+            proposal_status=request.proposal_status,
+            proposal_refusal_code=request.proposal_refusal_code,
         )
     findings = tuple(
         ReviewFinding(
@@ -809,10 +939,14 @@ def _packet_for_request(
         source_digest=result.source_digest,
         claim_evidence_ids=result.claim_evidence_ids,
         failure_code=result.refusal_code,
+        proposal_status=request.proposal_status,
+        proposal_refusal_code=request.proposal_refusal_code,
     )
 
 
 def _proposal_ids(request: CourseDoctorRequest) -> tuple[str, ...]:
+    if request.claim_proposal_ids:
+        return request.claim_proposal_ids
     if request.freshness_request is None:
         return ()
     return tuple(
@@ -950,6 +1084,8 @@ def _doctor_request_metadata(request: CourseDoctorRequest) -> dict[str, object]:
             "course_id": request.course_id,
             "course_revision": request.course_revision,
             "preflight_refusal_code": request.preflight_refusal_code,
+            "proposal_status": request.proposal_status.value,
+            "claim_proposal_ids": list(request.claim_proposal_ids),
         }
     pipeline = request.freshness_request.pipeline_request
     return {
@@ -960,6 +1096,8 @@ def _doctor_request_metadata(request: CourseDoctorRequest) -> dict[str, object]:
         "claim_ids": [claim.claim_id for claim in pipeline.claims],
         "section_ids": [claim.section_id for claim in pipeline.claims],
         "proposal_only": True,
+        "proposal_status": request.proposal_status.value,
+        "claim_proposal_ids": list(request.claim_proposal_ids),
     }
 
 

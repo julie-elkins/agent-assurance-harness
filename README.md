@@ -152,6 +152,12 @@ The local adapter reads only beneath the supplied root, enforces a byte ceiling,
 source bytes in memory, and exports metadata only. It does not rewrite or publish course
 content. A human adjudication record is required before a later publisher could act.
 
+Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
+may suggest claim and section identifiers, but the validator rejects empty, duplicate,
+fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the
+provider boundary replaceable: a future model adapter can propose claims, while the
+evidence contract still decides whether the proposal may enter a review packet.
+
 The public-source refresh path can read the current official AWS, Anthropic, and OpenAI
 documentation roots when explicitly invoked:
 

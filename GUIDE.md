@@ -275,6 +275,22 @@ Public CI never uses private files or live source retrieval. This phase provides
 rewriter or publisher; it stops at the explicit human decision required before a later
 content change.
 
+## Untrusted claim proposals
+
+Phase 31 adds a proposal worker before evidence evaluation. A proposal worker is an agent
+component that suggests claim and section identifiers; it does not decide whether those
+claims are true or publishable.
+
+The validator refuses empty, duplicate, fabricated, incomplete, source-drifted, or
+raw-content-bearing proposals. A refused proposal stops the downstream evidence
+pipeline, and the Course Doctor emits a blocking or not-reviewed packet with a stable
+reason code. This prevents a plausible agent output from becoming an evidence result
+merely because it was well-formed enough to continue.
+
+The public worker is deterministic and synthetic. It proves the proposal contract and
+negative controls, not semantic extraction quality or live-model quality. A future
+provider adapter can replace it without changing the evidence or human-approval gates.
+
 The real-source path is explicit and bounded:
 
 ```bash

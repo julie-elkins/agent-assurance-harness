@@ -92,6 +92,7 @@ The current progression is intentionally operational:
 | 28 | In-memory content pipeline | Whether source retrieval, normalization, claim evidence, and abstention remain inside the bounded assurance path |
 | 29 | Course freshness orchestration | Whether independent course workers can sweep revisions under bounded limits without hiding unavailable results |
 | 30 | Course Doctor review workflow | Whether findings become complete, metadata-only review packets and unresolved findings require human adjudication |
+| 31 | Untrusted claim-proposal worker | Whether agent-suggested claims are validated before they reach evidence evaluation |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -295,6 +296,8 @@ The harness can support that path, but its synthetic gate does not replace those
   worker contract, metadata checkpoints, and graceful-degradation results.
 - `src/agent_reliability_lab/course_doctor.py` — local source adapter, review packets,
   adjudication gate, and state-reconciling packet counts.
+- `src/agent_reliability_lab/claim_proposals.py` — typed untrusted proposal contract,
+  deterministic worker, payload parser, and validation boundary.
 - `examples/content-assurance-packs/` — seven declarative synthetic packs for fresh,
   stale, wrong-source, source-drift, unsupported-claim, conflicting-claim, and
   ambiguous-claim evidence.
@@ -605,6 +608,36 @@ stable reason codes, never source text or paths. A human adjudication record is
 append-only and cannot approve a packet with unresolved findings. No publisher or
 rewriter exists in this phase, so the public build demonstrates the control without
 creating an unauthorized content side effect.
+
+### Untrusted claim-proposal worker
+
+Phase 31 inserts a proposal stage before the Course Doctor sends a course to evidence
+evaluation:
+
+```text
+source bytes in memory
+        |
+        v
+proposal worker -> proposal validator -> evidence pipeline
+                                      |
+                                      v
+                              Course Doctor packet
+                                      |
+                                      v
+                              human adjudication
+```
+
+The proposal worker suggests only claim and section identifiers. The validator binds
+each proposal to the current source fingerprint, checks required coverage and section
+identity, rejects duplicates and fabricated identifiers, and refuses raw-content fields.
+An invalid proposal is an upstream failure: the evidence pipeline does not run, and the
+Course Doctor emits a blocking or not-reviewed packet with the stable reason.
+
+The public worker is intentionally deterministic. It mirrors the synthetic reviewed
+claim registry so CI can test the contract without pretending to measure semantic
+extraction quality. A future OpenAI, Anthropic, or other provider adapter can replace
+the worker behind the same typed boundary, with credentials, spend limits, and model
+quality reviewed separately.
 
 ### Operational ship gate
 

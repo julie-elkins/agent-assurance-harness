@@ -18,6 +18,10 @@ adjudication (a recorded reviewer decision) before any future content change. Th
 source adapter reads only beneath an explicit root, processes bytes in memory, and
 emits no source paths or content. Public CI remains synthetic-only.
 
+The proposal worker is an upstream, untrusted stage. It may suggest claim and section
+identifiers, but a validator must reject empty, duplicate, fabricated, incomplete,
+source-drifted, or raw-content-bearing output before the content pipeline runs.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

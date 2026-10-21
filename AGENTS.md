@@ -114,6 +114,11 @@ missing, and what the result does not prove.
   enforce a source-size ceiling, process bytes in memory, and never emit source paths,
   source text, or source errors containing content. Public CI must use synthetic
   fixtures.
+- The claim-proposal worker is an untrusted upstream stage. Validate proposal shape,
+  identifiers, source binding, uniqueness, and required coverage before passing claims
+  to the evidence pipeline. Empty, fabricated, duplicate, incomplete, or raw-content
+  proposals must block or produce a structured refusal; proposal output never authorises
+  rewriting or publication.
 - `tools/adapter_regression_report.py` must run baseline and candidate adapters through
   the existing replay comparator, keep traces in memory, and emit only identifier-only
   regression metadata. It must block safety/evidence regressions and refusals while

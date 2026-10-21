@@ -274,6 +274,73 @@ def _provider_contract_observation(
     )
 
 
+def _content_assurance_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    cases = report.get("cases")
+    case_map = {
+        item.get("case_id"): item
+        for item in cases
+        if isinstance(item, dict)
+    } if isinstance(cases, list) else {}
+    required_cases = {
+        "fresh-approved": ("approved", ()),
+        "stale-approved": ("abstain", ("evidence_stale",)),
+        "fresh-wrong-source": ("abstain", ("evidence_wrong_source",)),
+        "source-drift": ("abstain", ("source_drift",)),
+    }
+    cases_passed = all(
+        isinstance(case_map.get(case_id), dict)
+        and case_map[case_id].get("decision") == decision
+        and set(case_map[case_id].get("abstention_reasons", [])) == set(reasons)
+        for case_id, (decision, reasons) in required_cases.items()
+    )
+    passed = (
+        expected == "pass"
+        and report.get("content_assurance_version") == 1
+        and report.get("passed") is True
+        and report.get("controls_missed") == []
+        and cases_passed
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "content-assurance-failed",
+    )
+
+
+def _content_adapter_observation(
+    check_id: str,
+    path: Path,
+    *,
+    expected: str,
+) -> CheckObservation:
+    report = _read_object(path)
+    expected_packs = {
+        "fresh-approved",
+        "stale-approved",
+        "fresh-wrong-source",
+        "source-drift",
+    }
+    passed = (
+        expected == "pass"
+        and report.get("conformance_id") == "custom-pack-conformance-v2"
+        and report.get("passed") is True
+        and report.get("refusal_count") == 0
+        and report.get("pack_count") == len(expected_packs)
+        and set(report.get("pack_ids", [])) == expected_packs
+    )
+    return CheckObservation(
+        check_id,
+        passed,
+        "passed" if passed else "content-adapter-conformance-failed",
+    )
+
+
 def _release_artifact_observation(
     check_id: str,
     path: Path,
@@ -410,6 +477,18 @@ def _observations(
                 path,
                 expected=check.expected,
             )
+        elif check.report_kind == "content-assurance":
+            observations[check.check_id] = _content_assurance_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
+        elif check.report_kind == "content-adapter-conformance":
+            observations[check.check_id] = _content_adapter_observation(
+                check.check_id,
+                path,
+                expected=check.expected,
+            )
         elif check.report_kind == "release-artifact":
             observations[check.check_id] = _release_artifact_observation(
                 check.check_id,
@@ -474,6 +553,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--golden-trace-negative-control", type=Path)
     parser.add_argument("--provider-assurance", type=Path)
     parser.add_argument("--provider-contract", type=Path)
+    parser.add_argument("--content-assurance", type=Path)
+    parser.add_argument("--content-assurance-conformance", type=Path)
     parser.add_argument("--release-artifact", type=Path)
     parser.add_argument("--rollback-rehearsal", type=Path)
     parser.add_argument("--output", type=Path)
@@ -488,6 +569,8 @@ def main(argv: list[str] | None = None) -> int:
         "golden-trace-negative-control": args.golden_trace_negative_control,
         "provider-adapter-assurance": args.provider_assurance,
         "provider-contract-drift": args.provider_contract,
+        "content-assurance-reference": args.content_assurance,
+        "content-assurance-adapter": args.content_assurance_conformance,
         "release-artifact-integrity": args.release_artifact,
         "rollback-rehearsal": args.rollback_rehearsal,
     }

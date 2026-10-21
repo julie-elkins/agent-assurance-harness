@@ -41,6 +41,18 @@
       "blocking": true
     },
     {
+      "check_id": "content-assurance-reference",
+      "report_kind": "content-assurance",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
+      "check_id": "content-assurance-adapter",
+      "report_kind": "content-adapter-conformance",
+      "expected": "pass",
+      "blocking": true
+    },
+    {
       "check_id": "release-artifact-integrity",
       "report_kind": "release-artifact",
       "expected": "pass",

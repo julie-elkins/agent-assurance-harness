@@ -68,6 +68,7 @@ class TraceRecorder:
         self._claim: str | None = None
         self._answer: str | None = None
         self._abstained = False
+        self._abstention_reasons: list[str] = []
         self._refusal: AdapterRefusal | None = None
 
         invalid = _identifier_refusal(scenario_id, "scenario_id")
@@ -228,8 +229,8 @@ class TraceRecorder:
         self._answer = answer_id
         return self._event(EventType.ANSWER, "answer")
 
-    def record_abstention(self) -> RecorderResult:
-        """Record that the agent deliberately abstained."""
+    def record_abstention(self, reason_id: str | None = None) -> RecorderResult:
+        """Record deliberate abstention and an optional stable reason identifier."""
 
         blocked = self._blocked()
         if blocked is not None:
@@ -240,6 +241,11 @@ class TraceRecorder:
                 message="TraceRecorder accepts one abstention event per run.",
                 guidance="Create a new recorder for a separate scenario run.",
             )
+        if reason_id is not None:
+            invalid = _identifier_refusal(reason_id, "abstention_reason_id")
+            if invalid is not None:
+                return self._set_refusal(invalid)
+            self._abstention_reasons.append(reason_id)
         self._abstained = True
         return self._event(EventType.ABSTENTION, "abstention")
 
@@ -393,6 +399,7 @@ class TraceRecorder:
                 claim=self._claim,
                 answer=self._answer,
                 abstained=self._abstained,
+                abstention_reasons=tuple(self._abstention_reasons),
                 evidence_ids=tuple(self._evidence_ids),
                 side_effects=tuple(self._side_effects),
                 authorization_ids=tuple(self._authorization_ids),

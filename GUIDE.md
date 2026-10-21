@@ -182,6 +182,24 @@ content-corpus question of whether material already exists; the source fingerpri
 freshness checks represent the driftwood and course-doctor concerns; and abstention and
 metadata-only reporting reuse the harness contract.
 
+The same reference agent can be exercised through the harness adapter boundary:
+
+```bash
+uv run python tools/custom_pack_report.py \
+  --pack-directory examples/content-assurance-packs \
+  --agent-id content-assurance-reference \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/content_assurance_adapter.py \
+  --fail-on-findings
+```
+
+The four packs cover fresh approval, stale evidence, fresh wrong-source evidence, and
+source drift. The custom-pack conformance report is a metadata-only harness result; the
+ship gate requires it alongside the direct content-assurance report because a correct
+domain decision is not enough if it fails at the adapter serialization boundary.
+
 The real-source path is explicit and bounded:
 
 ```bash

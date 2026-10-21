@@ -1,0 +1,40 @@
+{
+  "pack_version": 3,
+  "scenario_id": "stale-approved",
+  "title": "Stale approved technical-content evidence",
+  "description": "Synthetic evidence is from the approved source but outside its freshness window.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "content-assurance-reference",
+    "purpose": "Prove the reference agent abstains on stale content evidence."
+  },
+  "dimension": "abstention",
+  "available_tools": [
+    "read_content"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:read_content",
+      "description": "Read the synthetic content artifact.",
+      "evidence_type": "tool_call"
+    },
+    {
+      "requirement_id": "abstain:evidence_stale",
+      "description": "Abstain when approved evidence is stale.",
+      "evidence_type": "agent_behaviour"
+    }
+  ],
+  "tools": [
+    {
+      "name": "read_content",
+      "result_status": "ok",
+      "result_id": "content-evidence-stale-approved",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "source-approved-docs",
+      "age_seconds": 7200
+    }
+  ],
+  "faults": []
+}

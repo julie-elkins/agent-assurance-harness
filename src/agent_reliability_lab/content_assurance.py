@@ -25,6 +25,8 @@ from typing import Iterable
 from urllib.parse import urlparse
 
 from .models import FindingStatus
+from .protocol import AdapterRefusal, AdapterRun, ScenarioRequest
+from .recorder import TraceRecorder
 
 
 CONTENT_ASSURANCE_VERSION = 1
@@ -210,7 +212,7 @@ class ContentAssuranceSuiteReport:
             "diagnostics": {
                 "warnings": [
                     "The suite uses one approval path and explicit degraded "
-                    "controls for stale and wrong-source evidence."
+                    "controls for stale, wrong-source, and drifted evidence."
                 ],
                 "what_it_does_not_show": (
                     "It does not establish live-model quality, source truth, "
@@ -389,6 +391,67 @@ class TechnicalContentAssuranceAgent:
         )
 
 
+class ContentAssuranceAdapter:
+    """Expose the reference content agent through the harness adapter protocol."""
+
+    agent_id = "content-assurance-reference"
+
+    def run(self, request: ScenarioRequest, environment: object) -> AdapterRun:
+        """Run one synthetic content case and emit identifier-only evidence."""
+
+        del environment
+        cases = {
+            case.case_id: case for case in reference_content_assurance_cases()
+        }
+        case = cases.get(request.scenario_id)
+        if case is None:
+            return AdapterRun(
+                refusal=AdapterRefusal(
+                    error="unknown_content_case",
+                    message="The content-assurance case is not registered.",
+                    guidance="Use one of the checked-in synthetic content case identifiers.",
+                )
+            )
+        if request.contract.scenario_id != request.scenario_id:
+            return AdapterRun(
+                refusal=AdapterRefusal(
+                    error="content_contract_mismatch",
+                    message="The content request contract does not match its case.",
+                    guidance="Use the declarative content-assurance pack for this case.",
+                )
+            )
+
+        source = case.sources[0] if case.sources else None
+        recorder = TraceRecorder(
+            scenario_id=request.scenario_id,
+            agent_id=self.agent_id,
+        )
+        recorder.record_tool_call("read_content")
+        recorder.record_tool_result(
+            "read_content",
+            "ok" if source is not None else "not_found",
+            result_id=f"content-evidence-{case.case_id}",
+            source=source.source_id if source is not None else None,
+            age_seconds=source.age_seconds if source is not None else None,
+        )
+        report = TechnicalContentAssuranceAgent().review(
+            case.request,
+            case.artifact,
+            case.sources,
+        )
+        if report.decision is ContentDecision.APPROVED:
+            recorder.record_claim("claim:content_assured")
+            recorder.record_answer("answer:publishable")
+        else:
+            recorder.record_claim("claim:content_requires_review")
+            recorder.record_abstention(
+                report.abstention_reasons[0]
+                if report.abstention_reasons
+                else "evidence_missing"
+            )
+        return recorder.finish()
+
+
 def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
     """Return the public synthetic positive and negative-control cases."""
 
@@ -440,6 +503,13 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
         source_digest=expected_source_digest,
         age_seconds=300,
     )
+    drifted_source = ContentSource(
+        source_id="source-approved-docs",
+        authority="public-reference-docs",
+        source_url="https://docs.aws.amazon.com/",
+        source_digest="sha256:" + "0" * 64,
+        age_seconds=300,
+    )
     request = ContentAssuranceRequest(
         artifact_id=artifact.artifact_id,
         approved_source_ids=("source-approved-docs",),
@@ -468,6 +538,14 @@ def reference_content_assurance_cases() -> tuple[ContentAssuranceCase, ...]:
             sources=(wrong_source,),
             expected_decision=ContentDecision.ABSTAIN,
             expected_reason="evidence_wrong_source",
+        ),
+        ContentAssuranceCase(
+            case_id="source-drift",
+            request=request,
+            artifact=artifact,
+            sources=(drifted_source,),
+            expected_decision=ContentDecision.ABSTAIN,
+            expected_reason="source_drift",
         ),
     )
 

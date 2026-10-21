@@ -66,6 +66,24 @@ evidence from the wrong source. It also detects source drift (a changed source
 fingerprint) and refuses an unapproved source host. The output contains identifiers,
 statuses, and hashes only; it does not contain lesson text.
 
+The reference agent also runs through the existing adapter contract and four declarative
+scenario packs:
+
+```bash
+uv run python tools/custom_pack_report.py \
+  --pack-directory examples/content-assurance-packs \
+  --agent-id content-assurance-reference \
+  --adapter-command uv \
+  --adapter-command run \
+  --adapter-command python \
+  --adapter-command examples/content_assurance_adapter.py \
+  --fail-on-findings
+```
+
+This proves the agent's decisions survive the same JSONL (JSON Lines, one JSON object
+per line) boundary used by external adapters. The ship gate requires both the direct
+content report and this adapter-conformance report.
+
 The public-source refresh path can read the current official AWS, Anthropic, and OpenAI
 documentation roots when explicitly invoked:
 

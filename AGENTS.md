@@ -95,6 +95,9 @@ missing, and what the result does not prove.
   scenario and mutation control. Its report may contain only identifiers, counts, statuses,
   and conformance state; never emit the adapter command, raw findings, traces, prompts,
   credentials, or provider output.
+- The technical content assurance adapter must run through declarative packs under
+  `examples/content-assurance-packs/`; its stale, wrong-source, and source-drift
+  abstention reasons are part of the contract and must remain distinguishable.
 - `tools/adapter_regression_report.py` must run baseline and candidate adapters through
   the existing replay comparator, keep traces in memory, and emit only identifier-only
   regression metadata. It must block safety/evidence regressions and refusals while

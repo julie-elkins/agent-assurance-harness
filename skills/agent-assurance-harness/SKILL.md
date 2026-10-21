@@ -37,15 +37,18 @@ negative control and make the delivery gate fail when it is not caught.
 1. State the evidence contract and the failure that would otherwise pass unnoticed.
 2. Reuse the existing evaluator, adapter boundary, and metadata-only report shape.
 3. Add the positive control, degraded negative control, and focused tests.
-4. Add the control to the blocking CI workflow and preserve the stable
+4. Run external reference agents through declarative custom packs when the capability
+   needs to prove adapter-boundary behavior; record stable abstention reasons rather
+   than relying on a generic refusal.
+5. Add the control to the blocking CI workflow and preserve the stable
    `Agent reliability gate` job name.
-5. For consumer or action changes, run consumer validation, independent provenance
+6. For consumer or action changes, run consumer validation, independent provenance
    verification, compatibility verification, and pinned-action content-parity
    verification. The parity check must inspect the immutable Git object, not only the
    current action file.
-6. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
+7. Update `GUIDE.md`, `BUILD_GUIDE.md`, `README.md`, `CLAUDE.md`, and `AGENTS.md` when
    the workflow or repository contract changes.
-7. Run the full test suite, repository boundary check, dependency audit, release check,
+8. Run the full test suite, repository boundary check, dependency audit, release check,
    lock check, and `git diff --check`.
 
 ## Limits

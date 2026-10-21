@@ -277,6 +277,10 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/verify_pinned_action.py` — verifies the required action behavior at the exact pinned Git revision.
 - `skills/agent-assurance-harness/SKILL.md` — reusable workflow instructions for future harness changes.
 - `src/agent_reliability_lab/content_assurance.py` — synthetic technical-content assurance agent and controls.
+- `examples/content-assurance-packs/` — four declarative synthetic packs for fresh,
+  stale, wrong-source, and source-drift evidence.
+- `examples/content_assurance_adapter.py` — JSONL adapter that exercises the content
+  assurance agent through the same external protocol used by CI.
 - `src/agent_reliability_lab/public_sources.py` — bounded official-source metadata refresh.
 - `tools/content_assurance_report.py` — metadata-only content assurance suite.
 - `tools/refresh_public_sources.py` — explicit real-source refresh without body persistence.
@@ -514,6 +518,13 @@ remains deterministic and credential-free.
 This phase does not yet parse or rewrite documentation, infer claim truth from prose,
 or publish a course update. Those are later adapters and require their own evidence
 contracts.
+
+The reference agent is now exercised through the existing adapter boundary with four
+declarative packs under `examples/content-assurance-packs/`. A custom-pack conformance
+report proves the approval and abstention reasons survive JSONL serialization. The
+operational ship gate requires both the domain report and the adapter-conformance
+report, because a domain decision that cannot survive its integration boundary is not
+production evidence.
 
 ### Operational ship gate
 

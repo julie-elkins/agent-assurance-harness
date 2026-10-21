@@ -102,6 +102,7 @@ class Trace:
     claim: str | None = None
     answer: str | None = None
     abstained: bool = False
+    abstention_reasons: tuple[str, ...] = ()
     evidence_ids: tuple[str, ...] = ()
     side_effects: tuple[str, ...] = ()
     authorization_ids: tuple[str, ...] = ()

@@ -213,6 +213,10 @@ class AgentTraceInput(StrictModel):
     abstained: bool = Field(
         description="Whether the agent deliberately refused because evidence was insufficient."
     )
+    abstention_reasons: list[str] = Field(
+        default_factory=list,
+        description="Stable reason identifiers for a deliberate abstention.",
+    )
     evidence_ids: list[str] = Field(
         default_factory=list,
         description="Identifier-only evidence references; do not include payload text.",
@@ -488,6 +492,7 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
         claim=trace.claim,
         answer=trace.answer,
         abstained=trace.abstained,
+        abstention_reasons=tuple(trace.abstention_reasons),
         evidence_ids=tuple(trace.evidence_ids),
         side_effects=tuple(trace.side_effects),
         authorization_ids=tuple(trace.authorization_ids),

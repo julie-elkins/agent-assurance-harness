@@ -224,6 +224,7 @@ def _trace_from_dict(value: object) -> Trace:
             "claim",
             "answer",
             "abstained",
+            "abstention_reasons",
             "evidence_ids",
             "side_effects",
             "authorization_ids",
@@ -293,6 +294,10 @@ def _trace_from_dict(value: object) -> Trace:
         claim=_string(data.get("claim"), "trace claim", allow_none=True),
         answer=_string(data.get("answer"), "trace answer", allow_none=True),
         abstained=abstained,
+        abstention_reasons=_string_tuple(
+            data.get("abstention_reasons", []),
+            "trace abstention_reasons",
+        ),
         evidence_ids=_string_tuple(data.get("evidence_ids"), "trace evidence_ids"),
         side_effects=_string_tuple(data.get("side_effects"), "trace side_effects"),
         authorization_ids=_string_tuple(
@@ -387,6 +392,7 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
             "claim": run.trace.claim,
             "answer": run.trace.answer,
             "abstained": run.trace.abstained,
+            "abstention_reasons": list(run.trace.abstention_reasons),
             "evidence_ids": list(run.trace.evidence_ids),
             "side_effects": list(run.trace.side_effects),
             "authorization_ids": list(run.trace.authorization_ids),

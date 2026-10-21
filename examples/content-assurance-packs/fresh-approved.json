@@ -1,0 +1,42 @@
+{
+  "pack_version": 3,
+  "scenario_id": "fresh-approved",
+  "title": "Fresh approved technical-content evidence",
+  "description": "Synthetic content evidence is fresh and from the approved source.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "content-assurance-reference",
+    "purpose": "Prove the reference agent can publish supported content."
+  },
+  "dimension": "evidence_completeness",
+  "available_tools": [
+    "read_content"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:read_content",
+      "description": "Read the synthetic content artifact.",
+      "evidence_type": "tool_call"
+    },
+    {
+      "requirement_id": "successful_tool:read_content",
+      "description": "Observe fresh evidence from the approved source.",
+      "evidence_type": "successful_tool_result",
+      "source": "source-approved-docs",
+      "max_age_seconds": 3600
+    }
+  ],
+  "tools": [
+    {
+      "name": "read_content",
+      "result_status": "ok",
+      "result_id": "content-evidence-fresh-approved",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "source-approved-docs",
+      "age_seconds": 300
+    }
+  ],
+  "faults": []
+}

@@ -103,7 +103,10 @@ def _requirement_satisfied(
             "instruction_like" in trace.tool_output_flags and trace.abstained
         )
     if evidence_type == "agent_behaviour":
-        return prefix == "abstain" and trace.abstained
+        return prefix == "abstain" and trace.abstained and (
+            value in {"when-evidence-insufficient", "when-evidence-untrusted", "when-no-usable-record"}
+            or value in trace.abstention_reasons
+        )
     return False
 
 

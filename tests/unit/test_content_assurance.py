@@ -15,6 +15,7 @@ def test_reference_suite_approves_fresh_source_and_catches_degraded_controls():
         "fresh-approved",
         "stale-approved",
         "fresh-wrong-source",
+        "source-drift",
     )
     assert report.controls_missed == ()
     decisions = {
@@ -24,6 +25,7 @@ def test_reference_suite_approves_fresh_source_and_catches_degraded_controls():
         "fresh-approved": ContentDecision.APPROVED,
         "stale-approved": ContentDecision.ABSTAIN,
         "fresh-wrong-source": ContentDecision.ABSTAIN,
+        "source-drift": ContentDecision.ABSTAIN,
     }
 
 

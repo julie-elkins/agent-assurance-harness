@@ -564,6 +564,26 @@ payloads, prompts, or traces. It proves the local action boundary and negative
 control; it does not prove GitHub-hosted runner availability, live-provider
 quality, or a consumer's deployment behavior.
 
+### Validate consumer policy and escalation
+
+Phase 19 adds an optional consumer policy contract to the same reusable action.
+The checked-in manifest binds adapter metadata to a policy version and SHA-256
+digest, requires the protected-write scenario to report the declared
+authorization scope, and requires the unsupported-request scenario to report
+an escalation identifier and status. A deliberately degraded adapter violates
+those conditions, so CI blocks it and reports stable failure reasons such as
+`policy_digest_mismatch`, `authorization_scope_missing`, and `escalation_missing`.
+
+Enable it in a consumer workflow with:
+
+```yaml
+consumer-policy-manifest: policy-manifest.json
+```
+
+This is a pre-merge contract check, not live IAM (Identity and Access
+Management), credential-vault, egress-gateway, deployment, or human-response
+proof. The public fixture contains synthetic identifiers only.
+
 ### Run one bounded live synthetic scenario
 
 Phase 14 adds a local-only live boundary for one built-in synthetic scenario. It requires

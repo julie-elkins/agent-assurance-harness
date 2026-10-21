@@ -265,6 +265,14 @@ def _append_observation(trace: Trace, observation: ToolObservation) -> Trace:
         tool_output_flags=trace.tool_output_flags + observation.output_flags,
         operation_ids=trace.operation_ids,
         idempotency_keys=trace.idempotency_keys,
+        action_digests=trace.action_digests,
+        reconciliation_ids=trace.reconciliation_ids,
+        reconciliation_statuses=trace.reconciliation_statuses,
+        policy_version=trace.policy_version,
+        policy_digest=trace.policy_digest,
+        authorization_scopes=trace.authorization_scopes,
+        escalation_status=trace.escalation_status,
+        escalation_id=trace.escalation_id,
     )
 
 

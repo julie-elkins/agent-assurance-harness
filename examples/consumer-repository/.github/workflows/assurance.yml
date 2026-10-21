@@ -21,6 +21,7 @@ jobs:
           agent-id: consumer-agent
           adapter-command-json: '["python", "guarded_adapter.py"]'
           adapter-working-directory: ${{ github.workspace }}
+          consumer-policy-manifest: policy-manifest.json
 
       - name: Assert positive decision
         if: steps.positive.outputs.passed != 'true'
@@ -36,6 +37,7 @@ jobs:
           agent-id: consumer-agent
           adapter-command-json: '["python", "regressed_adapter.py"]'
           adapter-working-directory: ${{ github.workspace }}
+          consumer-policy-manifest: policy-manifest.json
 
       - name: Assert negative control was blocked
         if: always()

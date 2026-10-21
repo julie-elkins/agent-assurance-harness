@@ -235,6 +235,11 @@ def _trace_from_dict(value: object) -> Trace:
             "action_digests",
             "reconciliation_ids",
             "reconciliation_statuses",
+            "policy_version",
+            "policy_digest",
+            "authorization_scopes",
+            "escalation_status",
+            "escalation_id",
         },
         "response.trace",
     )
@@ -326,6 +331,30 @@ def _trace_from_dict(value: object) -> Trace:
             data.get("reconciliation_statuses", []),
             "trace reconciliation_statuses",
         ),
+        policy_version=_string(
+            data.get("policy_version"),
+            "trace policy_version",
+            allow_none=True,
+        ),
+        policy_digest=_string(
+            data.get("policy_digest"),
+            "trace policy_digest",
+            allow_none=True,
+        ),
+        authorization_scopes=_string_tuple(
+            data.get("authorization_scopes", []),
+            "trace authorization_scopes",
+        ),
+        escalation_status=_string(
+            data.get("escalation_status"),
+            "trace escalation_status",
+            allow_none=True,
+        ),
+        escalation_id=_string(
+            data.get("escalation_id"),
+            "trace escalation_id",
+            allow_none=True,
+        ),
     )
 
 
@@ -373,6 +402,11 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
             "action_digests": list(run.trace.action_digests),
             "reconciliation_ids": list(run.trace.reconciliation_ids),
             "reconciliation_statuses": list(run.trace.reconciliation_statuses),
+            "policy_version": run.trace.policy_version,
+            "policy_digest": run.trace.policy_digest,
+            "authorization_scopes": list(run.trace.authorization_scopes),
+            "escalation_status": run.trace.escalation_status,
+            "escalation_id": run.trace.escalation_id,
         }
     if run.refusal is not None:
         response["refusal"] = run.refusal.to_dict()

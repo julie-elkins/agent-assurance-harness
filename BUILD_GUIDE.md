@@ -260,6 +260,8 @@ The harness can support that path, but its synthetic gate does not replace those
 - `tools/reusable_action_runner.py` — JSON-argument-vector action runner and metadata-only outputs.
 - `examples/reusable-action-consumer.yml` — consumer workflow example.
 - `examples/consumer-repository/` — separate synthetic consumer fixture with positive and negative adapter workflows.
+- `src/agent_reliability_lab/consumer_contract.py` — metadata-only policy, scope, and escalation contract evaluator.
+- `examples/consumer-repository/policy-manifest.json` — checked-in synthetic consumer policy declaration and digest.
 - `tools/consumer_validation.py` — local metadata-only consumer validation and workflow contract check.
 
 ### Audit evidence binding
@@ -391,6 +393,20 @@ metadata-only report with the other assurance evidence.
 This proves that the reusable action's consumer contract is exercised outside
 the harness's normal example adapter. It does not prove GitHub-hosted runner
 availability, live-provider quality, or consumer-specific deployment behavior.
+
+### Consumer policy and escalation contract
+
+Phase 19 extends the consumer contract without adding a second runner. A
+consumer may provide a checked-in policy manifest to the action. The harness
+checks the manifest's canonical SHA-256 binding across the scenario traces,
+the required authorization scope for a protected write, and an explicit
+escalation status and identifier for an unsupported request.
+
+The degraded fixture changes all three controls. Its report remains
+metadata-only and uses stable failure reasons, which makes a pull request
+reviewable without exporting prompts, traces, provider output, credentials, or
+private content. This proves pre-merge representation and enforcement, not live
+IAM, vault, gateway, deployment, or human-response behaviour.
 
 ### Operational ship gate
 

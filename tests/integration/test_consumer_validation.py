@@ -31,8 +31,16 @@ def test_consumer_fixture_passes_and_catches_negative_control(tmp_path):
     assert all(data["workflow_contract"].values())
     assert data["positive_run"]["decision"] == "pass"
     assert data["positive_run"]["passed"] is True
+    assert data["positive_run"]["consumer_contract_passed"] is True
     assert data["negative_control"]["decision"] == "blocked"
     assert data["negative_control"]["passed"] is False
+    assert data["negative_control"]["consumer_contract_passed"] is False
+    assert "authorization_scope_missing" in (
+        data["negative_control"]["consumer_contract_failure_reasons"]
+    )
+    assert "escalation_missing" in (
+        data["negative_control"]["consumer_contract_failure_reasons"]
+    )
     assert data["negative_control"]["caught"] is True
     assert str(REPOSITORY) not in output.read_text(encoding="utf-8")
     assert "guarded_adapter.py" not in output.read_text(encoding="utf-8")

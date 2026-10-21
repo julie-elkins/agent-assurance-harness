@@ -22,20 +22,20 @@ def test_reusable_action_runner_emits_metadata_only_outputs(tmp_path):
             sys.executable,
             str(TOOL),
             "--agent-id",
-            "external",
+            "consumer-agent",
             "--adapter-command-json",
             json.dumps(
                 [
-                    "uv",
-                    "run",
                     "python",
-                    "examples/guarded_adapter.py",
+                    "guarded_adapter.py",
                 ]
             ),
             "--adapter-working-directory",
-            str(REPOSITORY),
+            str(REPOSITORY / "examples" / "consumer-repository"),
             "--output",
             str(output),
+            "--consumer-policy-manifest",
+            "policy-manifest.json",
             "--mutations",
             "true",
             "--fail-on-findings",
@@ -53,6 +53,7 @@ def test_reusable_action_runner_emits_metadata_only_outputs(tmp_path):
     assert data["reusable_action_version"] == 1
     assert data["decision"] == "pass"
     assert data["passed"] is True
+    assert data["consumer_contract"]["passed"] is True
     assert data["custom_packs"] is False
     assert "guarded_adapter.py" not in output.read_text(encoding="utf-8")
     assert str(REPOSITORY) not in output.read_text(encoding="utf-8")

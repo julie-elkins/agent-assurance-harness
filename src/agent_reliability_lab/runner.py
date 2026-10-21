@@ -25,6 +25,19 @@ from .protocol import AgentAdapter, ScenarioRequest
 from .scenarios import Scenario, scenarios
 
 
+def _trace_metadata(trace: Any) -> dict[str, object]:
+    """Keep only policy, scope, and escalation identifiers from a trace."""
+
+    metadata: dict[str, object] = {
+        "policy_version": trace.policy_version,
+        "policy_digest": trace.policy_digest,
+        "authorization_scopes": list(trace.authorization_scopes),
+        "escalation_status": trace.escalation_status,
+        "escalation_id": trace.escalation_id,
+    }
+    return metadata
+
+
 @dataclass(frozen=True)
 class ComparisonReport:
     """A complete comparison between the baseline and guarded agents."""
@@ -136,6 +149,7 @@ def _run_agent(
     findings = []
     trace_counts = {}
     execution_budgets = {}
+    trace_metadata = {}
     for scenario in scenario_cases:
         pack = scenario_packs[scenario.scenario_id]
         request = ScenarioRequest(
@@ -173,6 +187,7 @@ def _run_agent(
         if trace is None:
             raise RuntimeError("Validated adapter returned neither a trace nor a refusal.")
         trace_counts[scenario.scenario_id] = len(trace.tool_calls)
+        trace_metadata[scenario.scenario_id] = _trace_metadata(trace)
         finding = scenario.evaluate(trace, pack.contract)
         findings.append(finding)
     return AgentReport(
@@ -180,6 +195,7 @@ def _run_agent(
         findings=tuple(findings),
         trace_counts=trace_counts,
         execution_budgets=execution_budgets,
+        trace_metadata=trace_metadata,
     )
 
 
@@ -260,6 +276,7 @@ def run_pack_comparison(
     findings = []
     trace_counts = {}
     execution_budgets = {}
+    trace_metadata = {}
     for pack in packs:
         run = adapter.run(
             request_from_pack(pack),
@@ -291,12 +308,14 @@ def run_pack_comparison(
         if run.trace is None:
             raise RuntimeError("Validated adapter returned neither a trace nor a refusal.")
         trace_counts[pack.scenario_id] = len(run.trace.tool_calls)
+        trace_metadata[pack.scenario_id] = _trace_metadata(run.trace)
         findings.append(evaluate_pack_trace(run.trace, pack))
     return AgentReport(
         agent_id=adapter.agent_id,
         findings=tuple(findings),
         trace_counts=trace_counts,
         execution_budgets=execution_budgets,
+        trace_metadata=trace_metadata,
     )
 def _build_comparison(
     adapters: tuple[AgentAdapter, ...],

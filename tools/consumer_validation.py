@@ -56,6 +56,8 @@ def _run_consumer(adapter: str, *, fail_on_findings: bool) -> dict[str, object]:
             str(CONSUMER),
             "--output",
             str(output),
+            "--consumer-policy-manifest",
+            "policy-manifest.json",
             "--mutations",
             "true",
             "--fail-on-findings",
@@ -78,6 +80,8 @@ def _run_consumer(adapter: str, *, fail_on_findings: bool) -> dict[str, object]:
                 "passed": False,
                 "report_version": None,
                 "github_outputs_present": False,
+                "consumer_contract_passed": False,
+                "consumer_contract_failure_reasons": ["report_unavailable"],
             }
         output_text = (
             github_output.read_text(encoding="utf-8")
@@ -91,6 +95,15 @@ def _run_consumer(adapter: str, *, fail_on_findings: bool) -> dict[str, object]:
             "report_version": report.get("reusable_action_version"),
             "github_outputs_present": (
                 "decision=" in output_text and "passed=" in output_text
+            ),
+            "consumer_contract_passed": (
+                isinstance(report.get("consumer_contract"), dict)
+                and report["consumer_contract"].get("passed") is True
+            ),
+            "consumer_contract_failure_reasons": (
+                report["consumer_contract"].get("failure_reasons", [])
+                if isinstance(report.get("consumer_contract"), dict)
+                else ["report_missing_consumer_contract"]
             ),
         }
 
@@ -108,8 +121,10 @@ def build_report() -> dict[str, object]:
         positive["return_code"] == 0
         and positive["decision"] == "pass"
         and positive["passed"] is True
+        and positive["consumer_contract_passed"] is True
         and positive["github_outputs_present"] is True
         and negative_caught
+        and negative["consumer_contract_passed"] is False
     )
     return {
         "consumer_validation_version": 1,
@@ -147,7 +162,9 @@ def _markdown(data: dict[str, object]) -> str:
             f"- **Decision:** {status}",
             f"- **Action commit:** `{data['action_ref']}`",
             f"- **Positive consumer run:** `{positive['decision']}`",
+            f"- **Positive policy contract:** `{positive['consumer_contract_passed']}`",
             f"- **Negative control caught:** `{negative['caught']}`",
+            f"- **Negative contract failure reasons:** `{negative['consumer_contract_failure_reasons']}`",
             "",
             "The fixture is synthetic and metadata-only; credentials, prompts, "
             "payloads, and provider output are not exported.",

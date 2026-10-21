@@ -9,6 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from agent_reliability_lab.pack_provenance import pack_manifest, pack_set_sha256
+from agent_reliability_lab.consumer_contract import (
+    ConsumerContractReport,
+    evaluate_consumer_contract,
+    load_consumer_policy_manifest,
+)
 from agent_reliability_lab.packs import (
     load_builtin_packs,
     load_pack_directory,
@@ -71,16 +76,21 @@ def _metadata_report(
     report: Any,
     packs: tuple[Any, ...],
     custom_packs: bool,
+    consumer_contract: ConsumerContractReport | None = None,
 ) -> dict[str, object]:
     agent_report = (
         report.reports[0] if hasattr(report, "reports") else report
     )
-    failed = (
+    assurance_failed = (
         failed_checks(report)
         if hasattr(report, "reports")
         else not agent_report.passed
     )
-    return {
+    consumer_failed = (
+        consumer_contract is not None and not consumer_contract.passed
+    )
+    failed = bool(assurance_failed or consumer_failed)
+    data: dict[str, object] = {
         "reusable_action_version": ACTION_REPORT_VERSION,
         "decision": "blocked" if failed else "pass",
         "passed": not failed,
@@ -110,6 +120,9 @@ def _metadata_report(
             ),
         },
     }
+    if consumer_contract is not None:
+        data["consumer_contract"] = consumer_contract.to_dict()
+    return data
 
 
 def _refusal(error: Exception) -> dict[str, object]:
@@ -165,6 +178,17 @@ def _write_summary(data: dict[str, object]) -> None:
             "and credentials are not exported.",
             "",
         ]
+        contract = data.get("consumer_contract")
+        if isinstance(contract, dict):
+            contract_status = "PASS" if contract.get("passed") is True else "BLOCKED"
+            reasons = contract.get("failure_reasons", [])
+            lines.extend(
+                [
+                    f"- **Consumer policy contract:** {contract_status}",
+                    f"- **Consumer contract failure reasons:** `{reasons}`",
+                    "",
+                ]
+            )
     else:
         lines = [
             "# Reusable Agent Assurance",
@@ -185,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--adapter-command-json", required=True)
     parser.add_argument("--adapter-working-directory", type=Path, required=True)
     parser.add_argument("--scenario-pack-directory", default="")
+    parser.add_argument("--consumer-policy-manifest", default="")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mutations", default="true")
     parser.add_argument("--fail-on-findings", default="true")
@@ -241,10 +266,25 @@ def main(argv: list[str] | None = None) -> int:
                     "mutations must be false when scenario-pack-directory is supplied."
                 )
             report = run_pack_comparison(adapter, packs)
+        consumer_contract = None
+        if args.consumer_policy_manifest:
+            manifest_path = Path(args.consumer_policy_manifest)
+            if not manifest_path.is_absolute():
+                manifest_path = args.adapter_working_directory / manifest_path
+            manifest = load_consumer_policy_manifest(manifest_path)
+            agent_report = (
+                report.reports[0] if hasattr(report, "reports") else report
+            )
+            consumer_contract = evaluate_consumer_contract(
+                agent_report.trace_metadata,
+                manifest,
+                tuple(pack.scenario_id for pack in packs),
+            )
         data = _metadata_report(
             report=report,
             packs=packs,
             custom_packs=pack_directory is not None,
+            consumer_contract=consumer_contract,
         )
     except (OSError, RuntimeError, TypeError, ValueError) as error:
         data = _refusal(error)

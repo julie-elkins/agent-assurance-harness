@@ -470,6 +470,30 @@ traces. The check proves the bounded local action path and its negative
 control; it does not prove GitHub-hosted runner availability, live-provider
 quality, or consumer-specific deployment behavior.
 
+### Consumer policy and escalation contract
+
+Phase 19 adds an optional checked-in policy manifest to the reusable action.
+The manifest is a reviewed declaration: its SHA-256 digest (a fingerprint of
+the canonical policy fields) must match every adapter trace, the protected-write
+scenario must report the required authorization scope, and an unsupported
+request must report an escalation status and identifier.
+
+The synthetic consumer fixture uses:
+
+```yaml
+consumer-policy-manifest: policy-manifest.json
+```
+
+The negative adapter changes the policy binding, reports the wrong scope, and
+removes escalation metadata. The action blocks it and keeps those failure
+reasons separate, because fresh evidence from the wrong source or an
+unapproved scope must not be hidden by a passing freshness check.
+
+The check proves that these expectations are represented and enforced before
+merge. It does not prove live IAM (Identity and Access Management), a
+credential vault, an egress gateway, a deployment, or a human receiving an
+escalation.
+
 ### Evidence-quality abstention
 
 Phase 17 separates two evidence failures that a single freshness check can confuse:

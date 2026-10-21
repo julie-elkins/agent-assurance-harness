@@ -13,3 +13,13 @@ demonstrates both paths:
 The workflow pins the action to the reviewed Phase 17 commit. A consumer should
 update that reference only through a reviewed dependency change, because a moving
 branch can change the assurance code without changing the consumer workflow.
+
+`policy-manifest.json` adds a metadata-only consumer contract. It binds adapter
+traces to a reviewed policy version and SHA-256 digest, requires the protected
+write scenario to report `orders:write`, and requires the unsupported-request
+scenario to report an escalation. The degraded adapter violates these controls
+as well as the evidence contract, so the action blocks it.
+
+This fixture does not provide live credentials, IAM enforcement, a vault,
+an egress gateway, or a human escalation queue. It proves that those expectations
+are represented and enforced at the pre-merge boundary.

@@ -113,6 +113,11 @@ class Trace:
     action_digests: tuple[str, ...] = ()
     reconciliation_ids: tuple[str, ...] = ()
     reconciliation_statuses: tuple[str, ...] = ()
+    policy_version: str | None = None
+    policy_digest: str | None = None
+    authorization_scopes: tuple[str, ...] = ()
+    escalation_status: str | None = None
+    escalation_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -236,6 +241,7 @@ class AgentReport:
     findings: tuple[Finding, ...]
     trace_counts: dict[str, int] = field(default_factory=dict)
     execution_budgets: dict[str, ExecutionBudget] = field(default_factory=dict)
+    trace_metadata: dict[str, dict[str, object]] = field(default_factory=dict)
 
     @property
     def passed(self) -> bool:
@@ -271,6 +277,10 @@ class AgentReport:
             "execution_budgets": {
                 scenario_id: budget.to_dict()
                 for scenario_id, budget in sorted(self.execution_budgets.items())
+            },
+            "trace_metadata": {
+                scenario_id: dict(metadata)
+                for scenario_id, metadata in sorted(self.trace_metadata.items())
             },
             "dimensions": [
                 summary.to_dict() for summary in self.dimension_summaries

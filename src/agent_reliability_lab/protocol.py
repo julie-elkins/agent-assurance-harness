@@ -33,6 +33,8 @@ class EventType(str, Enum):
     IDEMPOTENCY_KEY = "idempotency_key"
     ACTION_DIGEST = "action_digest"
     RECONCILIATION = "reconciliation"
+    POLICY = "policy"
+    ESCALATION = "escalation"
 
 
 @dataclass(frozen=True)

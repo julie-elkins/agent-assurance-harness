@@ -77,6 +77,28 @@ metadata; the Markdown output uses plain-language labels and shortened detail.
 The ready pack still requires human approval before publication. Its degraded controls
 demonstrate stale, wrong-source, unsupported-claim, and incomplete-pack behavior.
 
+## Portfolio dashboard
+
+The combined report can also be rendered as a local dashboard. A dashboard is a
+reviewer-facing view of one run, not a hosted monitoring service and not a second
+evaluator:
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --workspace /tmp/agent-reliability-portfolio \
+  --output /tmp/agent-reliability-portfolio.json \
+  --fail-on-findings
+uv run python tools/portfolio_dashboard.py \
+  --input /tmp/agent-reliability-portfolio.json \
+  --output /tmp/agent-reliability-portfolio.html
+```
+
+The HTML view shows the portfolio decision, lane states, caught and missed controls,
+human gates, the missing-lane negative control, and the limits of the result. It contains
+metadata only: no prompts, traces, source text, credentials, provider output, or local
+source paths. See [`docs/PORTFOLIO_DASHBOARD.md`](docs/PORTFOLIO_DASHBOARD.md) for the
+input boundary and refusal behaviour.
+
 ## Instructor calibration
 
 - Ready for human sign-off: `PASS`

@@ -9,6 +9,8 @@ The showcase has two lanes:
    checks that run before a change can merge).
 2. An opt-in public-course lane for demonstrating the same metadata-only review path
    against a real public course checkout.
+3. A launch-to-field lane for demonstrating how a capability becomes a demo, lab, and
+   quick-reference guide with freshness and feedback controls.
 
 The first lane is the required proof. The second lane is the practical demonstration.
 Keeping them separate prevents a changing course repository or a network outage from
@@ -24,8 +26,9 @@ uv run python tools/showcase_demo.py --markdown
 ```
 
 The command runs the guarded synthetic agent, evaluator false-pass controls, mutation
-controls, and one Course Doctor review packet. A mutation control is a deliberately
-changed synthetic result used to prove that the evaluator catches a known failure.
+controls, one Course Doctor review packet, and the launch-to-field enablement pack. A
+mutation control is a deliberately changed synthetic result used to prove that the
+evaluator catches a known failure.
 
 The output contains identifiers, statuses, counts, and hashes only. It does not contain
 lesson text, prompts, credentials, provider output, or source paths.
@@ -60,6 +63,15 @@ Expected successful output:
 This deliberately blocked example shows where a review starts without exposing lesson
 text or a source path. The full JSON report retains the complete machine-readable
 metadata; the Markdown output uses plain-language labels and shortened detail.
+
+## Launch-to-field enablement
+
+- Ready pack: `PASS`
+- Degraded controls caught: `4`
+- Pack includes: `demo`, `lab`, `quick_reference`, and synthetic feedback signals
+
+The ready pack still requires human approval before publication. Its degraded controls
+demonstrate stale, wrong-source, unsupported-claim, and incomplete-pack behavior.
 
 This demo is synthetic, offline, and metadata-only.
 ```

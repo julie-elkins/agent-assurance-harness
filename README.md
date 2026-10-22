@@ -14,14 +14,22 @@ and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIV
 defines the delivery controls to apply to future builds. This README remains the full
 command reference and feature history.
 
+The [Portfolio Evidence Guide](ROLE_ALIGNMENT_GUIDE.md) maps the runnable controls to
+technical education, developer experience, and enablement requirements. The reusable
+patterns behind the launch-to-field workflow live in the public
+[Agent Systems Design Guide](https://github.com/julie-elkins/agent-systems-design-guide);
+the MCP-specific patterns remain in the
+[MCP Server Design Guide](https://github.com/julie-elkins/mcp-server-design-guide).
+
 For the shortest outside-reviewer path, use the [Showcase](SHOWCASE.md). It runs an
 offline synthetic assurance demo and documents the optional metadata-only demonstration
 against a local checkout of the public
 [Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab).
 
 The showcase currently reports 9 scenarios, a passing guarded agent, 1 evaluator
-control caught, 3 mutation controls caught, and 1 complete Course Doctor packet. See
-the [expected output](SHOWCASE.md#one-command-offline-showcase) before running it.
+control caught, 3 mutation controls caught, 1 complete Course Doctor packet, and a
+passing launch-to-field pack with four degraded controls caught. See the
+[expected output](SHOWCASE.md#one-command-offline-showcase) before running it.
 
 An evidence contract is the minimum set of observable facts required before an agent may
 claim that a task is complete. The question is not only whether an agent produced an
@@ -174,6 +182,28 @@ source bytes in memory, and exports metadata only. It does not rewrite or publis
 content. The local index contains only caller-supplied relative paths and optional line
 ranges; it must remain local and must not be uploaded with the public report. A human
 adjudication record is required before a later publisher could act.
+
+## Launch-to-field enablement
+
+The launch-to-field pack is a reusable content-enablement workflow. A pack is a
+metadata-only contract for a demo, hands-on lab, quick-reference guide, audience,
+source, freshness state, claim-support state, and usage feedback. It demonstrates how
+a changing technical capability can become self-service material without turning a
+generated recommendation into publication authority.
+
+Run the synthetic ready path and degraded controls:
+
+```bash
+uv run python tools/launch_to_field_report.py \
+  --output /tmp/agent-reliability-launch-to-field.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The command catches stale evidence, fresh evidence from the wrong source, unsupported
+claims, and an incomplete asset set. A ready result means only that the pack is ready
+for human approval; it does not publish or rewrite content. The report contains
+identifiers, states, counts, and hashes only.
 
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,

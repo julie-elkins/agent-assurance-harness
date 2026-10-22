@@ -18,6 +18,9 @@ from agent_reliability_lab.course_doctor import (
     load_local_course_manifest,
     run_reference_course_doctor_suite,
 )
+from agent_reliability_lab.enablement_pack import (
+    run_reference_launch_to_field_suite,
+)
 from agent_reliability_lab.runner import run_comparison
 
 
@@ -39,6 +42,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     comparison = run_comparison(include_mutations=True)
+    enablement_report = run_reference_launch_to_field_suite()
     with tempfile.TemporaryDirectory(prefix="agent-assurance-showcase-") as path:
         requests = load_local_course_manifest(
             DEMO_ROOT / "manifest.json",
@@ -66,7 +70,7 @@ def main(argv: list[str] | None = None) -> int:
     example_finding = example_packet.findings[0]
     example_locator = example_finding.locators[0]
     summary = {
-        "showcase_version": 2,
+        "showcase_version": 3,
         "offline": True,
         "synthetic_assurance": {
             "scenario_count": comparison.scenario_count,
@@ -95,6 +99,21 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 for packet in course_report.packets
             ],
+        },
+        "launch_to_field": {
+            "passed": enablement_report.passed,
+            "controls_caught": list(enablement_report.controls_caught),
+            "degraded_controls_caught": [
+                case_id
+                for case_id in enablement_report.controls_caught
+                if case_id != "launch-pack-ready"
+            ],
+            "controls_missed": list(enablement_report.controls_missed),
+            "ready_case": next(
+                report.to_dict()
+                for case_id, report in enablement_report.reports
+                if case_id == "launch-pack-ready"
+            ),
         },
         "synthetic_finding_example": {
             "course_id": example_packet.course_id,
@@ -132,13 +151,21 @@ def _passed(summary: dict[str, object]) -> bool:
 
     synthetic = summary["synthetic_assurance"]
     course = summary["course_doctor"]
-    if not isinstance(synthetic, dict) or not isinstance(course, dict):
+    enablement = summary["launch_to_field"]
+    if (
+        not isinstance(synthetic, dict)
+        or not isinstance(course, dict)
+        or not isinstance(enablement, dict)
+    ):
         return False
     return (
         synthetic["guarded_agent_passed"] is True
         and bool(synthetic["evaluator_controls_caught"])
         and bool(synthetic["mutation_controls_caught"])
         and course["passed"] is True
+        and enablement["passed"] is True
+        and bool(enablement["controls_caught"])
+        and enablement["controls_missed"] == []
     )
 
 
@@ -147,10 +174,12 @@ def _markdown(summary: dict[str, object]) -> str:
 
     synthetic = summary["synthetic_assurance"]
     course = summary["course_doctor"]
+    enablement = summary["launch_to_field"]
     example = summary["synthetic_finding_example"]
     if (
         not isinstance(synthetic, dict)
         or not isinstance(course, dict)
+        or not isinstance(enablement, dict)
         or not isinstance(example, dict)
     ):
         raise ValueError("showcase summary has an invalid internal shape")
@@ -182,6 +211,16 @@ def _markdown(summary: dict[str, object]) -> str:
         "",
         "This example is deliberately blocked to prove the harness can identify "
         "where a review must start. It contains no lesson text or source path.",
+        "",
+        "## Launch-to-field enablement",
+        "",
+        f"- Ready pack: `{'PASS' if enablement['passed'] else 'BLOCKED'}`",
+        f"- Degraded controls caught: `{len(enablement['degraded_controls_caught'])}`",
+        "- Pack includes: `demo`, `lab`, `quick_reference`, and synthetic feedback signals",
+        "",
+        "The ready pack still requires human approval before publication. Its degraded "
+        "controls demonstrate stale, wrong-source, unsupported-claim, and incomplete-pack "
+        "behavior.",
         "",
         "This demo is synthetic, offline, and metadata-only.",
         "",

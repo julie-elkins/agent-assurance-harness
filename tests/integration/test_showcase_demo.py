@@ -23,6 +23,8 @@ def test_showcase_demo_is_offline_and_passes():
     assert report["synthetic_assurance"]["evaluator_controls_caught"]
     assert report["synthetic_assurance"]["mutation_controls_caught"]
     assert report["course_doctor"]["passed"] is True
+    assert report["launch_to_field"]["passed"] is True
+    assert len(report["launch_to_field"]["degraded_controls_caught"]) == 4
     assert report["synthetic_finding_example"]["reason_code"] == "evidence_stale"
     assert (
         report["synthetic_finding_example"]["claim_id"]
@@ -45,4 +47,6 @@ def test_showcase_markdown_explains_where_review_starts():
     assert "Source is older than the allowed freshness window." in result.stdout
     assert "Claim: `claim-pipeline-supported`" in result.stdout
     assert "Section: `section-synthetic-guidance`" in result.stdout
+    assert "Launch-to-field enablement" in result.stdout
+    assert "Degraded controls caught: `4`" in result.stdout
     assert "lesson-001.md" not in result.stdout

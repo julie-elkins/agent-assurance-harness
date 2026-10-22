@@ -121,6 +121,10 @@ missing, and what the result does not prove.
   enforce a source-size ceiling, process bytes in memory, and never emit source paths,
   source text, or source errors containing content. Public CI must use synthetic
   fixtures.
+- The launch-to-field enablement pack must reuse the existing content-assurance
+  pipeline, require a demo, lab, quick-reference asset, and metadata-only feedback
+  signal, and keep human approval separate from any ready result. Its CLI and fixtures
+  must remain synthetic, offline, and metadata-only.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

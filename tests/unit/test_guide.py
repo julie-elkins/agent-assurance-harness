@@ -7,6 +7,7 @@ BUILD_GUIDE = REPOSITORY / "BUILD_GUIDE.md"
 DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
 ASSURANCE_SKILL = REPOSITORY / "skills" / "agent-assurance-harness" / "SKILL.md"
 SHOWCASE = REPOSITORY / "SHOWCASE.md"
+ROLE_GUIDE = REPOSITORY / "ROLE_ALIGNMENT_GUIDE.md"
 
 
 def test_guide_exists_and_local_references_are_present():
@@ -16,6 +17,7 @@ def test_guide_exists_and_local_references_are_present():
     assert "Agent reliability gate" in guide
     assert "verify_assurance_evidence.py" in guide
     assert "How this helps ship production code" in guide
+    assert "launch-to-field" in guide
     assert "```mermaid" in guide
     assert "Candidate merge blocked" in guide
     build_guide = BUILD_GUIDE.read_text(encoding="utf-8")
@@ -32,6 +34,9 @@ def test_guide_exists_and_local_references_are_present():
     assert "tools/claude_course_adapter.py" in showcase
     assert "REVIEW_REQUIRED" in showcase
     assert "rows_total" in showcase
+    role_guide = ROLE_GUIDE.read_text(encoding="utf-8")
+    assert "Requirement-to-evidence map" in role_guide
+    assert "tools/launch_to_field_report.py" in role_guide
 
     for relative_path in (
         "README.md",
@@ -44,6 +49,7 @@ def test_guide_exists_and_local_references_are_present():
         "tools/render_assurance_summary.py",
         "tools/golden_trace_report.py",
         "SHOWCASE.md",
+        "ROLE_ALIGNMENT_GUIDE.md",
         "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",
         "skills/agent-assurance-harness/SKILL.md",

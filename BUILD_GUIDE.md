@@ -94,6 +94,7 @@ The current progression is intentionally operational:
 | 30 | Course Doctor review workflow | Whether findings become complete, metadata-only review packets and unresolved findings require human adjudication |
 | 31 | Untrusted claim-proposal worker | Whether agent-suggested claims are validated before they reach evidence evaluation |
 | 32 | Showcase hardening and bounded live-provider completion | Whether an outside reviewer can run the safe path quickly and the local live boundary refuses unsafe transport behavior |
+| 35 | Launch-to-field enablement pack | Whether a changing capability becomes a complete, source-checked, feedback-aware pack ready for human approval |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -718,6 +719,34 @@ An older private draft without structured claim IDs, source references, read dat
 review locations is outside this adapter's contract. Feeding it directly would create
 false precision, so it needs a separate local-only manifest and human approval. No
 private draft or Google document is a public fixture.
+
+### Launch-to-field enablement pack
+
+Phase 35 adds the first public workflow aimed at technical enablement rather than only
+content verification. A launch-to-field pack is a bounded contract for a demo, lab,
+quick-reference guide, audience, source, freshness state, claim-support state, and
+synthetic feedback signals.
+
+The CLI runs one ready case and four degraded cases:
+
+```bash
+uv run python tools/launch_to_field_report.py \
+  --output /tmp/agent-reliability-launch-to-field.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The ready case is marked `ready_for_human_approval`. Stale source evidence, fresh
+evidence from the wrong source, unsupported claims, and an incomplete asset set are
+blocked or refused with stable reasons. The workflow deliberately stops before
+rewriting or publishing content.
+
+This pattern demonstrates scale through a repeatable self-service path, not through a
+claim about live learner counts or customer adoption. The public
+[`ROLE_ALIGNMENT_GUIDE.md`](ROLE_ALIGNMENT_GUIDE.md) maps the path to the role
+requirements it is intended to demonstrate. The reusable design patterns are kept in
+the separate public
+[`agent-systems-design-guide`](https://github.com/julie-elkins/agent-systems-design-guide).
 
 ### Operational ship gate
 

@@ -70,6 +70,15 @@ negative control and make the delivery gate fail when it is not caught.
 - An unstructured private draft is not a public fixture. Do not infer timestamps,
   freshness windows, or source locations that the draft does not provide; require a
   separate local-only manifest and human approval before adapting it.
+- When the change creates technical enablement content, require a launch-to-field
+  pack (a demo, hands-on lab, and quick-reference guide that another person can use)
+  with an audience identifier, source contract, freshness state, claim-support state,
+  feedback signal, and human-approval boundary. The pack is evidence of a workflow,
+  not publication authority.
+- Keep role-alignment evidence separate from engineering claims. A portfolio guide may
+  map a requirement to a runnable artifact, but it must name what the artifact does
+  not prove. Do not turn synthetic counts into claims about live learners, customer
+  adoption, deployment success, or general model quality.
 
 ## Build path
 
@@ -112,6 +121,10 @@ negative control and make the delivery gate fail when it is not caught.
 17. If adapting an existing public verifier, run the full adapter locally against a
     pinned checkout, report evidence tiers separately, inspect every concrete finding,
     and keep the network path outside CI.
+18. For launch-to-field enablement, verify that a complete pack contains a demo, lab,
+    quick reference, and metadata-only feedback signal. Run at least one ready case
+    and degraded stale, wrong-source, unsupported-claim, and incomplete-pack controls.
+    A ready result must say that human approval is still required.
 
 ## Limits
 

@@ -17,6 +17,8 @@ production safely.
 For an outside reviewer, start with [`SHOWCASE.md`](SHOWCASE.md). It separates the
 repeatable synthetic CI path from the optional public-course demonstration so a changing
 course checkout or live network cannot make the required gate unreliable.
+The [`ROLE_ALIGNMENT_GUIDE.md`](ROLE_ALIGNMENT_GUIDE.md) explains how the runnable
+artifacts map to technical education, developer experience, and enablement work.
 
 ## What this project does
 
@@ -158,6 +160,32 @@ blocker.
 
 It remains a release assurance layer, not a substitute for integration tests, deployment
 controls, monitoring, incident response, or live-model evaluation.
+
+## Launch-to-field enablement
+
+A launch-to-field pack is a reusable bundle contract for turning one changing technical
+capability into a demo, hands-on lab, and quick-reference guide. The workflow also
+records the intended audience and synthetic feedback signals, because a pack that can
+be generated but never evaluated by another person is not yet self-service enablement.
+
+Run it with:
+
+```bash
+uv run python tools/launch_to_field_report.py \
+  --output /tmp/agent-reliability-launch-to-field.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The positive case is marked `ready_for_human_approval`. The degraded cases must catch:
+
+- stale approved-source evidence;
+- fresh evidence from the wrong source;
+- an unsupported claim; and
+- a missing required asset.
+
+The report is metadata-only. It does not contain the generated lesson, demo code,
+provider output, or feedback text, and a ready result is not permission to publish.
 
 ## Technical content assurance
 

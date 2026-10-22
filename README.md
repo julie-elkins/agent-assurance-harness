@@ -287,6 +287,29 @@ The packet contains identifiers, states, priorities, dates, URLs, and actions on
 It does not contain course claims, quotations, source bytes, local paths, or raw
 exceptions. A human must resolve, defer, or accept each finding before a content change.
 
+## Record the human disposition
+
+Phase 40 adds a separate adjudication record (a metadata-only record of what a human
+decided about each finding). It binds the decisions to the packet digest, refuses unknown
+or omitted finding IDs, and keeps reviewer rationale out of the public artifact because
+rationale can accidentally reproduce protected course text.
+
+Copy the packet digest, course revision, and finding IDs into a local decisions file based
+on `examples/public-course-demo/review-decisions.template.json`, then run:
+
+```bash
+uv run python tools/public_course_review_adjudication.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --decisions /tmp/claude-course-review-decisions.json \
+  --output /tmp/claude-course-review-adjudication.json \
+  --markdown \
+  --fail-on-open
+```
+
+`adjudicated` means every known finding has an explicit disposition. It does not mean the
+course is technically correct or authorises an edit or publication. The report keeps the
+course evidence decision separate, so unresolved weaker evidence remains visible.
+
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
 fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the

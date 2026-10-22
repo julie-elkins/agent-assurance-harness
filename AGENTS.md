@@ -140,6 +140,10 @@ missing, and what the result does not prove.
 - Public-course review packets may add queue priorities, recommended actions, and
   initial human dispositions to those safe locators. They must remain bounded,
   metadata-only worklists; no packet may edit, approve, or publish course content.
+- Public-course adjudication may record only a packet digest, course revision, reviewer
+  identifier, finding identifiers, and bounded dispositions. It must reject unknown or
+  omitted findings and must never accept free-form rationale, edit course files, or
+  authorise publication.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

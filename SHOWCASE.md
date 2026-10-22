@@ -171,6 +171,25 @@ uv run python tools/public_course_review_packet.py \
 The packet maps each finding to a lesson, claim number, evidence tier, priority, and
 recommended action. It starts every item as `open`; human review is still required.
 
+## Record the review decision
+
+The packet is a worklist, not a decision. Copy the packet digest and safe finding IDs
+into a local decisions file based on
+`examples/public-course-demo/review-decisions.template.json`, then run:
+
+```bash
+uv run python tools/public_course_review_adjudication.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --decisions /tmp/claude-course-review-decisions.json \
+  --output /tmp/claude-course-review-adjudication.json \
+  --markdown \
+  --fail-on-open
+```
+
+The result records dispositions without exporting course text or reviewer rationale.
+`adjudicated` means every known finding has a disposition; the underlying course
+evidence decision and human approval boundary remain visible.
+
 The exact counts are part of the current synthetic fixture contract. A changed count
 should prompt a deliberate fixture or scenario review, not a README-only update.
 

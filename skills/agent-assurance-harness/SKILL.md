@@ -86,6 +86,9 @@ negative control and make the delivery gate fail when it is not caught.
 - Public-course review packets may turn those locators into bounded priorities,
   recommended actions, and initial `open` dispositions. They must not include claim
   text, quotations, source bytes, local paths, raw exceptions, or write authority.
+- Public-course adjudication must bind every disposition to the exact packet digest and
+  course revision. Reject unknown, duplicate, omitted, or free-form decisions; keep
+  `adjudicated` separate from technical correctness and publication authority.
 
 ## Build path
 
@@ -148,6 +151,9 @@ negative control and make the delivery gate fail when it is not caught.
 22. For a public-course review packet, map each concrete evidence state to a stable
     priority and recommended action, bound the number of findings, start every item
     as `open`, and keep human disposition separate from content editing or publication.
+23. For public-course adjudication, fingerprint the safe packet, require one bounded
+    disposition per known finding, test digest and omission failures, and keep the
+    adjudication record separate from content approval or publishing.
 
 ## Limits
 

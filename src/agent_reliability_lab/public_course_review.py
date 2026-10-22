@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass
 from enum import Enum
@@ -12,7 +13,7 @@ from .claude_course_adapter import (
 )
 
 
-PUBLIC_COURSE_REVIEW_PACKET_VERSION = 1
+PUBLIC_COURSE_REVIEW_PACKET_VERSION = 2
 DEFAULT_MAX_FINDINGS = 100
 
 
@@ -112,6 +113,30 @@ class PublicCourseReviewPacket:
             for finding in self.findings
         )
 
+    @property
+    def packet_digest(self) -> str:
+        """Return a stable fingerprint of the safe review queue."""
+
+        payload = _packet_digest_payload(
+            version=PUBLIC_COURSE_REVIEW_PACKET_VERSION,
+            course_id=self.course_id,
+            course_revision=self.course_revision,
+            adapter_decision=self.adapter_decision,
+            counts=self.counts,
+            total_known_findings=self.total_known_findings,
+            total_unverified_rows=self.total_unverified_rows,
+            findings=self.findings,
+            max_findings=self.max_findings,
+            truncated=self.truncated,
+            refusal_code=self.refusal_code,
+        )
+        encoded = json.dumps(
+            payload,
+            sort_keys=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+        return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
     def to_dict(self) -> dict[str, object]:
         """Return the complete metadata-only packet."""
 
@@ -124,6 +149,7 @@ class PublicCourseReviewPacket:
             "adapter_decision": self.adapter_decision,
             "decision": self.decision,
             "passed": self.passed,
+            "packet_digest": self.packet_digest,
             "counts": self.counts,
             "total_known_findings": self.total_known_findings,
             "total_unverified_rows": self.total_unverified_rows,
@@ -272,3 +298,70 @@ def packet_json(packet: PublicCourseReviewPacket) -> str:
     """Serialize a packet for a local file or caller."""
 
     return json.dumps(packet.to_dict(), indent=2, sort_keys=True) + "\n"
+
+
+def _packet_digest_payload(
+    *,
+    version: int,
+    course_id: str,
+    course_revision: str | None,
+    adapter_decision: str,
+    counts: dict[str, int | bool],
+    total_known_findings: int,
+    total_unverified_rows: int,
+    findings: tuple[PublicCourseReviewFinding, ...]
+    | list[dict[str, object]],
+    max_findings: int,
+    truncated: bool,
+    refusal_code: str | None,
+) -> dict[str, object]:
+    """Return the disposition-independent packet identity."""
+
+    safe_findings: list[dict[str, object]] = []
+    for finding in findings:
+        if isinstance(finding, PublicCourseReviewFinding):
+            safe_findings.append(
+                {
+                    "finding_id": finding.finding_id,
+                    "lesson_id": finding.lesson_id,
+                    "claim_index": finding.claim_index,
+                    "evidence_tier": finding.evidence_tier,
+                    "state": finding.state.value,
+                    "reason_code": finding.reason_code,
+                    "source_url": finding.source_url,
+                    "source_read_date": finding.source_read_date,
+                    "priority": finding.priority.value,
+                    "recommended_action": finding.recommended_action,
+                }
+            )
+        else:
+            safe_findings.append(
+                {
+                    key: finding.get(key)
+                    for key in (
+                        "finding_id",
+                        "lesson_id",
+                        "claim_index",
+                        "evidence_tier",
+                        "state",
+                        "reason_code",
+                        "source_url",
+                        "source_read_date",
+                        "priority",
+                        "recommended_action",
+                    )
+                }
+            )
+    return {
+        "public_course_review_packet_version": version,
+        "course_id": course_id,
+        "course_revision": course_revision,
+        "adapter_decision": adapter_decision,
+        "counts": counts,
+        "total_known_findings": total_known_findings,
+        "total_unverified_rows": total_unverified_rows,
+        "findings": safe_findings,
+        "max_findings": max_findings,
+        "truncated": truncated,
+        "refusal_code": refusal_code,
+    }

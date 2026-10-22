@@ -237,6 +237,10 @@ text or source paths. An explicitly requested local review index may map those i
 to caller-supplied relative paths and optional line ranges; it is not a CI artifact. The
 Markdown renderer translates stable reason codes into plain-language review guidance.
 
+Phase 40 adds a separate public-course adjudication boundary. A reviewer disposition is
+bound to the packet digest and course revision, but it remains a decision record rather
+than permission to edit or publish content.
+
 Phase 34 adds a provider-neutral adapter for a separately checked-out public Claude
 course verifier. It reuses that verifier's claim extraction and citation checks, records
 the pinned checkout revision and bounded page fetches, and preserves guide, verbatim,

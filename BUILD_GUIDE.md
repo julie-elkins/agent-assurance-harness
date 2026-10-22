@@ -99,6 +99,7 @@ The current progression is intentionally operational:
 | 37 | Portfolio assurance orchestration | Whether independent content, enablement, instructor, agent, and delivery lanes join into one complete reviewer handoff without hiding missing work |
 | 38 | Optional public-course portfolio lane | Whether a real public course checkout can add revision, evidence-tier, and safe finding-location metadata without widening the CI boundary |
 | 39 | Public-course review packet | Whether concrete course findings become a bounded, actionable human worklist without copying course text |
+| 40 | Public-course adjudication | Whether a human disposition is bound to the exact review packet without becoming automatic content approval |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -836,6 +837,18 @@ uv run python tools/public_course_review_packet.py \
 The packet is bounded by `--max-findings`, keeps unresolved evidence distinct from
 verified rows, and refuses the run when the course root or verifier is unavailable.
 Claim text, quotations, source bytes, and local paths remain outside the packet.
+
+### Public-course adjudication
+
+Phase 40 adds the decision boundary after the review packet. A reviewer supplies a
+metadata-only manifest containing the packet digest, course revision, reviewer ID, and
+one disposition per known finding. The adjudicator rejects unknown IDs, duplicate or
+omitted decisions, digest mismatches, truncated packets, and free-form metadata that
+could carry course text.
+
+This is deliberately not a publisher. `adjudicated` means the known worklist has
+explicit human dispositions; the underlying course evidence decision remains separate,
+and the output still requires human approval before a content change.
 
 ### Operational ship gate
 

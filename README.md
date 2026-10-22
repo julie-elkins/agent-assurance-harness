@@ -124,6 +124,33 @@ This proves the agent's decisions survive the same JSONL (JSON Lines, one JSON o
 per line) boundary used by external adapters. The ship gate requires both the direct
 content report and this adapter-conformance report.
 
+## Developer workflow assurance reference lane
+
+The developer workflow lane applies the same evidence contract to coding-agent work:
+diff inspection, tests, security checks, dependency verification, abstention for
+ambiguous scope, safe handling of untrusted build output, and authorization for protected
+release actions.
+
+Run the six-pack synthetic demonstration:
+
+```bash
+uv run python tools/developer_workflow_report.py \
+  --output /tmp/agent-reliability-developer-workflow.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The command runs a guarded reference adapter and an intentionally degraded negative
+control. The guarded path must pass; the degraded path must be blocked because the
+synthetic `developer-green-but-unaudited` task has a green test result but no observed
+security evidence. This is evidence completeness (whether every required check was
+observed), not proof that a real patch is correct.
+
+The lane is offline and metadata-only. It contains no model calls, provider credentials,
+live repository execution, raw prompts, tool arguments, or tool output. See the
+[Developer Workflow Assurance guide](docs/DEVELOPER_WORKFLOW_ASSURANCE.md) for the
+reviewer path and its limits.
+
 Phase 29 adds a bounded course-freshness coordinator and one-course workers:
 
 ```bash

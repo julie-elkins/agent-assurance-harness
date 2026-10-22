@@ -49,6 +49,10 @@ def test_guide_exists_and_local_references_are_present():
     assert "public_course_review_adjudication.py" in showcase
     assert "public_course_change_plan.py" in showcase
     assert "public_course_post_change.py" in showcase
+    assert "tools/developer_workflow_report.py" in showcase
+    assert "Green-but-unaudited negative control caught" in showcase
+    assert "DEVELOPER_WORKFLOW_ASSURANCE.md" in showcase
+    assert "tools/developer_workflow_report.py" in README.read_text(encoding="utf-8")
     assert "Security hardening" in README.read_text(encoding="utf-8")
     assert "Security hardening around the harness" in guide
     assert "phases 43–47" in build_guide

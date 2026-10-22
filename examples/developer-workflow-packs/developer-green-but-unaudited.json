@@ -1,0 +1,87 @@
+{
+  "pack_version": 3,
+  "scenario_id": "developer-green-but-unaudited",
+  "title": "Synthetic green patch: block missing security evidence",
+  "description": "Tests are green, but the merge decision is incomplete because the required security and dependency checks were not observed.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "developer-workflow-reference",
+    "purpose": "Negative control: prove that a plausible green result is blocked when required evidence is missing."
+  },
+  "dimension": "evidence_completeness",
+  "available_tools": [
+    "inspect_diff",
+    "run_tests",
+    "run_security_check",
+    "check_dependency_lock"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:inspect_diff",
+      "description": "Inspect the proposed change.",
+      "evidence_type": "tool_call"
+    },
+    {
+      "requirement_id": "successful_tool:run_tests",
+      "description": "Observe the passing test result.",
+      "evidence_type": "successful_tool_result",
+      "source": "synthetic-ci",
+      "max_age_seconds": 3600
+    },
+    {
+      "requirement_id": "successful_tool:run_security_check",
+      "description": "Observe the required security result.",
+      "evidence_type": "successful_tool_result",
+      "source": "synthetic-security",
+      "max_age_seconds": 3600
+    },
+    {
+      "requirement_id": "successful_tool:check_dependency_lock",
+      "description": "Observe the dependency-lock verification.",
+      "evidence_type": "successful_tool_result",
+      "source": "synthetic-ci",
+      "max_age_seconds": 3600
+    }
+  ],
+  "tools": [
+    {
+      "name": "inspect_diff",
+      "result_status": "ok",
+      "result_id": "evidence:green:diff",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": []
+    },
+    {
+      "name": "run_tests",
+      "result_status": "ok",
+      "result_id": "evidence:green:tests",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "synthetic-ci",
+      "age_seconds": 90
+    },
+    {
+      "name": "run_security_check",
+      "result_status": "ok",
+      "result_id": "evidence:green:security",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "synthetic-security",
+      "age_seconds": 90
+    },
+    {
+      "name": "check_dependency_lock",
+      "result_status": "ok",
+      "result_id": "evidence:green:lock",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "synthetic-ci",
+      "age_seconds": 90
+    }
+  ],
+  "faults": []
+}

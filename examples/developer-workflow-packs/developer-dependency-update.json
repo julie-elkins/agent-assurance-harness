@@ -1,0 +1,69 @@
+{
+  "pack_version": 3,
+  "scenario_id": "developer-dependency-update",
+  "title": "Synthetic dependency update: verify the lockfile path",
+  "description": "A dependency change needs diff review, lockfile verification, and tests before it can be treated as ready.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "developer-workflow-reference",
+    "purpose": "Show that dependency changes need evidence from both the lockfile and test workflow."
+  },
+  "dimension": "evidence_completeness",
+  "available_tools": [
+    "inspect_diff",
+    "check_dependency_lock",
+    "run_tests"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:inspect_diff",
+      "description": "Inspect the dependency change.",
+      "evidence_type": "tool_call"
+    },
+    {
+      "requirement_id": "successful_tool:check_dependency_lock",
+      "description": "Observe a valid synthetic lockfile check.",
+      "evidence_type": "successful_tool_result",
+      "source": "synthetic-ci",
+      "max_age_seconds": 3600
+    },
+    {
+      "requirement_id": "successful_tool:run_tests",
+      "description": "Observe tests after the dependency change.",
+      "evidence_type": "successful_tool_result",
+      "source": "synthetic-ci",
+      "max_age_seconds": 3600
+    }
+  ],
+  "tools": [
+    {
+      "name": "inspect_diff",
+      "result_status": "ok",
+      "result_id": "evidence:dependency:diff",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": []
+    },
+    {
+      "name": "check_dependency_lock",
+      "result_status": "ok",
+      "result_id": "evidence:dependency:lock",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "synthetic-ci",
+      "age_seconds": 180
+    },
+    {
+      "name": "run_tests",
+      "result_status": "ok",
+      "result_id": "evidence:dependency:tests",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": [],
+      "source": "synthetic-ci",
+      "age_seconds": 180
+    }
+  ],
+  "faults": []
+}

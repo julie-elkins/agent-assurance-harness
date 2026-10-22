@@ -187,6 +187,27 @@ The positive case is marked `ready_for_human_approval`. The degraded cases must 
 The report is metadata-only. It does not contain the generated lesson, demo code,
 provider output, or feedback text, and a ready result is not permission to publish.
 
+## Instructor calibration
+
+Instructor calibration means applying the same observer rubric to multiple technical
+teaching sessions so coaching decisions do not depend on an undocumented personal
+standard. The public workflow records only criterion identifiers, observation states,
+feedback counts, and coaching codes.
+
+Run the synthetic path with:
+
+```bash
+uv run python tools/instructor_calibration_report.py \
+  --output /tmp/agent-reliability-instructor-calibration.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The ready case demonstrates technical accuracy, hands-on execution, live debugging,
+audience adaptation, and the safety boundary. Degraded cases return coaching
+recommendations or refuse incomplete observation records. The result is ready for
+human sign-off, not automatic instructor certification.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

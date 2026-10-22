@@ -21,6 +21,9 @@ from agent_reliability_lab.course_doctor import (
 from agent_reliability_lab.enablement_pack import (
     run_reference_launch_to_field_suite,
 )
+from agent_reliability_lab.instructor_calibration import (
+    run_reference_instructor_calibration_suite,
+)
 from agent_reliability_lab.runner import run_comparison
 
 
@@ -43,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
 
     comparison = run_comparison(include_mutations=True)
     enablement_report = run_reference_launch_to_field_suite()
+    calibration_report = run_reference_instructor_calibration_suite()
     with tempfile.TemporaryDirectory(prefix="agent-assurance-showcase-") as path:
         requests = load_local_course_manifest(
             DEMO_ROOT / "manifest.json",
@@ -115,6 +119,21 @@ def main(argv: list[str] | None = None) -> int:
                 if case_id == "launch-pack-ready"
             ),
         },
+        "instructor_calibration": {
+            "passed": calibration_report.passed,
+            "controls_caught": list(calibration_report.controls_caught),
+            "degraded_controls_caught": [
+                case_id
+                for case_id in calibration_report.controls_caught
+                if case_id != "instructor-ready"
+            ],
+            "controls_missed": list(calibration_report.controls_missed),
+            "ready_case": next(
+                report.to_dict()
+                for case_id, report in calibration_report.reports
+                if case_id == "instructor-ready"
+            ),
+        },
         "synthetic_finding_example": {
             "course_id": example_packet.course_id,
             "what_needs_attention": describe_finding_reason(
@@ -152,10 +171,12 @@ def _passed(summary: dict[str, object]) -> bool:
     synthetic = summary["synthetic_assurance"]
     course = summary["course_doctor"]
     enablement = summary["launch_to_field"]
+    calibration = summary["instructor_calibration"]
     if (
         not isinstance(synthetic, dict)
         or not isinstance(course, dict)
         or not isinstance(enablement, dict)
+        or not isinstance(calibration, dict)
     ):
         return False
     return (
@@ -166,6 +187,9 @@ def _passed(summary: dict[str, object]) -> bool:
         and enablement["passed"] is True
         and bool(enablement["controls_caught"])
         and enablement["controls_missed"] == []
+        and calibration["passed"] is True
+        and bool(calibration["controls_caught"])
+        and calibration["controls_missed"] == []
     )
 
 
@@ -175,11 +199,13 @@ def _markdown(summary: dict[str, object]) -> str:
     synthetic = summary["synthetic_assurance"]
     course = summary["course_doctor"]
     enablement = summary["launch_to_field"]
+    calibration = summary["instructor_calibration"]
     example = summary["synthetic_finding_example"]
     if (
         not isinstance(synthetic, dict)
         or not isinstance(course, dict)
         or not isinstance(enablement, dict)
+        or not isinstance(calibration, dict)
         or not isinstance(example, dict)
     ):
         raise ValueError("showcase summary has an invalid internal shape")
@@ -221,6 +247,16 @@ def _markdown(summary: dict[str, object]) -> str:
         "The ready pack still requires human approval before publication. Its degraded "
         "controls demonstrate stale, wrong-source, unsupported-claim, and incomplete-pack "
         "behavior.",
+        "",
+        "## Instructor calibration",
+        "",
+        f"- Ready for human sign-off: `{'PASS' if calibration['passed'] else 'BLOCKED'}`",
+        f"- Degraded controls caught: `{len(calibration['degraded_controls_caught'])}`",
+        "- Rubric covers: `technical_accuracy`, `hands_on_execution`, "
+        "`live_debugging`, `audience_adaptation`, and `safety_boundary`",
+        "",
+        "The result recommends coaching or human sign-off; it does not certify an "
+        "instructor automatically.",
         "",
         "This demo is synthetic, offline, and metadata-only.",
         "",

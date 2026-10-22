@@ -205,6 +205,28 @@ claims, and an incomplete asset set. A ready result means only that the pack is 
 for human approval; it does not publish or rewrite content. The report contains
 identifiers, states, counts, and hashes only.
 
+## Instructor calibration
+
+The instructor-calibration workflow demonstrates the instructor-development side of
+technical enablement. An observer rubric is a fixed set of criteria used to evaluate
+the same teaching behaviors consistently. The synthetic rubric checks technical
+accuracy, hands-on execution, live debugging, audience adaptation, and the safety
+boundary, then routes missing behaviors to coaching recommendations.
+
+Run it with:
+
+```bash
+uv run python tools/instructor_calibration_report.py \
+  --output /tmp/agent-reliability-instructor-calibration.json \
+  --markdown \
+  --fail-on-findings
+```
+
+A ready result means `ready_for_human_signoff`; it does not certify an instructor.
+The degraded controls cover missing lab evidence, missing adaptation evidence, missing
+feedback, and an incomplete observation rubric. The report contains rubric identifiers,
+states, counts, and recommendations only.
+
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
 fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the

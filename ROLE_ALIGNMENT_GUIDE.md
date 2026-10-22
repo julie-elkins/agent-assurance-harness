@@ -42,7 +42,7 @@ feedback metadata before marking the pack ready for human approval.
 | Launch-ready enablement | `tools/launch_to_field_report.py` and `enablement_pack.py` | One workflow produces the metadata contract for a demo, lab, quick reference, and feedback loop. |
 | Self-service resources | CLI tools, `SHOWCASE.md`, `GUIDE.md`, reusable skill | Another engineer can run the workflow without the author in the room. |
 | Fast iteration | Deterministic fixtures, focused negative controls, provider-neutral boundaries | New capabilities can be added without waiting for provider credentials or live network state. |
-| Instructor quality | Course Doctor packets and the design-guide pattern for calibration | Review decisions are visible and unresolved findings remain human work. |
+| Instructor quality | `tools/instructor_calibration_report.py` and the observer rubric | Missing teaching behaviors become coaching recommendations, while readiness remains a human sign-off decision. |
 | Feedback to product or content owners | Synthetic feedback signals in the launch pack | Usage signals can lead to a documented retain, clarify, revise, or retire action. |
 | Portfolio ownership | Public guides, tests, runnable examples, and limitations | The work is inspectable rather than represented only by a résumé bullet. |
 

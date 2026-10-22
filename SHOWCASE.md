@@ -11,6 +11,8 @@ The showcase has two lanes:
    against a real public course checkout.
 3. A launch-to-field lane for demonstrating how a capability becomes a demo, lab, and
    quick-reference guide with freshness and feedback controls.
+4. An instructor-calibration lane for demonstrating observer consistency and coaching
+   recommendations.
 
 The first lane is the required proof. The second lane is the practical demonstration.
 Keeping them separate prevents a changing course repository or a network outage from
@@ -26,9 +28,9 @@ uv run python tools/showcase_demo.py --markdown
 ```
 
 The command runs the guarded synthetic agent, evaluator false-pass controls, mutation
-controls, one Course Doctor review packet, and the launch-to-field enablement pack. A
-mutation control is a deliberately changed synthetic result used to prove that the
-evaluator catches a known failure.
+controls, one Course Doctor review packet, the launch-to-field enablement pack, and
+the instructor-calibration rubric. A mutation control is a deliberately changed
+synthetic result used to prove that the evaluator catches a known failure.
 
 The output contains identifiers, statuses, counts, and hashes only. It does not contain
 lesson text, prompts, credentials, provider output, or source paths.
@@ -72,6 +74,16 @@ metadata; the Markdown output uses plain-language labels and shortened detail.
 
 The ready pack still requires human approval before publication. Its degraded controls
 demonstrate stale, wrong-source, unsupported-claim, and incomplete-pack behavior.
+
+## Instructor calibration
+
+- Ready for human sign-off: `PASS`
+- Degraded controls caught: `4`
+- Rubric covers: `technical_accuracy`, `hands_on_execution`, `live_debugging`,
+  `audience_adaptation`, and `safety_boundary`
+
+The result recommends coaching or human sign-off; it does not certify an instructor
+automatically.
 
 This demo is synthetic, offline, and metadata-only.
 ```

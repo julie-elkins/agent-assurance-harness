@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agent-reliability-lab"
-version = "0.60.0"
+version = "0.61.0"
 description = "Production assurance harness for AI agents: evidence, abstention, safety, privacy, CI gates, and release controls."
 readme = "README.md"
 requires-python = ">=3.11"

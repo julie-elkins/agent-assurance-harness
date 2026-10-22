@@ -260,6 +260,13 @@ from .public_course_adjudication import (
     adjudication_json,
     build_public_course_adjudication,
 )
+from .public_course_change_plan import (
+    PUBLIC_COURSE_CHANGE_PLAN_VERSION,
+    PublicCourseChangePlan,
+    PublicCourseChangePlanItem,
+    build_public_course_change_plan,
+    change_plan_json,
+)
 from .claude_course_adapter import (
     CLAUDE_COURSE_ADAPTER_VERSION,
     DEFAULT_MAX_REQUESTS,
@@ -534,6 +541,11 @@ __all__ = [
     "PublicCourseAdjudication",
     "adjudication_json",
     "build_public_course_adjudication",
+    "PUBLIC_COURSE_CHANGE_PLAN_VERSION",
+    "PublicCourseChangePlan",
+    "PublicCourseChangePlanItem",
+    "build_public_course_change_plan",
+    "change_plan_json",
     "CLAUDE_COURSE_ADAPTER_VERSION",
     "DEFAULT_MAX_REQUESTS",
     "DEFAULT_MAX_ROWS",

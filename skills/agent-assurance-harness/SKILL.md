@@ -89,6 +89,10 @@ negative control and make the delivery gate fail when it is not caught.
 - Public-course adjudication must bind every disposition to the exact packet digest and
   course revision. Reject unknown, duplicate, omitted, or free-form decisions; keep
   `adjudicated` separate from technical correctness and publication authority.
+- Public-course change plans may carry only safe locations, bounded actions,
+  dispositions, and required re-checks. Refuse open, deferred, mismatched, truncated,
+  or incomplete state; never emit replacement wording, diffs, file writes, or publish
+  authority.
 
 ## Build path
 
@@ -154,6 +158,9 @@ negative control and make the delivery gate fail when it is not caught.
 23. For public-course adjudication, fingerprint the safe packet, require one bounded
     disposition per known finding, test digest and omission failures, and keep the
     adjudication record separate from content approval or publishing.
+24. For a public-course change plan, verify packet and adjudication identity, block open
+    or deferred findings, emit a required post-change re-check, and test that no content
+    or write capability crosses the boundary.
 
 ## Limits
 

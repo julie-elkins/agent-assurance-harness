@@ -190,6 +190,23 @@ The result records dispositions without exporting course text or reviewer ration
 `adjudicated` means every known finding has a disposition; the underlying course
 evidence decision and human approval boundary remain visible.
 
+## Create the change plan
+
+After adjudication, generate the final metadata-only handoff before a future human edit:
+
+```bash
+uv run python tools/public_course_change_plan.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --adjudication /tmp/claude-course-review-adjudication.json \
+  --output /tmp/claude-course-change-plan.json \
+  --markdown \
+  --fail-on-block
+```
+
+The plan shows the safe lesson and claim locations, proposed action, disposition, and
+required re-check. It contains no replacement wording or source text. A ready plan still
+requires human approval, and a fresh course-verifier run after the edit.
+
 The exact counts are part of the current synthetic fixture contract. A changed count
 should prompt a deliberate fixture or scenario review, not a README-only update.
 

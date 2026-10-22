@@ -144,6 +144,10 @@ missing, and what the result does not prove.
   identifier, finding identifiers, and bounded dispositions. It must reject unknown or
   omitted findings and must never accept free-form rationale, edit course files, or
   authorise publication.
+- Public-course change plans may contain only safe locations, bounded actions,
+  dispositions, and re-check requirements. They must refuse open, deferred, mismatched,
+  truncated, or incomplete review state and must never emit replacement wording, diffs,
+  file writes, or publication authority.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

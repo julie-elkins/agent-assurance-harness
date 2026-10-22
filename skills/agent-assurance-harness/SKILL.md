@@ -83,6 +83,9 @@ negative control and make the delivery gate fail when it is not caught.
   course only through the existing root-confined verifier adapter. Preserve its
   evidence tiers and unresolved states; emit only revision, counts, dates, URLs, and
   safe lesson/claim locators. CI must remain synthetic and offline.
+- Public-course review packets may turn those locators into bounded priorities,
+  recommended actions, and initial `open` dispositions. They must not include claim
+  text, quotations, source bytes, local paths, raw exceptions, or write authority.
 
 ## Build path
 
@@ -142,6 +145,9 @@ negative control and make the delivery gate fail when it is not caught.
     tiers and unresolved states, include a bounded finding-location summary, and test
     that claim text, quotes, source bytes, local paths, and raw exceptions cannot enter
     the portfolio report.
+22. For a public-course review packet, map each concrete evidence state to a stable
+    priority and recommended action, bound the number of findings, start every item
+    as `open`, and keep human disposition separate from content editing or publication.
 
 ## Limits
 

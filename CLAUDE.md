@@ -39,6 +39,10 @@ When a caller supplies a checked-out public Claude course, the portfolio report 
 an opt-in local lane. That lane preserves evidence tiers and safe claim locations only;
 the course text, quotes, source bytes, and local checkout path stay in-process.
 
+The public-course review packet turns those locations into an open human worklist with
+stable priorities and next actions. It does not make the disposition decision or write
+back to the course.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

@@ -24,6 +24,7 @@ from .claude_course_adapter import (
 from .course_doctor import run_reference_course_doctor_suite
 from .enablement_pack import run_reference_launch_to_field_suite
 from .instructor_calibration import run_reference_instructor_calibration_suite
+from .public_course_review import build_public_course_review_packet
 from .runner import run_comparison
 
 
@@ -605,6 +606,8 @@ def build_public_course_lane(
         "known_finding_count": len(report.known_findings),
         "findings": list(finding_summaries),
     }
+    review_packet = build_public_course_review_packet(report)
+    summary["review_packet"] = review_packet.to_dict()
     if report.refusal_code is not None:
         status = PortfolioLaneStatus.BLOCKED
         controls_caught: tuple[str, ...] = ()

@@ -154,6 +154,23 @@ The current decision is `review_required`, which means a human should inspect th
 locations before changing course content. The report does not contain lesson text,
 quotes, source bytes, or the local checkout path.
 
+## Turn public-course findings into a review packet
+
+After the portfolio run identifies findings, create the bounded human worklist:
+
+```bash
+uv run python tools/public_course_review_packet.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --output /tmp/claude-course-review-packet.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The packet maps each finding to a lesson, claim number, evidence tier, priority, and
+recommended action. It starts every item as `open`; human review is still required.
+
 The exact counts are part of the current synthetic fixture contract. A changed count
 should prompt a deliberate fixture or scenario review, not a README-only update.
 

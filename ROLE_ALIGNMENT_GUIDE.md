@@ -74,6 +74,7 @@ it is not a claim that every course row is incorrect.
 | Instructor quality | `tools/instructor_calibration_report.py` and the observer rubric | Missing teaching behaviors become coaching recommendations, while readiness remains a human sign-off decision. |
 | Reviewer-facing orchestration | `tools/portfolio_assurance_report.py` and inspectable lane reports | Independent evidence paths join into one report while missing or unavailable work remains blocking. |
 | Public technical-content evidence | Optional `--course-root` lane using `claude_course_adapter.py` | A real public course can be reviewed through the same metadata boundary without being copied into the harness. |
+| Actionable content review | `tools/public_course_review_packet.py` | Concrete findings become a bounded human worklist with priorities and next actions, without auto-publishing changes. |
 | Feedback to product or content owners | Synthetic feedback signals in the launch pack | Usage signals can lead to a documented retain, clarify, revise, or retire action. |
 | Portfolio ownership | Public guides, tests, runnable examples, and limitations | The work is inspectable rather than represented only by a résumé bullet. |
 

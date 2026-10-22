@@ -258,6 +258,25 @@ that were not proven by the strongest available check. The Markdown report shows
 review starts without reproducing the course claim or source quotation. A human must
 review before any content change.
 
+### Turn findings into a review packet
+
+The public-course review packet is the human worklist after verification. It maps each
+concrete finding to a safe lesson/claim location, evidence tier, stable state, queue
+priority, and recommended action. Initial disposition is always `open`.
+
+```bash
+uv run python tools/public_course_review_packet.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --output /tmp/claude-course-review-packet.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The packet is a worklist, not an approval. It does not reproduce course claims or
+source quotations, and it cannot change or publish content.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

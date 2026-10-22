@@ -137,6 +137,9 @@ missing, and what the result does not prove.
   evidence tiers, counts, dates, URLs, and safe lesson/claim locators; it must never
   emit claim text, quotes, source bytes, local paths, or raw exceptions. CI must not
   depend on that checkout or its network fetches.
+- Public-course review packets may add queue priorities, recommended actions, and
+  initial human dispositions to those safe locators. They must remain bounded,
+  metadata-only worklists; no packet may edit, approve, or publish course content.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

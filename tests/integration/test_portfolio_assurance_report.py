@@ -96,3 +96,9 @@ def test_portfolio_markdown_includes_safe_public_course_locator(monkeypatch, tmp
     assert "`abc123`" in markdown
     assert "`lesson-a` claim `1`" in markdown
     assert "must not escape" not in markdown
+
+    public_course = next(
+        lane for lane in result.to_dict()["lanes"]
+        if lane["lane_id"] == "public_course"
+    )
+    assert public_course["summary"]["review_packet"]["open_count"] == 1

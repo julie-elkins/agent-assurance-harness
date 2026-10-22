@@ -44,6 +44,8 @@ def test_guide_exists_and_local_references_are_present():
     assert "Instructor calibration" in showcase
     assert "Combined portfolio assurance report" in showcase
     assert "Add the public Claude course locally" in showcase
+    assert "public_course_review_packet.py" in showcase
+    assert "public_course_review_adjudication.py" in showcase
 
     for relative_path in (
         "README.md",

@@ -245,6 +245,21 @@ from .portfolio_report import (
     build_public_course_lane,
     run_reference_portfolio_report,
 )
+from .public_course_review import (
+    DEFAULT_MAX_FINDINGS,
+    PUBLIC_COURSE_REVIEW_PACKET_VERSION,
+    HumanDisposition,
+    PublicCourseReviewFinding,
+    PublicCourseReviewPacket,
+    ReviewPriority,
+    build_public_course_review_packet,
+)
+from .public_course_adjudication import (
+    PUBLIC_COURSE_ADJUDICATION_VERSION,
+    PublicCourseAdjudication,
+    adjudication_json,
+    build_public_course_adjudication,
+)
 from .claude_course_adapter import (
     CLAUDE_COURSE_ADAPTER_VERSION,
     DEFAULT_MAX_REQUESTS,
@@ -508,6 +523,17 @@ __all__ = [
     "assemble_portfolio_lanes",
     "build_public_course_lane",
     "run_reference_portfolio_report",
+    "DEFAULT_MAX_FINDINGS",
+    "PUBLIC_COURSE_REVIEW_PACKET_VERSION",
+    "HumanDisposition",
+    "PublicCourseReviewFinding",
+    "PublicCourseReviewPacket",
+    "ReviewPriority",
+    "build_public_course_review_packet",
+    "PUBLIC_COURSE_ADJUDICATION_VERSION",
+    "PublicCourseAdjudication",
+    "adjudication_json",
+    "build_public_course_adjudication",
     "CLAUDE_COURSE_ADAPTER_VERSION",
     "DEFAULT_MAX_REQUESTS",
     "DEFAULT_MAX_ROWS",

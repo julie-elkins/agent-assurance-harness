@@ -39,6 +39,10 @@ When a caller supplies a checked-out public Claude course, the portfolio report 
 an opt-in local lane. That lane preserves evidence tiers and safe claim locations only;
 the course text, quotes, source bytes, and local checkout path stay in-process.
 
+The public-course review packet turns those locations into an open human worklist with
+stable priorities and next actions. It does not make the disposition decision or write
+back to the course.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable
@@ -232,6 +236,10 @@ failed check, evidence, source, digest, and freshness condition without exportin
 text or source paths. An explicitly requested local review index may map those identifiers
 to caller-supplied relative paths and optional line ranges; it is not a CI artifact. The
 Markdown renderer translates stable reason codes into plain-language review guidance.
+
+Phase 40 adds a separate public-course adjudication boundary. A reviewer disposition is
+bound to the packet digest and course revision, but it remains a decision record rather
+than permission to edit or publish content.
 
 Phase 34 adds a provider-neutral adapter for a separately checked-out public Claude
 course verifier. It reuses that verifier's claim extraction and citation checks, records

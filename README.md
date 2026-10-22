@@ -266,6 +266,50 @@ read dates, and safe lesson/claim finding locations. `review_required` means a h
 should inspect those rows; it is not permission to change or publish course content.
 Claim text, quotations, source bytes, and local checkout paths remain outside the report.
 
+## Public-course review packet
+
+The public-course review packet turns concrete adapter findings into a bounded human
+worklist. It preserves where review starts, why the row needs attention, what evidence
+tier was checked, and the next recommended action. Every row starts with disposition
+`open`; the tool never edits or publishes course content.
+
+```bash
+uv run python tools/public_course_review_packet.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --output /tmp/claude-course-review-packet.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The packet contains identifiers, states, priorities, dates, URLs, and actions only.
+It does not contain course claims, quotations, source bytes, local paths, or raw
+exceptions. A human must resolve, defer, or accept each finding before a content change.
+
+## Record the human disposition
+
+Phase 40 adds a separate adjudication record (a metadata-only record of what a human
+decided about each finding). It binds the decisions to the packet digest, refuses unknown
+or omitted finding IDs, and keeps reviewer rationale out of the public artifact because
+rationale can accidentally reproduce protected course text.
+
+Copy the packet digest, course revision, and finding IDs into a local decisions file based
+on `examples/public-course-demo/review-decisions.template.json`, then run:
+
+```bash
+uv run python tools/public_course_review_adjudication.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --decisions /tmp/claude-course-review-decisions.json \
+  --output /tmp/claude-course-review-adjudication.json \
+  --markdown \
+  --fail-on-open
+```
+
+`adjudicated` means every known finding has an explicit disposition. It does not mean the
+course is technically correct or authorises an edit or publication. The report keeps the
+course evidence decision separate, so unresolved weaker evidence remains visible.
+
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
 fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the

@@ -1,0 +1,13 @@
+{
+  "public_course_adjudication_version": 1,
+  "packet_digest": "sha256:copy-from-the-review-packet",
+  "course_id": "claude-architect-lab",
+  "course_revision": "copy-from-the-review-packet",
+  "reviewer_id": "human-reviewer",
+  "decisions": [
+    {
+      "finding_id": "copy-from-the-review-packet",
+      "disposition": "resolved"
+    }
+  ]
+}

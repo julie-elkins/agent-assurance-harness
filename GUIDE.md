@@ -258,6 +258,53 @@ that were not proven by the strongest available check. The Markdown report shows
 review starts without reproducing the course claim or source quotation. A human must
 review before any content change.
 
+### Turn findings into a review packet
+
+The public-course review packet is the human worklist after verification. It maps each
+concrete finding to a safe lesson/claim location, evidence tier, stable state, queue
+priority, and recommended action. Initial disposition is always `open`.
+
+```bash
+uv run python tools/public_course_review_packet.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --output /tmp/claude-course-review-packet.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The packet is a worklist, not an approval. It does not reproduce course claims or
+source quotations, and it cannot change or publish content.
+
+### Record the human disposition
+
+Phase 40 adds a second boundary for human adjudication. Adjudication means recording
+what a reviewer decided about each known finding; it does not mean approving course
+correctness or authorising publication. The decision manifest is bound to the packet
+digest, a SHA-256 fingerprint of the packet's safe metadata, so a decision cannot
+silently apply to a different revision or finding queue.
+
+Use `examples/public-course-demo/review-decisions.template.json` as the shape for a
+local decision file. It intentionally has no free-form rationale field: rationale
+belongs in a private review system if it is needed, because copying it into a public
+artifact could reproduce course content.
+
+```bash
+uv run python tools/public_course_review_adjudication.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --decisions /tmp/claude-course-review-decisions.json \
+  --output /tmp/claude-course-review-adjudication.json \
+  --markdown \
+  --fail-on-open
+```
+
+The command blocks unknown IDs, duplicate decisions, omitted decisions, packet digest
+mismatches, truncated packets, and packet refusals. `adjudicated` means the known queue
+has explicit dispositions; `--fail-on-review-required` can additionally require the
+underlying course evidence decision to be complete. Neither flag authorises a content
+edit or publish.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

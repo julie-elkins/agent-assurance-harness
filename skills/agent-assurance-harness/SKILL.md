@@ -97,6 +97,10 @@ negative control and make the delivery gate fail when it is not caught.
   compare every planned target, catch new blocking findings, and distinguish verified
   targeted scope from full-course verification. A changed revision alone is not evidence
   that content improved.
+- Public repository security hardening must pin external actions to immutable commit
+  SHAs, keep workflow permissions least-privilege, lock dependency installation,
+  and separate dependency review, static analysis, secret scanning, and supply-chain
+  evidence. CODEOWNERS routing is not independent review until the ruleset requires it.
 
 ## Build path
 
@@ -168,6 +172,10 @@ negative control and make the delivery gate fail when it is not caught.
 25. For post-change verification, compare before and after metadata, require revision
     change, test target recovery and new-blocking regressions, and keep the result
     separate from full-course approval or publication.
+26. For public repository hardening, pin every external action, enforce the pins in a
+    repository boundary check, add dependency-review and CodeQL gates, configure
+    Dependabot for Python and Actions, publish Scorecard evidence, and document which
+    GitHub settings still require administrator action.
 
 ## Limits
 

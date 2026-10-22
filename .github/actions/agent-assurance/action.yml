@@ -51,14 +51,14 @@ runs:
   using: composite
   steps:
     - name: Install uv
-      uses: astral-sh/setup-uv@v6
+      uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
       with:
         python-version: ${{ inputs.python-version }}
 
     - name: Install locked harness dependencies
       shell: bash
       working-directory: ${{ github.action_path }}
-      run: uv sync --extra dev
+      run: uv sync --locked --extra dev
 
     - name: Run Agent Assurance Harness
       id: run-assurance
@@ -91,7 +91,7 @@ runs:
 
     - name: Upload metadata-only assurance report
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
       with:
         name: agent-assurance-report-${{ github.run_id }}
         path: ${{ runner.temp }}/agent-assurance-reusable-report.json

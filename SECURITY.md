@@ -50,6 +50,30 @@ uv run pytest
 The boundary check is a high-signal guard, not proof that the repository contains no
 possible secret. Reviewers must still inspect unexpected files and diffs.
 
+## Supply-chain controls
+
+Phases 43–47 add repository-level supply-chain checks:
+
+- external GitHub Actions are pinned to full commit SHAs and checked by the
+  repository boundary test;
+- Dependabot tracks Python and GitHub Actions updates;
+- pull requests run dependency review, which checks newly introduced dependency
+  risk separately from the locked-environment `pip-audit` check;
+- CodeQL analyzes the Python source for code-level security weaknesses; and
+- OpenSSF Scorecard publishes metadata-only supply-chain results.
+
+The workflow uses `uv sync --locked` so CI fails when the lockfile and project
+metadata disagree instead of silently resolving a different environment.
+
+The repository's `CODEOWNERS` file routes security-sensitive changes to Julie. It
+does not claim independent review. A second trusted reviewer and a ruleset
+requirement for one approval are still needed before that property can be claimed.
+
+Repository administrators must enable Dependabot security updates and
+non-provider secret scanning in GitHub settings. Secret-scanning validity checks
+are optional because they may send detected secret material to a provider; this
+repository's privacy boundary does not require them.
+
 ## Release promotion
 
 Phase 15 adds a manual promotion boundary after provenance. The promotion

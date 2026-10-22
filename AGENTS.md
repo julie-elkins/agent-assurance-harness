@@ -152,6 +152,9 @@ missing, and what the result does not prove.
   recover every planned target, and catch new blocking findings. It must distinguish
   verified targeted scope from full-course verification and never treat revision change
   alone as proof of content improvement.
+- Public repository workflows must pin external GitHub Actions to full commit SHAs,
+  keep `GITHUB_TOKEN` permissions minimal per job, use `uv sync --locked` in CI, and
+  preserve the separate secret, dependency, CodeQL, and supply-chain checks.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

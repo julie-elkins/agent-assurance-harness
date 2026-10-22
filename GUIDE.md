@@ -347,6 +347,22 @@ the planned locations recovered, not that every course claim is correct. An acce
 target that becomes blocking also fails. Human approval remains required before publication,
 and the report contains metadata only.
 
+## Security hardening around the harness
+
+Phases 43–47 add security controls around the repository that ships the harness:
+
+- external Actions use full commit-SHA pins, and the boundary check rejects moving
+  references;
+- Dependabot tracks Python and GitHub Actions updates;
+- dependency review checks the risk introduced by a pull request;
+- CodeQL analyzes the Python source;
+- CODEOWNERS routes sensitive files without claiming independent review; and
+- OpenSSF Scorecard publishes supply-chain evidence.
+
+CI also uses `uv sync --locked`, so a stale lockfile fails instead of changing the
+environment during the run. The repository still requires administrator settings for
+Dependabot security updates and non-provider secret scanning.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

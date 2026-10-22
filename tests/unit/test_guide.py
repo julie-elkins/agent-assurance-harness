@@ -2,6 +2,7 @@ from pathlib import Path
 
 
 REPOSITORY = Path(__file__).parents[2]
+README = REPOSITORY / "README.md"
 GUIDE = REPOSITORY / "GUIDE.md"
 BUILD_GUIDE = REPOSITORY / "BUILD_GUIDE.md"
 DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
@@ -48,6 +49,11 @@ def test_guide_exists_and_local_references_are_present():
     assert "public_course_review_adjudication.py" in showcase
     assert "public_course_change_plan.py" in showcase
     assert "public_course_post_change.py" in showcase
+    assert "Security hardening" in README.read_text(encoding="utf-8")
+    assert "Security hardening around the harness" in guide
+    assert "phases 43–47" in build_guide
+    assert "immutable commit" in skill
+    assert "supply-chain hardening" in role_guide.lower()
 
     for relative_path in (
         "README.md",
@@ -63,6 +69,11 @@ def test_guide_exists_and_local_references_are_present():
         "ROLE_ALIGNMENT_GUIDE.md",
         "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",
+        ".github/workflows/dependency-review.yml",
+        ".github/workflows/codeql.yml",
+        ".github/workflows/scorecard.yml",
+        ".github/dependabot.yml",
+        ".github/CODEOWNERS",
         "skills/agent-assurance-harness/SKILL.md",
     ):
         assert (REPOSITORY / relative_path).exists(), relative_path

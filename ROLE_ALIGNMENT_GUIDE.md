@@ -78,6 +78,8 @@ it is not a claim that every course row is incorrect.
 | Human review decision boundary | `tools/public_course_review_adjudication.py` | Binds explicit dispositions to the exact packet revision while preserving the separate approval and publication boundary. |
 | Safe change planning | `tools/public_course_change_plan.py` | Converts dispositioned findings into re-checkable maintenance proposals without copying content or granting write authority. |
 | Post-change verification | `tools/public_course_post_change.py` | Proves the planned scope recovered on a new revision and catches new blocking findings without claiming full-course correctness. |
+| Supply-chain hardening | `.github/workflows/`, `dependabot.yml`, CodeQL, Scorecard | Demonstrates immutable CI dependencies, dependency-change review, static analysis, and public security evidence. |
+| Honest review ownership | `.github/CODEOWNERS` and `SECURITY.md` | Shows review routing and clearly states when independent approval does and does not exist. |
 | Feedback to product or content owners | Synthetic feedback signals in the launch pack | Usage signals can lead to a documented retain, clarify, revise, or retire action. |
 | Portfolio ownership | Public guides, tests, runnable examples, and limitations | The work is inspectable rather than represented only by a résumé bullet. |
 

@@ -102,9 +102,38 @@ The current progression is intentionally operational:
 | 40 | Public-course adjudication | Whether a human disposition is bound to the exact review packet without becoming automatic content approval |
 | 41 | Public-course change plan | Whether a completed human disposition becomes a bounded, re-checkable proposal without becoming an automatic edit |
 | 42 | Public-course post-change verification | Whether the planned scope recovered on a new revision without introducing a new blocking finding |
+| 43 | Immutable workflow actions | Whether external GitHub Actions are pinned and the repository rejects moving references |
+| 44 | Dependency change assurance | Whether dependency updates are continuously proposed and newly introduced risk is reviewed |
+| 45 | Python static security analysis | Whether CodeQL inspects the Python source for code-level security weaknesses |
+| 46 | Review ownership readiness | Whether sensitive paths have review routing without overstating solo-maintainer independence |
+| 47 | Public supply-chain evidence | Whether OpenSSF Scorecard publishes a repeatable supply-chain assessment |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
+
+### Security hardening phases 43–47
+
+These phases harden the repository around the harness itself. They add independent
+controls around the code, dependencies, workflow actions, review path, and public
+supply chain; they do not make the synthetic agent scenarios secure by assertion.
+
+- Phase 43 pins external GitHub Actions to full commit SHAs and makes the repository
+  boundary check reject tag or branch references. A full commit SHA is an immutable
+  identifier for the reviewed action revision.
+- Phase 44 adds Dependabot configuration and pull-request dependency review.
+  Dependency review is the diff-aware check for newly introduced dependency risk;
+  the existing locked `pip-audit` run remains the full resolved-environment check.
+- Phase 45 adds CodeQL for Python. CodeQL is static analysis: it inspects source and
+  dataflow patterns without executing a production deployment.
+- Phase 46 adds CODEOWNERS routing and documents the limit: routing a change to Julie is
+  not independent review. The ruleset should require another approval only after a
+  trusted second reviewer exists.
+- Phase 47 adds OpenSSF Scorecard with pinned actions, least-privilege job permissions,
+  token persistence disabled for checkout, SARIF upload, and short artifact retention.
+
+The repository still needs administrator settings outside Git: Dependabot security
+updates and non-provider secret scanning. Those settings cannot be created by a file
+commit alone.
 
 ## What counts as evidence
 

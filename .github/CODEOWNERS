@@ -1,0 +1,5 @@
+# Routing metadata only. Independent review is not claimed until the ruleset
+# requires a second trusted reviewer.
+* @julie-elkins
+.github/ @julie-elkins
+SECURITY.md @julie-elkins

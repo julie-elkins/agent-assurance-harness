@@ -79,6 +79,10 @@ negative control and make the delivery gate fail when it is not caught.
   map a requirement to a runnable artifact, but it must name what the artifact does
   not prove. Do not turn synthetic counts into claims about live learners, customer
   adoption, deployment success, or general model quality.
+- An optional public-course portfolio lane may add a separately checked-out public
+  course only through the existing root-confined verifier adapter. Preserve its
+  evidence tiers and unresolved states; emit only revision, counts, dates, URLs, and
+  safe lesson/claim locators. CI must remain synthetic and offline.
 
 ## Build path
 
@@ -133,6 +137,11 @@ negative control and make the delivery gate fail when it is not caught.
     independent lanes in parallel, write inspectable metadata-only intermediates, and
     block the join when any required lane is missing or unavailable. Include a negative
     control proving that an incomplete join cannot be presented as ready.
+21. For an optional public-course lane, keep the course checkout and fetched source
+    bytes behind an explicit local root boundary. Preserve the verifier's evidence
+    tiers and unresolved states, include a bounded finding-location summary, and test
+    that claim text, quotes, source bytes, local paths, and raw exceptions cannot enter
+    the portfolio report.
 
 ## Limits
 

@@ -132,6 +132,11 @@ missing, and what the result does not prove.
   independent lanes may run in parallel, but the join must block missing or unavailable
   lanes and preserve a human review boundary for content, release, and instructor
   decisions.
+- The optional public-course portfolio lane may read only a separately checked-out
+  public course beneath the explicit caller-supplied root. It may emit revision IDs,
+  evidence tiers, counts, dates, URLs, and safe lesson/claim locators; it must never
+  emit claim text, quotes, source bytes, local paths, or raw exceptions. CI must not
+  depend on that checkout or its network fetches.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

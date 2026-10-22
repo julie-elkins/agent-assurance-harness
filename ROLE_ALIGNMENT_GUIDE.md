@@ -43,6 +43,22 @@ This joins agent assurance, Course Doctor, launch-to-field enablement, instructo
 calibration, and production delivery evidence. It is a reviewer handoff, not proof of
 live production impact or employment history.
 
+To demonstrate the same portfolio against the public Claude course, add:
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --workspace /tmp/agent-assurance-public-course-portfolio \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The optional lane makes the course revision, evidence tiers, and safe finding locations
+visible. A `review_required` result is evidence that the system preserved uncertainty;
+it is not a claim that every course row is incorrect.
+
 ## Requirement-to-evidence map
 
 | Capability a reviewer needs to see | Public evidence | What it demonstrates |
@@ -57,6 +73,7 @@ live production impact or employment history.
 | Fast iteration | Deterministic fixtures, focused negative controls, provider-neutral boundaries | New capabilities can be added without waiting for provider credentials or live network state. |
 | Instructor quality | `tools/instructor_calibration_report.py` and the observer rubric | Missing teaching behaviors become coaching recommendations, while readiness remains a human sign-off decision. |
 | Reviewer-facing orchestration | `tools/portfolio_assurance_report.py` and inspectable lane reports | Independent evidence paths join into one report while missing or unavailable work remains blocking. |
+| Public technical-content evidence | Optional `--course-root` lane using `claude_course_adapter.py` | A real public course can be reviewed through the same metadata boundary without being copied into the harness. |
 | Feedback to product or content owners | Synthetic feedback signals in the launch pack | Usage signals can lead to a documented retain, clarify, revise, or retire action. |
 | Portfolio ownership | Public guides, tests, runnable examples, and limitations | The work is inspectable rather than represented only by a résumé bullet. |
 

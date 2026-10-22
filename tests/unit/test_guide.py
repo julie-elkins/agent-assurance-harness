@@ -40,8 +40,10 @@ def test_guide_exists_and_local_references_are_present():
     assert "tools/launch_to_field_report.py" in role_guide
     assert "tools/instructor_calibration_report.py" in role_guide
     assert "tools/portfolio_assurance_report.py" in role_guide
+    assert "--course-root" in role_guide
     assert "Instructor calibration" in showcase
     assert "Combined portfolio assurance report" in showcase
+    assert "Add the public Claude course locally" in showcase
 
     for relative_path in (
         "README.md",

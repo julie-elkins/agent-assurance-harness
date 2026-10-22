@@ -35,6 +35,10 @@ The portfolio assurance report joins the independent public assurance lanes into
 metadata-only reviewer handoff. It blocks when a lane is missing or unavailable and
 keeps human review, release approval, and instructor sign-off outside automation.
 
+When a caller supplies a checked-out public Claude course, the portfolio report may add
+an opt-in local lane. That lane preserves evidence tiers and safe claim locations only;
+the course text, quotes, source bytes, and local checkout path stay in-process.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

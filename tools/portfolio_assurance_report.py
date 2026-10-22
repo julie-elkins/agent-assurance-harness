@@ -26,8 +26,20 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Optional workspace for inspectable intermediate lane reports.",
     )
+    parser.add_argument(
+        "--course-root",
+        type=Path,
+        help=(
+            "Optional checked-out public Claude course. When supplied, "
+            "add its metadata-only verification as a local review lane."
+        ),
+    )
+    parser.add_argument("--course-id", default="claude-architect-lab")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown", action="store_true")
+    parser.add_argument("--offline", action="store_true")
+    parser.add_argument("--max-rows", type=int, default=1000)
+    parser.add_argument("--max-requests", type=int, default=50)
     parser.add_argument(
         "--fail-on-findings",
         action="store_true",
@@ -39,9 +51,23 @@ def main(argv: list[str] | None = None) -> int:
         with tempfile.TemporaryDirectory(
             prefix="agent-assurance-portfolio-"
         ) as directory:
-            report = run_reference_portfolio_report(workspace=Path(directory))
+            report = run_reference_portfolio_report(
+                workspace=Path(directory),
+                course_root=args.course_root,
+                course_id=args.course_id,
+                offline=args.offline,
+                max_rows=args.max_rows,
+                max_requests=args.max_requests,
+            )
     else:
-        report = run_reference_portfolio_report(workspace=args.workspace)
+        report = run_reference_portfolio_report(
+            workspace=args.workspace,
+            course_root=args.course_root,
+            course_id=args.course_id,
+            offline=args.offline,
+            max_rows=args.max_rows,
+            max_requests=args.max_requests,
+        )
 
     output_value = report.to_dict()
     serialized = json.dumps(output_value, indent=2, sort_keys=True) + "\n"

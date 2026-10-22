@@ -28,7 +28,7 @@ def test_portfolio_report_passes_and_writes_json(tmp_path):
     )
 
     report = json.loads(result.stdout)
-    assert report["portfolio_assurance_version"] == 1
+    assert report["portfolio_assurance_version"] == 2
     assert report["passed"] is True
     assert report["decision"] == "ready_for_human_review"
     assert report["controls_missed"] == []
@@ -50,3 +50,49 @@ def test_portfolio_markdown_explains_the_human_boundary():
     assert "`agent_assurance`" in result.stdout
     assert "`instructor_calibration`" in result.stdout
     assert "does not replace human review" in result.stdout
+
+
+def test_portfolio_markdown_includes_safe_public_course_locator(monkeypatch, tmp_path):
+    from agent_reliability_lab import portfolio_report
+    from agent_reliability_lab.claude_course_adapter import (
+        ClaimVerificationState,
+        VerifierRow,
+        adapt_verifier_rows,
+    )
+
+    course_report = adapt_verifier_rows(
+        (
+            VerifierRow(
+                row_id="lesson-a:claim-1",
+                lesson_id="lesson-a",
+                claim_index=1,
+                tier="VERBATIM",
+                source_url="https://docs.example.test/guide",
+                source_reference="official docs read 2026-10-22",
+                source_read_date="2026-10-22",
+                quote="must not escape",
+            ),
+        ),
+        course_id="claude-course",
+        course_revision="abc123",
+        outcomes={
+            "lesson-a:claim-1": ClaimVerificationState.VERBATIM_NOT_FOUND,
+        },
+        pages_fetched=1,
+    )
+    monkeypatch.setattr(
+        portfolio_report,
+        "run_claude_course_adapter",
+        lambda *args, **kwargs: course_report,
+    )
+
+    result = portfolio_report.run_reference_portfolio_report(
+        workspace=tmp_path,
+        course_root=tmp_path / "course",
+    )
+    markdown = result.to_markdown()
+
+    assert "Public course evidence" in markdown
+    assert "`abc123`" in markdown
+    assert "`lesson-a` claim `1`" in markdown
+    assert "must not escape" not in markdown

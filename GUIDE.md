@@ -235,6 +235,29 @@ lane and proves the incomplete portfolio is reported as `blocked`.
 not mean the content is approved, the release is authorized, or the instructor is
 certified.
 
+### Add the public course locally
+
+The portfolio report can add a separately checked-out public Claude course. This lane is
+opt-in and local-only, so CI remains synthetic and offline. It preserves the course
+verifier's evidence tiers and reports only revision, counts, source URLs, read dates,
+and safe lesson/claim locators.
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --workspace /tmp/agent-assurance-public-course-portfolio \
+  --output /tmp/agent-assurance-public-course-portfolio.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The combined decision becomes `review_required` when the public course contains rows
+that were not proven by the strongest available check. The Markdown report shows where
+review starts without reproducing the course claim or source quotation. A human must
+review before any content change.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

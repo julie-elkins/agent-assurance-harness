@@ -248,6 +248,24 @@ The report catches a deliberate missing-lane control and returns
 `ready_for_human_review` only when all required lanes pass. It does not certify an
 instructor, approve content, authorize a release, or prove live production outcomes.
 
+To include the real public Claude course locally, add the checked-out course root:
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --workspace /tmp/agent-assurance-public-course-portfolio \
+  --output /tmp/agent-assurance-public-course-portfolio.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The optional lane reports the course revision, evidence-tier counts, source URLs,
+read dates, and safe lesson/claim finding locations. `review_required` means a human
+should inspect those rows; it is not permission to change or publish course content.
+Claim text, quotations, source bytes, and local checkout paths remain outside the report.
+
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
 fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the

@@ -132,6 +132,28 @@ The missing-instructor-lane control is deliberately blocked internally to prove 
 join cannot call an incomplete portfolio ready. The final report contains only lane
 identifiers, states, counts, and human-gate descriptions.
 
+## Add the public Claude course locally
+
+The optional public-course lane reads a separately checked-out revision of
+[Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab):
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --workspace /tmp/agent-assurance-public-course-portfolio \
+  --output /tmp/agent-assurance-public-course-portfolio.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+On the reviewed checkout, the lane records the course revision, 335 claim rows, 13
+fetched pages, evidence-tier counts, and safe locations for the nine known findings.
+The current decision is `review_required`, which means a human should inspect those
+locations before changing course content. The report does not contain lesson text,
+quotes, source bytes, or the local checkout path.
+
 The exact counts are part of the current synthetic fixture contract. A changed count
 should prompt a deliberate fixture or scenario review, not a README-only update.
 

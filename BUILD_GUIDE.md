@@ -97,6 +97,7 @@ The current progression is intentionally operational:
 | 35 | Launch-to-field enablement pack | Whether a changing capability becomes a complete, source-checked, feedback-aware pack ready for human approval |
 | 36 | Instructor calibration | Whether a fixed observer rubric turns teaching evidence into coaching recommendations without pretending to certify an instructor |
 | 37 | Portfolio assurance orchestration | Whether independent content, enablement, instructor, agent, and delivery lanes join into one complete reviewer handoff without hiding missing work |
+| 38 | Optional public-course portfolio lane | Whether a real public course checkout can add revision, evidence-tier, and safe finding-location metadata without widening the CI boundary |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -788,6 +789,30 @@ uv run python tools/portfolio_assurance_report.py \
 The deliberate `portfolio-missing-instructor-lane` control removes one independent lane
 and verifies that the join returns `blocked`. A ready result is a reviewer handoff, not
 proof of employment, production adoption, or automatic approval of content or releases.
+
+### Optional public-course portfolio lane
+
+Phase 38 adds the real public-course demonstration to the portfolio report without
+making external documentation availability part of CI. When a checked-out public Claude
+course is supplied, the adapter preserves the course verifier's evidence tiers and adds
+the course revision, row counts, source URLs, read dates, and safe lesson/claim locators
+to the report. It never exports claim text, quotes, source bytes, or local paths.
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --course-root /path/to/claude-architect-lab \
+  --course-id claude-architect-lab \
+  --workspace /tmp/agent-assurance-public-course-portfolio \
+  --output /tmp/agent-assurance-public-course-portfolio.json \
+  --markdown \
+  --max-rows 1000 \
+  --max-requests 50
+```
+
+The optional lane may return `review_required` when a claim is not proven by the
+strongest available check. That is a useful reviewer handoff, not a failure to hide.
+CI continues to run the five-lane synthetic path without a public checkout or network
+dependency.
 
 ### Operational ship gate
 

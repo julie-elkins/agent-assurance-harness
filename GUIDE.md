@@ -208,6 +208,33 @@ audience adaptation, and the safety boundary. Degraded cases return coaching
 recommendations or refuse incomplete observation records. The result is ready for
 human sign-off, not automatic instructor certification.
 
+## Portfolio assurance report
+
+The portfolio assurance report is the combined reviewer path. It joins five independent
+metadata contracts: core agent assurance, Course Doctor content review, launch-to-field
+enablement, instructor calibration, and production delivery evidence. A lane is an
+independent workflow that can complete or fail without hiding the state of the other
+lanes.
+
+Run it with:
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --workspace /tmp/agent-reliability-portfolio \
+  --output /tmp/agent-reliability-portfolio.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The orchestrator (the component that coordinates independent workflows and assembles
+their results) writes inspectable intermediate metadata and blocks the join when a
+required lane is missing or unavailable. The negative control removes the instructor
+lane and proves the incomplete portfolio is reported as `blocked`.
+
+`ready_for_human_review` means the evidence is assembled for a human reviewer. It does
+not mean the content is approved, the release is authorized, or the instructor is
+certified.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

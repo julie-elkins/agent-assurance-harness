@@ -128,6 +128,10 @@ missing, and what the result does not prove.
 - The instructor-calibration workflow must use a fixed identifier-only observer rubric,
   require feedback metadata, distinguish coaching from incomplete observation, and
   state that readiness is a human sign-off recommendation rather than certification.
+- The portfolio-assurance workflow may join only typed metadata-only lane results. Its
+  independent lanes may run in parallel, but the join must block missing or unavailable
+  lanes and preserve a human review boundary for content, release, and instructor
+  decisions.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

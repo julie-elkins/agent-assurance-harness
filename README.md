@@ -1377,8 +1377,9 @@ credentials, or copied production traces.
 
 The core phase is deterministic and offline. Its provider adapters can report synthetic
 usage metadata, but that does not measure live model behaviour, live provider differences,
-or actual billing. The MCP server is local and read-only; there is no hosted dashboard,
-leaderboard, authentication, or production integration. A passing guarded baseline proves only that these synthetic contracts
+or actual billing. The MCP server is local and read-only; the portfolio dashboard is also
+local and static, with no hosted dashboard, leaderboard, authentication, or production
+integration. A passing guarded baseline proves only that these synthetic contracts
 distinguish the planted failures; it does not establish general agent reliability. CI
 proves only that the checked-in synthetic fixture and adapter continue to satisfy the
 current contracts; it does not prove a live agent will emit the same trace.

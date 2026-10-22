@@ -125,6 +125,10 @@ negative control and make the delivery gate fail when it is not caught.
     quick reference, and metadata-only feedback signal. Run at least one ready case
     and degraded stale, wrong-source, unsupported-claim, and incomplete-pack controls.
     A ready result must say that human approval is still required.
+19. For instructor development, verify a fixed identifier-only observer rubric covering
+    technical accuracy, hands-on execution, live debugging, audience adaptation, and
+    the safety boundary. Require feedback metadata, emit coaching recommendations for
+    missing behaviors, and keep readiness separate from human sign-off or certification.
 
 ## Limits
 

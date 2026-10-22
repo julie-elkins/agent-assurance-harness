@@ -95,6 +95,7 @@ The current progression is intentionally operational:
 | 31 | Untrusted claim-proposal worker | Whether agent-suggested claims are validated before they reach evidence evaluation |
 | 32 | Showcase hardening and bounded live-provider completion | Whether an outside reviewer can run the safe path quickly and the local live boundary refuses unsafe transport behavior |
 | 35 | Launch-to-field enablement pack | Whether a changing capability becomes a complete, source-checked, feedback-aware pack ready for human approval |
+| 36 | Instructor calibration | Whether a fixed observer rubric turns teaching evidence into coaching recommendations without pretending to certify an instructor |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -747,6 +748,25 @@ claim about live learner counts or customer adoption. The public
 requirements it is intended to demonstrate. The reusable design patterns are kept in
 the separate public
 [`agent-systems-design-guide`](https://github.com/julie-elkins/agent-systems-design-guide).
+
+### Instructor calibration
+
+Phase 36 adds the instructor-development path that the enablement roles require. The
+observer rubric uses five stable criteria: technical accuracy, hands-on execution,
+live debugging, audience adaptation, and the safety boundary. A missing behavior
+produces a coaching code; an incomplete observation record is refused rather than
+treated as a passing session.
+
+```bash
+uv run python tools/instructor_calibration_report.py \
+  --output /tmp/agent-reliability-instructor-calibration.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The result is `ready_for_human_signoff`, `coaching_required`, or `refused`. This is a
+calibration aid, not a substitute for a qualified observer or an instructor
+certification decision.
 
 ### Operational ship gate
 

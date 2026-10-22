@@ -125,6 +125,9 @@ missing, and what the result does not prove.
   pipeline, require a demo, lab, quick-reference asset, and metadata-only feedback
   signal, and keep human approval separate from any ready result. Its CLI and fixtures
   must remain synthetic, offline, and metadata-only.
+- The instructor-calibration workflow must use a fixed identifier-only observer rubric,
+  require feedback metadata, distinguish coaching from incomplete observation, and
+  state that readiness is a human sign-off recommendation rather than certification.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

@@ -30,6 +30,19 @@ technical capability into a demo, hands-on lab, and quick-reference guide. It
 checks source authority, freshness, claim support, asset completeness, and
 feedback metadata before marking the pack ready for human approval.
 
+For the shortest combined reviewer path, run:
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --workspace /tmp/agent-reliability-portfolio \
+  --markdown \
+  --fail-on-findings
+```
+
+This joins agent assurance, Course Doctor, launch-to-field enablement, instructor
+calibration, and production delivery evidence. It is a reviewer handoff, not proof of
+live production impact or employment history.
+
 ## Requirement-to-evidence map
 
 | Capability a reviewer needs to see | Public evidence | What it demonstrates |
@@ -43,6 +56,7 @@ feedback metadata before marking the pack ready for human approval.
 | Self-service resources | CLI tools, `SHOWCASE.md`, `GUIDE.md`, reusable skill | Another engineer can run the workflow without the author in the room. |
 | Fast iteration | Deterministic fixtures, focused negative controls, provider-neutral boundaries | New capabilities can be added without waiting for provider credentials or live network state. |
 | Instructor quality | `tools/instructor_calibration_report.py` and the observer rubric | Missing teaching behaviors become coaching recommendations, while readiness remains a human sign-off decision. |
+| Reviewer-facing orchestration | `tools/portfolio_assurance_report.py` and inspectable lane reports | Independent evidence paths join into one report while missing or unavailable work remains blocking. |
 | Feedback to product or content owners | Synthetic feedback signals in the launch pack | Usage signals can lead to a documented retain, clarify, revise, or retire action. |
 | Portfolio ownership | Public guides, tests, runnable examples, and limitations | The work is inspectable rather than represented only by a résumé bullet. |
 
@@ -61,17 +75,16 @@ Those claims require separate evidence such as delivered sessions, public talks,
 learner feedback, or production telemetry. The repository is deliberately honest
 about that boundary because overstating synthetic evidence weakens the portfolio.
 
-## What the next artifacts should add
+## What the combined report adds
 
-The strongest follow-on evidence is not another isolated evaluator. It is a
-larger synthetic launch pack that measures a complete path:
+The report makes the complete path visible from one command:
 
-1. A source change is identified.
-2. A demo, lab, and quick reference are proposed.
-3. Claims are checked against an approved and fresh source.
-4. A stale or unsupported claim blocks the pack.
-5. A human review packet explains where to begin.
-6. Synthetic usage signals recommend what to clarify or retire.
+1. Agent behavior is checked against evidence and negative controls.
+2. Course findings become review packets with reconciled counts.
+3. A demo, lab, and quick reference are evaluated as one enablement pack.
+4. Instructor observations become coaching or human-sign-off recommendations.
+5. Delivery-path artifacts remain visible without claiming deployment success.
+6. A missing lane blocks the joined handoff rather than disappearing from the summary.
 
 The reusable patterns behind this path live in the
 [`agent-systems-design-guide`](https://github.com/julie-elkins/agent-systems-design-guide).

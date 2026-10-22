@@ -3,7 +3,7 @@
 This is the fastest way for an outside reviewer to see what the project does and why
 the controls matter.
 
-The showcase has two lanes:
+The showcase has five related lanes:
 
 1. An offline synthetic lane for repeatable CI (continuous integration, the automated
    checks that run before a change can merge).
@@ -13,6 +13,8 @@ The showcase has two lanes:
    quick-reference guide with freshness and feedback controls.
 4. An instructor-calibration lane for demonstrating observer consistency and coaching
    recommendations.
+5. A portfolio-assurance lane for joining the independent evidence paths into one
+   reviewer handoff.
 
 The first lane is the required proof. The second lane is the practical demonstration.
 Keeping them separate prevents a changing course repository or a network outage from
@@ -87,6 +89,48 @@ automatically.
 
 This demo is synthetic, offline, and metadata-only.
 ```
+
+## Combined portfolio assurance report
+
+For a reviewer who wants the full public story in one command:
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --workspace /tmp/agent-reliability-portfolio \
+  --output /tmp/agent-reliability-portfolio.json \
+  --markdown \
+  --fail-on-findings
+```
+
+Expected summary:
+
+```text
+# Portfolio Assurance Report
+
+Decision: `ready_for_human_review`
+
+| Lane | Status | Degraded controls | Human gate |
+| --- | --- | ---: | --- |
+| `agent_assurance` | `passed` | `4` | CI and human merge approval remain required. |
+| `course_doctor` | `passed` | `4` | Human adjudication remains required before content changes. |
+| `launch_to_field` | `passed` | `4` | Human approval remains required before publication. |
+| `instructor_calibration` | `passed` | `4` | Qualified observer sign-off remains required. |
+| `delivery_path` | `passed` | `0` | Release approval, deployment controls, and monitoring remain external. |
+
+Blocking lanes: none
+Missing lanes: none
+
+Orchestration controls caught: `portfolio-ready`, `portfolio-missing-instructor-lane`
+
+Orchestration controls missed: none
+
+The report joins inspectable evidence; it does not replace human review, release
+approval, or instructor certification.
+```
+
+The missing-instructor-lane control is deliberately blocked internally to prove that the
+join cannot call an incomplete portfolio ready. The final report contains only lane
+identifiers, states, counts, and human-gate descriptions.
 
 The exact counts are part of the current synthetic fixture contract. A changed count
 should prompt a deliberate fixture or scenario review, not a README-only update.

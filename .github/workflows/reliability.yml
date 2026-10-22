@@ -248,6 +248,15 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run portfolio assurance gate
+        run: >-
+          uv run python tools/portfolio_assurance_report.py
+          --workspace /tmp/agent-reliability-portfolio
+          --output /tmp/agent-reliability-portfolio.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Rehearse rollback
         run: >-
           uv run python tools/rollback_rehearsal.py
@@ -330,6 +339,8 @@ jobs:
             /tmp/agent-reliability-course-doctor/
             /tmp/agent-reliability-launch-to-field.json
             /tmp/agent-reliability-instructor-calibration.json
+            /tmp/agent-reliability-portfolio.json
+            /tmp/agent-reliability-portfolio/
             /tmp/agent-reliability-consumer-validation.json
             /tmp/agent-reliability-release-manifest.json
             /tmp/agent-reliability-runtime-sbom.json

@@ -31,6 +31,10 @@ The live provider boundary is local-only and explicitly opt-in. It uses fixed of
 endpoints, no retries, redirect rejection, one-request and token/time/spend ceilings,
 and injected transports in tests. It is never enabled by CI.
 
+The portfolio assurance report joins the independent public assurance lanes into one
+metadata-only reviewer handoff. It blocks when a lane is missing or unavailable and
+keeps human review, release approval, and instructor sign-off outside automation.
+
 ## What this repository does
 
 This repository tests whether a tool-using agent can support its claims with observable

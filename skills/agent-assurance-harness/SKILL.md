@@ -129,6 +129,10 @@ negative control and make the delivery gate fail when it is not caught.
     technical accuracy, hands-on execution, live debugging, audience adaptation, and
     the safety boundary. Require feedback metadata, emit coaching recommendations for
     missing behaviors, and keep readiness separate from human sign-off or certification.
+20. For a reviewer-facing portfolio orchestrator, define typed lane contracts, run
+    independent lanes in parallel, write inspectable metadata-only intermediates, and
+    block the join when any required lane is missing or unavailable. Include a negative
+    control proving that an incomplete join cannot be presented as ready.
 
 ## Limits
 

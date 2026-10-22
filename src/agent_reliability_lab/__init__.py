@@ -233,6 +233,16 @@ from .instructor_calibration import (
     run_instructor_calibration,
     run_reference_instructor_calibration_suite,
 )
+from .portfolio_report import (
+    PORTFOLIO_ASSURANCE_VERSION,
+    REQUIRED_LANES,
+    PortfolioAssuranceReport,
+    PortfolioLaneResult,
+    PortfolioLaneStatus,
+    PortfolioNegativeControl,
+    assemble_portfolio_lanes,
+    run_reference_portfolio_report,
+)
 from .claude_course_adapter import (
     CLAUDE_COURSE_ADAPTER_VERSION,
     DEFAULT_MAX_REQUESTS,
@@ -486,6 +496,14 @@ __all__ = [
     "reference_instructor_calibration_cases",
     "run_instructor_calibration",
     "run_reference_instructor_calibration_suite",
+    "PORTFOLIO_ASSURANCE_VERSION",
+    "REQUIRED_LANES",
+    "PortfolioAssuranceReport",
+    "PortfolioLaneResult",
+    "PortfolioLaneStatus",
+    "PortfolioNegativeControl",
+    "assemble_portfolio_lanes",
+    "run_reference_portfolio_report",
     "CLAUDE_COURSE_ADAPTER_VERSION",
     "DEFAULT_MAX_REQUESTS",
     "DEFAULT_MAX_ROWS",

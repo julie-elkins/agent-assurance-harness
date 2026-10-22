@@ -28,7 +28,8 @@ against a local checkout of the public
 
 The showcase currently reports 9 scenarios, a passing guarded agent, 1 evaluator
 control caught, 3 mutation controls caught, 1 complete Course Doctor packet, and a
-passing launch-to-field pack with four degraded controls caught. See the
+passing launch-to-field pack with four degraded controls caught. The combined portfolio
+report adds one reviewer-facing handoff across the assurance lanes. See the
 [expected output](SHOWCASE.md#one-command-offline-showcase) before running it.
 
 An evidence contract is the minimum set of observable facts required before an agent may
@@ -226,6 +227,26 @@ A ready result means `ready_for_human_signoff`; it does not certify an instructo
 The degraded controls cover missing lab evidence, missing adaptation evidence, missing
 feedback, and an incomplete observation rubric. The report contains rubric identifiers,
 states, counts, and recommendations only.
+
+## Portfolio assurance report
+
+The portfolio assurance report is the shortest command for a reviewer who wants to see
+how the project connects agent reliability, technical-content assurance, enablement,
+instructor development, and the delivery path. It runs five independent lanes in
+parallel, writes metadata-only intermediate reports, and blocks the final handoff when a
+lane is missing or unavailable.
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --workspace /tmp/agent-reliability-portfolio \
+  --output /tmp/agent-reliability-portfolio.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The report catches a deliberate missing-lane control and returns
+`ready_for_human_review` only when all required lanes pass. It does not certify an
+instructor, approve content, authorize a release, or prove live production outcomes.
 
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,

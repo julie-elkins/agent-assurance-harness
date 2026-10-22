@@ -96,6 +96,7 @@ The current progression is intentionally operational:
 | 32 | Showcase hardening and bounded live-provider completion | Whether an outside reviewer can run the safe path quickly and the local live boundary refuses unsafe transport behavior |
 | 35 | Launch-to-field enablement pack | Whether a changing capability becomes a complete, source-checked, feedback-aware pack ready for human approval |
 | 36 | Instructor calibration | Whether a fixed observer rubric turns teaching evidence into coaching recommendations without pretending to certify an instructor |
+| 37 | Portfolio assurance orchestration | Whether independent content, enablement, instructor, agent, and delivery lanes join into one complete reviewer handoff without hiding missing work |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -767,6 +768,26 @@ uv run python tools/instructor_calibration_report.py \
 The result is `ready_for_human_signoff`, `coaching_required`, or `refused`. This is a
 calibration aid, not a substitute for a qualified observer or an instructor
 certification decision.
+
+### Portfolio assurance orchestration
+
+Phase 37 adds the reviewer-facing join across the public assurance portfolio. Five
+independent lanes run in parallel: core agent assurance, Course Doctor, launch-to-field
+enablement, instructor calibration, and production delivery evidence. Each worker emits a
+typed metadata contract and an inspectable intermediate JSON file. The join blocks if a
+lane is missing, unavailable, or has missed controls.
+
+```bash
+uv run python tools/portfolio_assurance_report.py \
+  --workspace /tmp/agent-reliability-portfolio \
+  --output /tmp/agent-reliability-portfolio.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The deliberate `portfolio-missing-instructor-lane` control removes one independent lane
+and verifies that the join returns `blocked`. A ready result is a reviewer handoff, not
+proof of employment, production adoption, or automatic approval of content or releases.
 
 ### Operational ship gate
 

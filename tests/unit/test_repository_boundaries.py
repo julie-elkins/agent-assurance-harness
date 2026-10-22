@@ -12,6 +12,7 @@ _CHECKER = importlib.util.module_from_spec(_SPEC)
 _SPEC.loader.exec_module(_CHECKER)
 
 _provenance_permission_failures = _CHECKER._provenance_permission_failures
+_unpinned_action_failures = _CHECKER._unpinned_action_failures
 
 
 def test_push_only_provenance_permissions_are_allowed():
@@ -57,3 +58,24 @@ jobs:
 
     assert failures
     assert "outside the release-provenance job" in failures[0]
+
+
+def test_external_action_refs_must_be_immutable_commits(monkeypatch, tmp_path):
+    github_root = tmp_path / ".github" / "workflows"
+    github_root.mkdir(parents=True)
+    workflow = github_root / "test.yml"
+    workflow.write_text(
+        """
+steps:
+  - name: Check out
+    uses: actions/checkout@v4
+  - name: Upload
+    uses: actions/upload-artifact@0123456789abcdef0123456789abcdef01234567
+""",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(_CHECKER, "GITHUB_ROOT", tmp_path / ".github")
+    failures = _unpinned_action_failures()
+
+    assert len(failures) == 1
+    assert ".github/workflows/test.yml:4" in failures[0]

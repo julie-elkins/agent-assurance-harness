@@ -471,6 +471,18 @@ adapter boundary also supports `--max-stderr-bytes`, `--max-memory-bytes`, and
 `--adapter-working-directory`; a timed-out process group and its descendants are
 terminated together.
 
+## Security hardening
+
+The repository also hardens its own delivery path. External GitHub Actions are pinned to
+full commit SHAs and enforced by the repository boundary check. Dependabot tracks Python
+and Actions updates, dependency review checks new dependency risk in pull requests,
+CodeQL analyzes the Python source, and OpenSSF Scorecard publishes supply-chain evidence.
+
+CI installs with `uv sync --locked`, so dependency metadata and the lockfile must agree.
+`CODEOWNERS` routes sensitive changes but does not pretend that a solo maintainer has
+independent review. GitHub administrators still need to enable Dependabot security
+updates and non-provider secret scanning.
+
 These are process-safety controls, not a complete network sandbox. The adapter command is
 still code the caller chose to run, so use a separate OS/container boundary for
 untrusted code that must not access the network or host filesystem.

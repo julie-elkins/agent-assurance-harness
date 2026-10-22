@@ -246,6 +246,10 @@ publication authority.
 Phase 42 compares that plan with a later verifier report, requires a new course revision,
 and blocks target regressions or new blocking findings while keeping targeted verification
 separate from full-course correctness.
+Phases 43–47 harden the delivery path with immutable action pins, dependency review,
+Dependabot configuration, CodeQL, CODEOWNERS readiness, and OpenSSF Scorecard. These
+checks improve the repository's security evidence; they do not replace human review,
+secret-scanning settings, or a production deployment review.
 
 Phase 34 adds a provider-neutral adapter for a separately checked-out public Claude
 course verifier. It reuses that verifier's claim extraction and citation checks, records

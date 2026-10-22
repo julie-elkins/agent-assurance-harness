@@ -16,6 +16,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "reliability.yml"
 PUBLIC_ACTION = ROOT / ".github" / "actions" / "agent-assurance" / "action.yml"
+GITHUB_ROOT = ROOT / ".github"
 
 SECRET_PATTERNS = (
     re.compile(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----"),
@@ -24,6 +25,10 @@ SECRET_PATTERNS = (
     re.compile(r"\bgh[pousr]_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bxox[baprs]-[A-Za-z0-9-]{20,}\b"),
 )
+EXTERNAL_ACTION_PATTERN = re.compile(
+    r"^\s*uses:\s*([A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)@([^\s#]+)"
+)
+FULL_COMMIT_SHA_PATTERN = re.compile(r"^[0-9a-f]{40}$")
 FORBIDDEN_SECRET_FILENAMES = {
     ".env",
     ".env.local",
@@ -73,6 +78,7 @@ def main() -> int:
 
     failures.extend(_workflow_failures())
     failures.extend(_public_action_failures())
+    failures.extend(_unpinned_action_failures())
     if failures:
         print("Repository boundary check failed:", file=sys.stderr)
         for failure in failures:
@@ -198,6 +204,31 @@ def _public_action_failures() -> list[str]:
         for marker in PUBLIC_ACTION_MARKERS
         if marker in action
     ]
+
+
+def _unpinned_action_failures() -> list[str]:
+    """Require immutable commit references for every external GitHub Action."""
+
+    failures = []
+    for path in sorted(GITHUB_ROOT.rglob("*")):
+        if path.suffix not in {".yml", ".yaml"} or not path.is_file():
+            continue
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except (OSError, UnicodeDecodeError):
+            continue
+        relative_path = path.relative_to(GITHUB_ROOT.parent)
+        for line_number, line in enumerate(lines, start=1):
+            match = EXTERNAL_ACTION_PATTERN.match(line)
+            if match is None:
+                continue
+            reference = match.group(2)
+            if not FULL_COMMIT_SHA_PATTERN.fullmatch(reference):
+                failures.append(
+                    "external GitHub Action must use a full commit SHA: "
+                    f"{relative_path}:{line_number}"
+                )
+    return failures
 
 
 if __name__ == "__main__":

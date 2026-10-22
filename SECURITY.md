@@ -69,10 +69,11 @@ The repository's `CODEOWNERS` file routes security-sensitive changes to Julie. I
 does not claim independent review. A second trusted reviewer and a ruleset
 requirement for one approval are still needed before that property can be claimed.
 
-Repository administrators must enable Dependabot security updates and
-non-provider secret scanning in GitHub settings. Secret-scanning validity checks
-are optional because they may send detected secret material to a provider; this
-repository's privacy boundary does not require them.
+Dependabot security updates are enabled for this repository. Repository
+administrators still need to enable non-provider secret scanning in GitHub
+settings. Secret-scanning validity checks are optional because they may send
+detected secret material to a provider; this repository's privacy boundary does
+not require them.
 
 ## Release promotion
 

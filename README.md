@@ -480,8 +480,8 @@ CodeQL analyzes the Python source, and OpenSSF Scorecard publishes supply-chain 
 
 CI installs with `uv sync --locked`, so dependency metadata and the lockfile must agree.
 `CODEOWNERS` routes sensitive changes but does not pretend that a solo maintainer has
-independent review. GitHub administrators still need to enable Dependabot security
-updates and non-provider secret scanning.
+independent review. Dependabot security updates are enabled; GitHub administrators
+still need to enable non-provider secret scanning.
 
 These are process-safety controls, not a complete network sandbox. The adapter command is
 still code the caller chose to run, so use a separate OS/container boundary for

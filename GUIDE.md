@@ -360,8 +360,8 @@ Phases 43–47 add security controls around the repository that ships the harnes
 - OpenSSF Scorecard publishes supply-chain evidence.
 
 CI also uses `uv sync --locked`, so a stale lockfile fails instead of changing the
-environment during the run. The repository still requires administrator settings for
-Dependabot security updates and non-provider secret scanning.
+environment during the run. Dependabot security updates are enabled; non-provider
+secret scanning still requires an administrator setting outside Git.
 
 ## Technical content assurance
 

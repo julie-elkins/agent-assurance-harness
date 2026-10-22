@@ -131,9 +131,9 @@ supply chain; they do not make the synthetic agent scenarios secure by assertion
 - Phase 47 adds OpenSSF Scorecard with pinned actions, least-privilege job permissions,
   token persistence disabled for checkout, SARIF upload, and short artifact retention.
 
-The repository still needs administrator settings outside Git: Dependabot security
-updates and non-provider secret scanning. Those settings cannot be created by a file
-commit alone.
+Dependabot security updates are enabled for this repository. Non-provider secret
+scanning still requires an administrator setting outside Git; that setting cannot
+be created by a file commit alone.
 
 ## What counts as evidence
 

@@ -3,7 +3,7 @@
 This is the fastest way for an outside reviewer to see what the project does and why
 the controls matter.
 
-The showcase has five related lanes:
+The showcase has six related lanes:
 
 1. An offline synthetic lane for repeatable CI (continuous integration, the automated
    checks that run before a change can merge).
@@ -15,6 +15,8 @@ The showcase has five related lanes:
    recommendations.
 5. A portfolio-assurance lane for joining the independent evidence paths into one
    reviewer handoff.
+6. A developer-workflow lane for proving that a plausible green coding-agent result
+   still needs the required verification evidence.
 
 The first lane is the required proof. The second lane is the practical demonstration.
 Keeping them separate prevents a changing course repository or a network outage from
@@ -111,6 +113,40 @@ automatically.
 
 This demo is synthetic, offline, and metadata-only.
 ```
+
+## Developer workflow assurance
+
+The developer workflow lane is the most direct portfolio path for an engineering hiring
+manager. It asks whether a coding-agent change has the evidence needed to be reviewed,
+not merely whether one test command returned green:
+
+```bash
+uv run python tools/developer_workflow_report.py \
+  --output /tmp/agent-reliability-developer-workflow.json \
+  --markdown \
+  --fail-on-findings
+```
+
+Expected summary:
+
+```text
+# Developer workflow assurance
+
+- Decision: `PASS`
+- Synthetic packs checked: `6`
+- Guarded reference: `PASS`
+- Green-but-unaudited negative control caught: `YES`
+```
+
+The negative control is intentionally incomplete: it reports a passing test result but
+omits required security and dependency evidence. The report must block it. This shows
+why evidence completeness matters in developer tooling: a green check can be true and
+still be insufficient for a merge decision.
+
+The lane also covers ambiguous scope, untrusted build-log output, and protected release
+actions. It is synthetic and offline; it does not claim to prove source-code correctness
+or general live-agent reliability. See
+[`docs/DEVELOPER_WORKFLOW_ASSURANCE.md`](docs/DEVELOPER_WORKFLOW_ASSURANCE.md).
 
 ## Combined portfolio assurance report
 

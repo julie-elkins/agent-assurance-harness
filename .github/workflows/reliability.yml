@@ -206,6 +206,14 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run developer workflow assurance lane
+        run: >-
+          uv run python tools/developer_workflow_report.py
+          --output /tmp/agent-reliability-developer-workflow.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run content assurance pipeline
         run: >-
           uv run python tools/content_assurance_pipeline_report.py

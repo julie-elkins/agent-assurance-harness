@@ -310,6 +310,27 @@ uv run python tools/public_course_review_adjudication.py \
 course is technically correct or authorises an edit or publication. The report keeps the
 course evidence decision separate, so unresolved weaker evidence remains visible.
 
+## Create a change plan
+
+Phase 41 turns a completed adjudication into a metadata-only change plan. It identifies
+the safe lesson and claim locations, the bounded action to take, and the verification to
+rerun after a human makes the change. It refuses open or deferred findings, mismatched
+packet identities, truncated packets, and incomplete adjudications.
+
+```bash
+uv run python tools/public_course_change_plan.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --adjudication /tmp/claude-course-review-adjudication.json \
+  --output /tmp/claude-course-change-plan.json \
+  --markdown \
+  --fail-on-block
+```
+
+`ready_for_human_approval` means the plan reached the approval boundary. It does not
+contain replacement wording, a content diff, file-write capability, or publication
+authority. The required re-check keeps a human edit from being treated as verified merely
+because the original finding was dispositioned.
+
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
 fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the

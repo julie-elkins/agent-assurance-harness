@@ -100,6 +100,7 @@ The current progression is intentionally operational:
 | 38 | Optional public-course portfolio lane | Whether a real public course checkout can add revision, evidence-tier, and safe finding-location metadata without widening the CI boundary |
 | 39 | Public-course review packet | Whether concrete course findings become a bounded, actionable human worklist without copying course text |
 | 40 | Public-course adjudication | Whether a human disposition is bound to the exact review packet without becoming automatic content approval |
+| 41 | Public-course change plan | Whether a completed human disposition becomes a bounded, re-checkable proposal without becoming an automatic edit |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -849,6 +850,17 @@ could carry course text.
 This is deliberately not a publisher. `adjudicated` means the known worklist has
 explicit human dispositions; the underlying course evidence decision remains separate,
 and the output still requires human approval before a content change.
+
+### Public-course change plan
+
+Phase 41 is the handoff from review to proposed maintenance. It verifies the original
+packet identity against the adjudication record, refuses open or deferred findings, and
+creates one safe item per dispositioned finding. A resolved finding keeps its recommended
+action and requires the public-course verifier to run again after the human change. An
+accepted finding becomes an explicit accepted-risk record with a future re-review trigger.
+
+The plan has no source-content field, no replacement-text field, and no write or publish
+operation. `ready_for_human_approval` is a reviewer handoff, not a release decision.
 
 ### Operational ship gate
 

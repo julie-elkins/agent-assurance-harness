@@ -305,6 +305,27 @@ has explicit dispositions; `--fail-on-review-required` can additionally require 
 underlying course evidence decision to be complete. Neither flag authorises a content
 edit or publish.
 
+### Create a change plan
+
+Phase 41 is the last public step before a future human-approved content edit. The
+change-plan tool takes the original packet and its adjudication record, verifies that
+the packet digest, course revision, finding identifiers, and evidence decision still
+match, and emits only safe locations, actions, dispositions, and required re-checks.
+
+```bash
+uv run python tools/public_course_change_plan.py \
+  --packet /tmp/claude-course-review-packet.json \
+  --adjudication /tmp/claude-course-review-adjudication.json \
+  --output /tmp/claude-course-change-plan.json \
+  --markdown \
+  --fail-on-block
+```
+
+The command blocks open or deferred findings, incomplete adjudication, packet identity
+drift, truncated packets, and refused packets. `ready_for_human_approval` means a human
+may inspect the proposed action; it does not approve, edit, or publish course content.
+The plan requires a fresh verifier run after any human change.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

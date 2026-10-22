@@ -240,6 +240,9 @@ Markdown renderer translates stable reason codes into plain-language review guid
 Phase 40 adds a separate public-course adjudication boundary. A reviewer disposition is
 bound to the packet digest and course revision, but it remains a decision record rather
 than permission to edit or publish content.
+Phase 41 adds a metadata-only change plan after adjudication. It carries bounded actions
+and required re-checks, but no replacement wording, diff, file-write operation, or
+publication authority.
 
 Phase 34 adds a provider-neutral adapter for a separately checked-out public Claude
 course verifier. It reuses that verifier's claim extraction and citation checks, records

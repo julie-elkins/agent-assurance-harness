@@ -101,6 +101,7 @@ The current progression is intentionally operational:
 | 39 | Public-course review packet | Whether concrete course findings become a bounded, actionable human worklist without copying course text |
 | 40 | Public-course adjudication | Whether a human disposition is bound to the exact review packet without becoming automatic content approval |
 | 41 | Public-course change plan | Whether a completed human disposition becomes a bounded, re-checkable proposal without becoming an automatic edit |
+| 42 | Public-course post-change verification | Whether the planned scope recovered on a new revision without introducing a new blocking finding |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -861,6 +862,30 @@ accepted finding becomes an explicit accepted-risk record with a future re-revie
 
 The plan has no source-content field, no replacement-text field, and no write or publish
 operation. `ready_for_human_approval` is a reviewer handoff, not a release decision.
+
+### Public-course post-change verification
+
+Phase 42 closes the loop after a human makes a planned content change. It compares the
+change plan with a later adapter report and blocks unless the course revision changed, all
+planned targets are still at the same safe locations, every resolved target reached an
+allowed recovery state, and no new blocking finding appeared outside the planned scope.
+
+The verifier returns `verified_targeted_scope`, not full-course verification. It also
+rechecks accepted-risk targets and blocks if one becomes an `identifier_missing` or
+`unable_to_check` result. A changed revision alone is never treated as evidence that the
+content improved.
+
+```bash
+uv run python tools/public_course_post_change.py \
+  --change-plan /tmp/claude-course-change-plan.json \
+  --post-report /tmp/claude-course-adapter-after.json \
+  --output /tmp/claude-course-post-change.json \
+  --markdown \
+  --fail-on-block
+```
+
+The output remains metadata-only. It contains no lesson text, source quotations, content
+diff, file-write operation, or publication authority. Human approval remains required.
 
 ### Operational ship gate
 

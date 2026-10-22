@@ -326,6 +326,27 @@ drift, truncated packets, and refused packets. `ready_for_human_approval` means 
 may inspect the proposed action; it does not approve, edit, or publish course content.
 The plan requires a fresh verifier run after any human change.
 
+### Verify after the change
+
+Phase 42 compares that plan with a later public-course verifier report. The later report
+must use a different course revision, preserve the same course and safe claim locations,
+recover every resolved target, and introduce no new blocking finding outside the planned
+scope.
+
+```bash
+uv run python tools/public_course_post_change.py \
+  --change-plan /tmp/claude-course-change-plan.json \
+  --post-report /tmp/claude-course-adapter-after.json \
+  --output /tmp/claude-course-post-change.json \
+  --markdown \
+  --fail-on-block
+```
+
+`verified_targeted_scope` is deliberately narrower than full-course verification: it says
+the planned locations recovered, not that every course claim is correct. An accepted-risk
+target that becomes blocking also fails. Human approval remains required before publication,
+and the report contains metadata only.
+
 ## Technical content assurance
 
 The reference use case is technical training and enablement: a lesson, lab, or

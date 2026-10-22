@@ -93,6 +93,10 @@ negative control and make the delivery gate fail when it is not caught.
   dispositions, and required re-checks. Refuse open, deferred, mismatched, truncated,
   or incomplete state; never emit replacement wording, diffs, file writes, or publish
   authority.
+- Public-course post-change verification must require a different course revision,
+  compare every planned target, catch new blocking findings, and distinguish verified
+  targeted scope from full-course verification. A changed revision alone is not evidence
+  that content improved.
 
 ## Build path
 
@@ -161,6 +165,9 @@ negative control and make the delivery gate fail when it is not caught.
 24. For a public-course change plan, verify packet and adjudication identity, block open
     or deferred findings, emit a required post-change re-check, and test that no content
     or write capability crosses the boundary.
+25. For post-change verification, compare before and after metadata, require revision
+    change, test target recovery and new-blocking regressions, and keep the result
+    separate from full-course approval or publication.
 
 ## Limits
 

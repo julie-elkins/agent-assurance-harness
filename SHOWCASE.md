@@ -207,6 +207,24 @@ The plan shows the safe lesson and claim locations, proposed action, disposition
 required re-check. It contains no replacement wording or source text. A ready plan still
 requires human approval, and a fresh course-verifier run after the edit.
 
+## Verify after a human change
+
+Compare the plan with the later verifier report after the human edit:
+
+```bash
+uv run python tools/public_course_post_change.py \
+  --change-plan /tmp/claude-course-change-plan.json \
+  --post-report /tmp/claude-course-adapter-after.json \
+  --output /tmp/claude-course-post-change.json \
+  --markdown \
+  --fail-on-block
+```
+
+The result is `verified_targeted_scope` only when the revision changed, every planned
+target recovered, and no new blocking finding appeared outside the planned scope. This is
+not a full-course correctness claim. Accepted-risk targets are rechecked and fail if they
+become blocking; human approval is still required before publication.
+
 The exact counts are part of the current synthetic fixture contract. A changed count
 should prompt a deliberate fixture or scenario review, not a README-only update.
 

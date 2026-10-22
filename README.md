@@ -331,6 +331,26 @@ contain replacement wording, a content diff, file-write capability, or publicati
 authority. The required re-check keeps a human edit from being treated as verified merely
 because the original finding was dispositioned.
 
+## Verify after the change
+
+Phase 42 compares the change plan with a later public-course verifier report. It requires
+a different course revision, the same safe course and claim locations, recovery of every
+resolved target, and no new blocking finding outside the planned scope.
+
+```bash
+uv run python tools/public_course_post_change.py \
+  --change-plan /tmp/claude-course-change-plan.json \
+  --post-report /tmp/claude-course-adapter-after.json \
+  --output /tmp/claude-course-post-change.json \
+  --markdown \
+  --fail-on-block
+```
+
+`verified_targeted_scope` means the planned locations recovered under the later report.
+It is not full-course verification and does not prove that the human edit was technically
+correct. A human must still approve any content change before publication. The verifier
+contains no course text, source quotations, diff, write operation, or publication authority.
+
 Phase 31 adds an untrusted claim-proposal worker before evidence evaluation. The worker
 may suggest claim and section identifiers, but the validator rejects empty, duplicate,
 fabricated, incomplete, source-drifted, or raw-content-bearing output. This keeps the

@@ -47,6 +47,7 @@ def test_guide_exists_and_local_references_are_present():
     assert "public_course_review_packet.py" in showcase
     assert "public_course_review_adjudication.py" in showcase
     assert "public_course_change_plan.py" in showcase
+    assert "public_course_post_change.py" in showcase
 
     for relative_path in (
         "README.md",

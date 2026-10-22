@@ -267,6 +267,13 @@ from .public_course_change_plan import (
     build_public_course_change_plan,
     change_plan_json,
 )
+from .public_course_post_change import (
+    PUBLIC_COURSE_POST_CHANGE_VERSION,
+    PublicCoursePostChangeVerification,
+    TargetVerification,
+    build_public_course_post_change_verification,
+    post_change_json,
+)
 from .claude_course_adapter import (
     CLAUDE_COURSE_ADAPTER_VERSION,
     DEFAULT_MAX_REQUESTS,
@@ -546,6 +553,11 @@ __all__ = [
     "PublicCourseChangePlanItem",
     "build_public_course_change_plan",
     "change_plan_json",
+    "PUBLIC_COURSE_POST_CHANGE_VERSION",
+    "PublicCoursePostChangeVerification",
+    "TargetVerification",
+    "build_public_course_post_change_verification",
+    "post_change_json",
     "CLAUDE_COURSE_ADAPTER_VERSION",
     "DEFAULT_MAX_REQUESTS",
     "DEFAULT_MAX_ROWS",

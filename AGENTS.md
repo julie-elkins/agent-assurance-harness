@@ -148,6 +148,10 @@ missing, and what the result does not prove.
   dispositions, and re-check requirements. They must refuse open, deferred, mismatched,
   truncated, or incomplete review state and must never emit replacement wording, diffs,
   file writes, or publication authority.
+- Public-course post-change verification must compare a different course revision,
+  recover every planned target, and catch new blocking findings. It must distinguish
+  verified targeted scope from full-course verification and never treat revision change
+  alone as proof of content improvement.
 - The public-course verifier adapter may import a separately checked-out verifier as
   the source of truth, but must preserve its evidence tiers and unresolved states,
   record the checkout revision and bounded fetch counts, and emit only safe

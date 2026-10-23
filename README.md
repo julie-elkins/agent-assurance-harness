@@ -26,6 +26,36 @@ offline synthetic assurance demo and documents the optional metadata-only demons
 against a local checkout of the public
 [Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab).
 
+## Part 2 of the three-part learning path
+
+This repository is the hands-on middle step between learning how to build an agent
+system and learning how to validate the evaluation itself.
+
+- **Part 1:** Start with the [Claude Architect Lab learning path](https://github.com/julie-elkins/claude-architect-lab/blob/main/LEARNING-PATH.md)
+  to learn the system patterns.
+- **Part 2:** Run the [Agent Workflow Teaching Lab](examples/agent-workflow-teaching-lab/README.md)
+  to catch a transport-success result whose task outcome is still unsafe.
+- **Part 3:** Continue to [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity)
+  to test whether the measurement itself supports a decision.
+
+### Learner objective
+
+By the end of this part, you should be able to separate transport status from semantic
+task outcome, require bounded retry and cost evidence, and explain why an independent
+breaker (an evaluator designed to expose a false pass) must not share the builder's
+assumptions.
+
+### Learner checkpoint
+
+Run the teaching lab and explain why both paths can report transport status `ok` while
+only the guarded path is accepted. The expected result and troubleshooting steps are in
+the lab README.
+
+### What this part does not prove
+
+The lab is offline, synthetic, and metadata-only. It does not establish live model
+quality, production monitoring, or business impact.
+
 The showcase currently reports 10 scenarios, a passing guarded agent, 2 evaluator
 control caught, 3 mutation controls caught, 1 complete Course Doctor packet, and a
 passing launch-to-field pack with four degraded controls caught. The combined portfolio

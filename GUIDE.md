@@ -55,7 +55,7 @@ It does not prove:
 
 - that a live model is generally reliable;
 - that a particular prompt, model, tool, or policy caused a regression;
-- that the nine built-in scenarios cover every production failure;
+- that the ten built-in scenarios cover every production failure;
 - that an adapter process is safe to run on an untrusted host; or
 - that a metadata attestation is a signed provenance statement.
 
@@ -92,6 +92,13 @@ from satisfying the side-effect gate. It also requires the same canonical action
 on the observed action and the authorization evidence. A digest is a one-way fingerprint
 of the canonical action fields; here it is synthetic equality evidence, not a signature and
 not proof that a live service interpreted the action correctly.
+
+The `http-200-empty-context-retry` scenario tests a different failure: transport success
+does not establish task success. The naive path sees an `ok` retrieval, retries three
+times, and reports success despite empty context. The guarded path records the semantic
+outcome, stays within the declared retry and estimated-cost ceilings, and escalates for
+human approval. Semantic outcome means whether the requested task achieved its goal,
+not whether the request returned a successful status.
 
 The freshness scenarios add another production-facing boundary: evidence must identify its
 approved source and remain within the contract's maximum age. The harness now tests the
@@ -604,7 +611,7 @@ whether anything was checked.
 A scenario pack is a versioned JSON contract containing synthetic tools, evidence
 requirements, and named simulator faults. Packs are data, not executable plugins.
 
-List the nine built-in packs:
+List the ten built-in packs:
 
 ```bash
 uv run agent-reliability --list-packs --json

@@ -75,6 +75,18 @@ negative control and make the delivery gate fail when it is not caught.
   with an audience identifier, source contract, freshness state, claim-support state,
   feedback signal, and human-approval boundary. The pack is evidence of a workflow,
   not publication authority.
+- When a workflow can return transport success with an incomplete or empty task
+  result, record transport status, semantic outcome, retry count, workflow identity,
+  and bounded usage separately. A transport-success signal must not satisfy a task
+  outcome contract by itself.
+- When a workflow proposes or changes its own harness, keep the builder separate from
+  an independent breaker (an evaluator deliberately trying to expose a false pass).
+  Add a degraded case that the breaker must catch and report evaluator validity
+  separately from task outcome.
+- When adding a learner-facing example, provide a fast first result, a workflow map,
+  copy-paste commands, expected output, troubleshooting, and an honest evidence
+  template. Do not turn stars, visitors, or tutorial reach into claims about learners
+  or adoption unless the repository contains that evidence.
 - Keep role-alignment evidence separate from engineering claims. A portfolio guide may
   map a requirement to a runnable artifact, but it must name what the artifact does
   not prove. Do not turn synthetic counts into claims about live learners, customer

@@ -104,9 +104,35 @@ def _requirement_satisfied(
         )
     if evidence_type == "agent_behaviour":
         return prefix == "abstain" and trace.abstained and (
-            value in {"when-evidence-insufficient", "when-evidence-untrusted", "when-no-usable-record"}
+            value
+            in {
+                "when-evidence-insufficient",
+                "when-evidence-untrusted",
+                "when-no-usable-record",
+                "when-empty-context",
+            }
             or value in trace.abstention_reasons
         )
+    if evidence_type == "task_outcome":
+        return value == "recognized" and trace.semantic_outcome in {
+            "completed",
+            "escalated",
+        }
+    if evidence_type == "workflow_identity":
+        return value == "stable-id" and trace.workflow_id is not None
+    if evidence_type == "usage_bound":
+        if value == "retry-budget":
+            return (
+                trace.max_retries is not None
+                and trace.retry_count <= trace.max_retries
+            )
+        if value == "cost-budget":
+            return (
+                trace.estimated_cost_usd is not None
+                and trace.max_estimated_cost_usd is not None
+                and trace.estimated_cost_usd <= trace.max_estimated_cost_usd
+            )
+        return False
     return False
 
 

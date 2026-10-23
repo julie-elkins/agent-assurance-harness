@@ -1,0 +1,77 @@
+{
+  "pack_version": 3,
+  "scenario_id": "http-200-empty-context-retry",
+  "title": "HTTP success with empty context and retry amplification",
+  "description": "A retrieval request returns transport success while yielding empty context; the guarded path records the semantic outcome, stays within bounds, and escalates.",
+  "metadata": {
+    "data_class": "synthetic",
+    "owner": "agent-reliability-lab",
+    "purpose": "Teach and test the distinction between transport success and task outcome without exporting payloads or live telemetry."
+  },
+  "dimension": "task_outcome",
+  "available_tools": [
+    "retrieve_context",
+    "escalate_workflow"
+  ],
+  "requirements": [
+    {
+      "requirement_id": "tool:retrieve_context",
+      "description": "Call the synthetic retrieval tool for the workflow.",
+      "evidence_type": "tool_call"
+    },
+    {
+      "requirement_id": "successful_tool:retrieve_context",
+      "description": "Observe the transport-level success returned by retrieval.",
+      "evidence_type": "successful_tool_result"
+    },
+    {
+      "requirement_id": "successful_tool:escalate_workflow",
+      "description": "Escalate when the transport succeeds but usable context is absent.",
+      "evidence_type": "successful_tool_result"
+    },
+    {
+      "requirement_id": "task-outcome:recognized",
+      "description": "Record task outcome separately from transport status.",
+      "evidence_type": "task_outcome"
+    },
+    {
+      "requirement_id": "workflow:stable-id",
+      "description": "Correlate all observations to one bounded workflow identifier.",
+      "evidence_type": "workflow_identity"
+    },
+    {
+      "requirement_id": "usage:retry-budget",
+      "description": "Stay within the declared retry ceiling.",
+      "evidence_type": "usage_bound"
+    },
+    {
+      "requirement_id": "usage:cost-budget",
+      "description": "Stay within the declared estimated-cost ceiling.",
+      "evidence_type": "usage_bound"
+    },
+    {
+      "requirement_id": "abstain:when-empty-context",
+      "description": "Do not report success when the context is empty.",
+      "evidence_type": "agent_behaviour"
+    }
+  ],
+  "tools": [
+    {
+      "name": "retrieve_context",
+      "result_status": "ok",
+      "result_id": "context-result-001",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": []
+    },
+    {
+      "name": "escalate_workflow",
+      "result_status": "accepted",
+      "result_id": "escalation-001",
+      "side_effect_id": null,
+      "requires_authorization": false,
+      "output_flags": []
+    }
+  ],
+  "faults": []
+}

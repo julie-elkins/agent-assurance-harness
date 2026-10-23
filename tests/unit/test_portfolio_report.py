@@ -39,7 +39,7 @@ def test_missing_lane_cannot_be_presented_as_ready():
         controls_caught=("guarded-agent",),
         controls_missed=(),
         degraded_controls_caught=(),
-        evidence_ids=("scenario_count:9",),
+        evidence_ids=("scenario_count:10",),
         human_gate="human review",
     )
 

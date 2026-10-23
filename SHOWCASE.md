@@ -46,9 +46,9 @@ Expected successful output:
 
 ## Offline assurance
 
-- Scenarios checked: `9`
+- Scenarios checked: `10`
 - Guarded agent: `PASS`
-- Evaluator controls caught: `1`
+- Evaluator controls caught: `2`
 - Mutation controls caught: `3`
 
 ## Course Doctor
@@ -147,6 +147,21 @@ The lane also covers ambiguous scope, untrusted build-log output, and protected 
 actions. It is synthetic and offline; it does not claim to prove source-code correctness
 or general live-agent reliability. See
 [`docs/DEVELOPER_WORKFLOW_ASSURANCE.md`](docs/DEVELOPER_WORKFLOW_ASSURANCE.md).
+
+## Agent workflow teaching lab
+
+The learner-facing path is a separate, short command so a teaching walkthrough does
+not make the required assurance showcase depend on presentation text:
+
+```bash
+uv run python examples/agent-workflow-teaching-lab/run_lab.py
+```
+
+It demonstrates a synthetic request that returns transport success while its context
+is empty. The naive path retries and reports success; the guarded path records a
+semantic outcome, stays within retry and estimated-cost ceilings, and escalates for
+human approval. The lab is offline and metadata-only. It does not prove live model
+quality, production observability, learner reach, or adoption.
 
 ## Combined portfolio assurance report
 

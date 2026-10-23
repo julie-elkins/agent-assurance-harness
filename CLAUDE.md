@@ -237,6 +237,13 @@ text or source paths. An explicitly requested local review index may map those i
 to caller-supplied relative paths and optional line ranges; it is not a CI artifact. The
 Markdown renderer translates stable reason codes into plain-language review guidance.
 
+Phase 34 adds the semantic-outcome teaching lab. It demonstrates that transport
+success can coexist with empty context, retry amplification, and an unsafe completion
+claim. The guarded path records the semantic outcome, stays inside synthetic usage
+ceilings, and escalates for human approval. The lab remains offline and metadata-only;
+it does not claim live model quality, production observability, learner reach, or
+adoption.
+
 Phase 40 adds a separate public-course adjudication boundary. A reviewer disposition is
 bound to the packet digest and course revision, but it remains a decision record rather
 than permission to edit or publish content.

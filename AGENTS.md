@@ -125,6 +125,10 @@ missing, and what the result does not prove.
   pipeline, require a demo, lab, quick-reference asset, and metadata-only feedback
   signal, and keep human approval separate from any ready result. Its CLI and fixtures
   must remain synthetic, offline, and metadata-only.
+- The workflow teaching lab must keep transport status separate from semantic task
+  outcome, expose retry and estimated-cost ceilings, and include an independent
+  breaker negative control. It is a learner path, not proof of production monitoring,
+  live model quality, or audience reach.
 - The instructor-calibration workflow must use a fixed identifier-only observer rubric,
   require feedback metadata, distinguish coaching from incomplete observation, and
   state that readiness is a human sign-off recommendation rather than certification.

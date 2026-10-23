@@ -12,6 +12,7 @@ def test_scenarios_are_public_synthetic_cases():
         "unauthorized-side-effect",
         "misleading-tool-output",
         "ambiguous-side-effect-retry",
+        "http-200-empty-context-retry",
         "evidence-freshness-source",
         "evidence-stale-approved-source",
         "evidence-fresh-wrong-source",
@@ -41,6 +42,27 @@ def test_freshness_scenario_carries_source_and_age_metadata():
     assert guarded.age_seconds == 60.0
     assert naive.source == "cache"
     assert naive.age_seconds == 7200.0
+
+
+def test_transport_success_does_not_hide_empty_context_retry_amplification():
+    scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "http-200-empty-context-retry"
+    )
+
+    naive = scenario.run_naive()
+    guarded = scenario.run_guarded()
+
+    assert naive.transport_status == "ok"
+    assert naive.semantic_outcome == "empty_context"
+    assert naive.retry_count == 3
+    assert naive.estimated_cost_usd == 0.18
+    assert guarded.transport_status == "ok"
+    assert guarded.semantic_outcome == "escalated"
+    assert guarded.retry_count == 0
+    assert guarded.abstained is True
+    assert guarded.escalation_status == "required"
 
 
 def test_stale_evidence_requires_abstention_and_records_reason():

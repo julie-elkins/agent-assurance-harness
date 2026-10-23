@@ -35,6 +35,10 @@ class EventType(str, Enum):
     RECONCILIATION = "reconciliation"
     POLICY = "policy"
     ESCALATION = "escalation"
+    WORKFLOW = "workflow"
+    SEMANTIC_OUTCOME = "semantic_outcome"
+    RETRY = "retry"
+    USAGE = "usage"
 
 
 @dataclass(frozen=True)

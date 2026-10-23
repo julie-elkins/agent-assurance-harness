@@ -71,6 +71,7 @@ _RELIABILITY_EVENT_IDS = {
     "agent.reliability.idempotency_key",
     "agent.reliability.action_digest",
     "agent.reliability.reconciliation",
+    "agent.reliability.escalation",
 }
 _RELIABILITY_EVENT_ABSTENTION = "agent.reliability.abstention"
 
@@ -294,6 +295,44 @@ def _record_span(recorder: TraceRecorder, span: _Span) -> None:
             span.attributes,
             "agent.reliability.evidence.age_seconds",
         )
+        workflow_id = _first_string(
+            span.attributes,
+            "agent.reliability.workflow.id",
+        )
+        if workflow_id is not None:
+            recorder.record_workflow_outcome(
+                workflow_id=workflow_id,
+                transport_status=_first_string(
+                    span.attributes,
+                    "agent.reliability.transport.status",
+                )
+                or "unknown",
+                semantic_outcome=_first_string(
+                    span.attributes,
+                    "agent.reliability.semantic.outcome",
+                )
+                or "unknown",
+                retry_count=_first_integer(
+                    span.attributes,
+                    "agent.reliability.retry.count",
+                )
+                or 0,
+                estimated_cost_usd=_first_number(
+                    span.attributes,
+                    "agent.reliability.estimated_cost_usd",
+                )
+                or 0.0,
+                max_retries=_first_integer(
+                    span.attributes,
+                    "agent.reliability.max_retries",
+                )
+                or 0,
+                max_estimated_cost_usd=_first_number(
+                    span.attributes,
+                    "agent.reliability.max_estimated_cost_usd",
+                )
+                or 0.0,
+            )
         recorder.record_tool_call(tool_name)
         recorder.record_tool_result(
             tool_name,
@@ -363,6 +402,15 @@ def _record_event(
                 "Add an identifier-only agent.reliability.status value.",
             )
         recorder.record_reconciliation(event_id, status)
+    elif name == "agent.reliability.escalation":
+        status = _first_string(attributes, "agent.reliability.status")
+        if status is None:
+            raise OtlpDecodeError(
+                "missing_escalation_status",
+                "An escalation event has no status classification.",
+                "Add an identifier-only agent.reliability.status value.",
+            )
+        recorder.record_escalation(event_id, status)
     else:
         recorder.record_tool_output_flag(event_id)
 
@@ -471,6 +519,23 @@ def _first_number(
             if number >= 0:
                 return number
     return None
+
+
+def _first_integer(
+    attributes: dict[str, tuple[object, ...]],
+    key: str,
+) -> int | None:
+    value = attributes.get(key, ())
+    if not value:
+        return None
+    item = value[0]
+    if isinstance(item, bool):
+        return None
+    try:
+        integer = int(item)
+    except (TypeError, ValueError):
+        return None
+    return integer if integer >= 0 else None
 
 
 def _strings(

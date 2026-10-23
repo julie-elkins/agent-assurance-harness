@@ -33,6 +33,9 @@ SUPPORTED_EVIDENCE_TYPES = frozenset(
         "reconciliation",
         "output_handling",
         "agent_behaviour",
+        "task_outcome",
+        "workflow_identity",
+        "usage_bound",
     }
 )
 REQUIRED_ID_PREFIXES = {
@@ -44,6 +47,9 @@ REQUIRED_ID_PREFIXES = {
     "reconciliation": "reconciliation:",
     "output_handling": "output:",
     "agent_behaviour": "abstain:",
+    "task_outcome": "task-outcome:",
+    "workflow_identity": "workflow:",
+    "usage_bound": "usage:",
 }
 
 

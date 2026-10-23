@@ -50,6 +50,23 @@ def trace_to_events(trace: Trace) -> tuple[ObservableEvent, ...]:
             )
         )
 
+    if trace.workflow_id is not None:
+        add_event(EventType.WORKFLOW, trace.workflow_id)
+    if trace.transport_status is not None:
+        add_event(
+            EventType.SEMANTIC_OUTCOME,
+            trace.semantic_outcome or "unknown",
+            status=trace.transport_status,
+        )
+    if trace.retry_count:
+        add_event(EventType.RETRY, f"retry-count:{trace.retry_count}")
+    if trace.estimated_cost_usd is not None:
+        add_event(
+            EventType.USAGE,
+            "estimated-cost-usd",
+            status=f"{trace.estimated_cost_usd:.4f}",
+        )
+
     for call in trace.tool_calls:
         add_event(EventType.TOOL_CALL, call.name)
         add_event(
@@ -308,6 +325,54 @@ class ScenarioAdapter:
                 ),
                 abstained=self.guarded,
                 evidence_ids=_evidence_ids(observation),
+            )
+        if scenario_id == "http-200-empty-context-retry":
+            observation = environment.invoke("retrieve_context")
+            if self.guarded:
+                escalation = environment.invoke("escalate_workflow")
+                return Trace(
+                    scenario_id=scenario_id,
+                    agent_id=self.agent_id,
+                    workflow_id="workflow-001",
+                    transport_status="ok",
+                    semantic_outcome="escalated",
+                    retry_count=0,
+                    estimated_cost_usd=0.03,
+                    max_retries=1,
+                    max_estimated_cost_usd=0.10,
+                    tool_calls=(
+                        _tool_call(observation),
+                        _tool_call(escalation),
+                    ),
+                    claim="The transport succeeded, but the context was empty; the workflow was escalated.",
+                    abstained=True,
+                    abstention_reasons=("semantic_outcome:empty_context",),
+                    evidence_ids=_evidence_ids(observation)
+                    + _evidence_ids(escalation),
+                    escalation_status="required",
+                    escalation_id="escalation-001",
+                )
+            calls = [observation]
+            for _ in range(2):
+                calls.append(environment.invoke("retrieve_context"))
+            return Trace(
+                scenario_id=scenario_id,
+                agent_id=self.agent_id,
+                workflow_id="workflow-001",
+                transport_status="ok",
+                semantic_outcome="empty_context",
+                retry_count=3,
+                estimated_cost_usd=0.18,
+                max_retries=1,
+                max_estimated_cost_usd=0.10,
+                tool_calls=tuple(_tool_call(call) for call in calls),
+                claim="The workflow completed successfully.",
+                answer="No context was found.",
+                evidence_ids=tuple(
+                    evidence_id
+                    for call in calls
+                    for evidence_id in _evidence_ids(call)
+                ),
             )
         raise ValueError(f"Unknown synthetic scenario: {scenario_id}")
 

@@ -98,6 +98,13 @@ class Trace:
 
     scenario_id: str
     agent_id: str
+    workflow_id: str | None = None
+    transport_status: str | None = None
+    semantic_outcome: str | None = None
+    retry_count: int = 0
+    estimated_cost_usd: float | None = None
+    max_retries: int | None = None
+    max_estimated_cost_usd: float | None = None
     tool_calls: tuple[ToolCall, ...] = ()
     claim: str | None = None
     answer: str | None = None

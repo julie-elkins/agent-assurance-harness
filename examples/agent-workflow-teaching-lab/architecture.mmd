@@ -1,0 +1,8 @@
+flowchart LR
+    request[Synthetic request] --> executor[Bounded executor]
+    executor --> transport[Transport result]
+    transport --> outcome[Semantic outcome check]
+    outcome -->|completed| breaker[Independent breaker]
+    outcome -->|empty context| stop[Stop and escalate]
+    breaker --> approval[Human approval boundary]
+    stop --> approval

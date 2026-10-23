@@ -192,6 +192,43 @@ class AgentTraceInput(StrictModel):
         max_length=128,
         description="Caller-assigned agent identifier, not a credential or person identifier.",
     )
+    workflow_id: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Synthetic workflow identifier used to correlate one bounded run.",
+    )
+    transport_status: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Transport classification such as 'ok'; this is not task success.",
+    )
+    semantic_outcome: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Synthetic task outcome classification, separate from transport status.",
+    )
+    retry_count: int = Field(
+        default=0,
+        ge=0,
+        le=100,
+        description="Observed retry count for the bounded workflow.",
+    )
+    estimated_cost_usd: float | None = Field(
+        default=None,
+        ge=0,
+        description="Synthetic estimated cost metadata; no provider billing data is accepted.",
+    )
+    max_retries: int | None = Field(
+        default=None,
+        ge=0,
+        le=100,
+        description="Declared synthetic retry ceiling.",
+    )
+    max_estimated_cost_usd: float | None = Field(
+        default=None,
+        ge=0,
+        description="Declared synthetic estimated-cost ceiling.",
+    )
     tool_calls: list[ToolCallInput] = Field(
         default_factory=list,
         description=(
@@ -260,6 +297,16 @@ class AgentTraceInput(StrictModel):
     reconciliation_statuses: list[str] = Field(
         default_factory=list,
         description="Identifier-only postcondition classifications such as 'confirmed'.",
+    )
+    escalation_status: str | None = Field(
+        default=None,
+        max_length=64,
+        description="Synthetic escalation classification when the workflow stops for human review.",
+    )
+    escalation_id: str | None = Field(
+        default=None,
+        max_length=128,
+        description="Synthetic escalation identifier.",
     )
 
 
@@ -478,6 +525,13 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
     return Trace(
         scenario_id=trace.scenario_id,
         agent_id=trace.agent_id,
+        workflow_id=trace.workflow_id,
+        transport_status=trace.transport_status,
+        semantic_outcome=trace.semantic_outcome,
+        retry_count=trace.retry_count,
+        estimated_cost_usd=trace.estimated_cost_usd,
+        max_retries=trace.max_retries,
+        max_estimated_cost_usd=trace.max_estimated_cost_usd,
         tool_calls=tuple(
             ToolCall(
                 name=call.name,
@@ -504,6 +558,8 @@ def _trace_from_input(trace: AgentTraceInput) -> Trace:
         action_digests=tuple(trace.action_digests),
         reconciliation_ids=tuple(trace.reconciliation_ids),
         reconciliation_statuses=tuple(trace.reconciliation_statuses),
+        escalation_status=trace.escalation_status,
+        escalation_id=trace.escalation_id,
     )
 
 
@@ -610,7 +666,7 @@ def _comparison_output(include_mutations: bool) -> ReferenceComparisonOutput:
         diagnostics=_diagnostics(
             what_it_does_not_show=(
                 "It does not show live-provider behaviour, latency, cost, or reliability "
-                "outside the nine synthetic scenarios."
+                "outside the ten synthetic scenarios."
             )
         ),
     )
@@ -696,7 +752,7 @@ def get_scenario_pack_provenance() -> PackProvenanceOutput:
     name="list_scenario_packs",
     title="List synthetic scenario packs",
     description=(
-        "Validate and list the nine built-in synthetic scenario packs. Use this first "
+        "Validate and list the ten built-in synthetic scenario packs. Use this first "
         "when you need a scenario_id. The result includes refusals and diagnostics; "
         "an empty pack list is not evidence that all packs are valid."
     ),
@@ -835,7 +891,7 @@ def evaluate_agent_trace(
     name="run_reference_comparison",
     title="Run deterministic reference comparison",
     description=(
-        "Run the built-in naive and guarded agents against all nine synthetic scenario "
+        "Run the built-in naive and guarded agents against all ten synthetic scenario "
         "packs. Set include_mutations=true to run deliberate evidence-removal checks. "
         "This never launches a caller command, reads a file path, uses credentials, or "
         "contacts a provider."

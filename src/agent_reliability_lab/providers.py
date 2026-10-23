@@ -324,21 +324,43 @@ def _provider_payload(
         "estimated_cost_usd": 0.001,
     }
     if provider_id == "openai":
-        return {
+        payload = {
             "events": _openai_events(trace),
             "usage": usage,
         }
+        if trace.workflow_id is not None:
+            payload["workflow"] = _workflow_payload(trace)
+        return payload
     if provider_id == "anthropic":
-        return {
+        payload = {
             "content": _anthropic_events(trace),
             "stop_reason": "end_turn",
             "usage": usage,
         }
+        if trace.workflow_id is not None:
+            payload["workflow"] = _workflow_payload(trace)
+        return payload
     raise ProviderPayloadError(
         "unsupported_provider",
         f"Provider {provider_id} is not supported.",
         "Use openai or anthropic.",
     )
+
+
+def _workflow_payload(trace) -> dict[str, object]:
+    """Return bounded workflow metadata for the reviewed provider shape."""
+
+    return {
+        "workflow_id": trace.workflow_id,
+        "transport_status": trace.transport_status,
+        "semantic_outcome": trace.semantic_outcome,
+        "retry_count": trace.retry_count,
+        "estimated_cost_usd": trace.estimated_cost_usd,
+        "max_retries": trace.max_retries,
+        "max_estimated_cost_usd": trace.max_estimated_cost_usd,
+        "escalation_status": trace.escalation_status,
+        "escalation_id": trace.escalation_id,
+    }
 
 
 def _openai_events(trace) -> list[dict[str, object]]:
@@ -548,9 +570,14 @@ def _translate_openai(
     scenario_id: str,
     agent_id: str,
 ) -> AdapterRun:
-    _keys(payload, {"events", "usage"}, "openai response")
+    _keys(payload, {"events", "usage", "workflow"}, "openai response")
     events = _list_of_objects(payload.get("events"), "openai response.events")
     recorder = TraceRecorder(scenario_id=scenario_id, agent_id=agent_id)
+    _record_workflow_metadata(
+        recorder,
+        payload.get("workflow"),
+        provider_name="openai",
+    )
     call_names: dict[str, str] = {}
     for index, event in enumerate(events):
         event_type = _identifier(event.get("type"), f"openai events[{index}].type")
@@ -671,12 +698,17 @@ def _translate_anthropic(
 ) -> AdapterRun:
     _keys(
         payload,
-        {"content", "stop_reason", "usage"},
+        {"content", "stop_reason", "usage", "workflow"},
         "anthropic response",
     )
     _identifier(payload.get("stop_reason"), "anthropic stop_reason")
     events = _list_of_objects(payload.get("content"), "anthropic response.content")
     recorder = TraceRecorder(scenario_id=scenario_id, agent_id=agent_id)
+    _record_workflow_metadata(
+        recorder,
+        payload.get("workflow"),
+        provider_name="anthropic",
+    )
     call_names: dict[str, str] = {}
     for index, event in enumerate(events):
         event_type = _identifier(event.get("type"), f"anthropic content[{index}].type")
@@ -765,6 +797,84 @@ def _translate_anthropic(
                 "Map the provider event to the reviewed safe subset before accepting it.",
             )
     return recorder.finish()
+
+
+def _record_workflow_metadata(
+    recorder: TraceRecorder,
+    value: object,
+    *,
+    provider_name: str,
+) -> None:
+    """Validate and record the bounded workflow extension of the provider shape."""
+
+    if value is None:
+        return
+    data = _object(value, f"{provider_name} workflow")
+    _keys(
+        data,
+        {
+            "workflow_id",
+            "transport_status",
+            "semantic_outcome",
+            "retry_count",
+            "estimated_cost_usd",
+            "max_retries",
+            "max_estimated_cost_usd",
+            "escalation_status",
+            "escalation_id",
+        },
+        f"{provider_name} workflow",
+    )
+    workflow_id = _identifier(data.get("workflow_id"), f"{provider_name} workflow_id")
+    transport_status = _identifier(
+        data.get("transport_status"),
+        f"{provider_name} transport_status",
+    )
+    semantic_outcome = _identifier(
+        data.get("semantic_outcome"),
+        f"{provider_name} semantic_outcome",
+    )
+    retry_count = _non_negative_integer(
+        data.get("retry_count"),
+        f"{provider_name} retry_count",
+    )
+    estimated_cost_usd = _optional_number(
+        data.get("estimated_cost_usd"),
+        f"{provider_name} estimated_cost_usd",
+    )
+    max_retries = _non_negative_integer(
+        data.get("max_retries"),
+        f"{provider_name} max_retries",
+    )
+    max_estimated_cost_usd = _optional_number(
+        data.get("max_estimated_cost_usd"),
+        f"{provider_name} max_estimated_cost_usd",
+    )
+    if (
+        estimated_cost_usd is None
+        or max_estimated_cost_usd is None
+    ):
+        raise ProviderPayloadError(
+            "invalid_provider_metadata",
+            "Workflow cost metadata must include observed and maximum values.",
+            "Emit bounded non-negative workflow cost metadata.",
+        )
+    recorder.record_workflow_outcome(
+        workflow_id=workflow_id,
+        transport_status=transport_status,
+        semantic_outcome=semantic_outcome,
+        retry_count=retry_count,
+        estimated_cost_usd=estimated_cost_usd,
+        max_retries=max_retries,
+        max_estimated_cost_usd=max_estimated_cost_usd,
+    )
+    escalation_status = data.get("escalation_status")
+    escalation_id = data.get("escalation_id")
+    if escalation_status is not None or escalation_id is not None:
+        recorder.record_escalation(
+            _identifier(escalation_id, f"{provider_name} escalation_id"),
+            _identifier(escalation_status, f"{provider_name} escalation_status"),
+        )
 
 
 def _record_classification(
@@ -892,6 +1002,16 @@ def _optional_number(value: object, context: str) -> float | None:
             "Emit only identifier and non-negative numeric evidence metadata.",
         )
     return float(value)
+
+
+def _non_negative_integer(value: object, context: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ProviderPayloadError(
+            "invalid_provider_metadata",
+            f"{context} must be a non-negative integer.",
+            "Emit bounded integer workflow metadata.",
+        )
+    return value
 
 
 def _object(value: object, context: str) -> dict[str, Any]:

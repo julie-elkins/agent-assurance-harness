@@ -92,6 +92,18 @@ def _number(
     return float(value)
 
 
+def _integer(value: object, context: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ProtocolDecodeError(f"{context} must be a non-negative integer.")
+    return value
+
+
+def _integer_or_none(value: object, context: str) -> int | None:
+    if value is None:
+        return None
+    return _integer(value, context)
+
+
 def _string_tuple(value: object, context: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
         raise ProtocolDecodeError(f"{context} must be a list of strings.")
@@ -220,6 +232,13 @@ def _trace_from_dict(value: object) -> Trace:
         {
             "scenario_id",
             "agent_id",
+            "workflow_id",
+            "transport_status",
+            "semantic_outcome",
+            "retry_count",
+            "estimated_cost_usd",
+            "max_retries",
+            "max_estimated_cost_usd",
             "tool_calls",
             "claim",
             "answer",
@@ -290,6 +309,36 @@ def _trace_from_dict(value: object) -> Trace:
     return Trace(
         scenario_id=_string(data.get("scenario_id"), "trace scenario_id") or "",
         agent_id=_string(data.get("agent_id"), "trace agent_id") or "",
+        workflow_id=_string(
+            data.get("workflow_id"),
+            "trace workflow_id",
+            allow_none=True,
+        ),
+        transport_status=_string(
+            data.get("transport_status"),
+            "trace transport_status",
+            allow_none=True,
+        ),
+        semantic_outcome=_string(
+            data.get("semantic_outcome"),
+            "trace semantic_outcome",
+            allow_none=True,
+        ),
+        retry_count=_integer(data.get("retry_count", 0), "trace retry_count"),
+        estimated_cost_usd=_number(
+            data.get("estimated_cost_usd"),
+            "trace estimated_cost_usd",
+            allow_none=True,
+        ),
+        max_retries=_integer_or_none(
+            data.get("max_retries"),
+            "trace max_retries",
+        ),
+        max_estimated_cost_usd=_number(
+            data.get("max_estimated_cost_usd"),
+            "trace max_estimated_cost_usd",
+            allow_none=True,
+        ),
         tool_calls=tuple(tool_calls),
         claim=_string(data.get("claim"), "trace claim", allow_none=True),
         answer=_string(data.get("answer"), "trace answer", allow_none=True),
@@ -371,6 +420,13 @@ def adapter_run_to_dict(run: AdapterRun) -> dict[str, object]:
         response["trace"] = {
             "scenario_id": run.trace.scenario_id,
             "agent_id": run.trace.agent_id,
+            "workflow_id": run.trace.workflow_id,
+            "transport_status": run.trace.transport_status,
+            "semantic_outcome": run.trace.semantic_outcome,
+            "retry_count": run.trace.retry_count,
+            "estimated_cost_usd": run.trace.estimated_cost_usd,
+            "max_retries": run.trace.max_retries,
+            "max_estimated_cost_usd": run.trace.max_estimated_cost_usd,
             "tool_calls": [
                 {
                     "name": call.name,

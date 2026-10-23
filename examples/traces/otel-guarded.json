@@ -572,6 +572,158 @@
               ]
             },
             {
+              "traceId": "14141414141414141414141414141414",
+              "spanId": "0000000000000013",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "http-200-empty-context-retry"
+                  }
+                },
+                {
+                  "key": "agent.reliability.workflow.id",
+                  "value": {
+                    "stringValue": "workflow-001"
+                  }
+                },
+                {
+                  "key": "agent.reliability.transport.status",
+                  "value": {
+                    "stringValue": "ok"
+                  }
+                },
+                {
+                  "key": "agent.reliability.semantic.outcome",
+                  "value": {
+                    "stringValue": "escalated"
+                  }
+                },
+                {
+                  "key": "agent.reliability.retry.count",
+                  "value": {
+                    "intValue": 0
+                  }
+                },
+                {
+                  "key": "agent.reliability.estimated_cost_usd",
+                  "value": {
+                    "doubleValue": 0.03
+                  }
+                },
+                {
+                  "key": "agent.reliability.max_retries",
+                  "value": {
+                    "intValue": 1
+                  }
+                },
+                {
+                  "key": "agent.reliability.max_estimated_cost_usd",
+                  "value": {
+                    "doubleValue": 0.1
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "retrieve_context"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "context-result-001"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "ok"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "name": "agent.reliability.claim",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "claim:empty_context_escalated"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "traceId": "15151515151515151515151515151515",
+              "spanId": "0000000000000014",
+              "name": "execute_tool",
+              "attributes": [
+                {
+                  "key": "agent.reliability.scenario_id",
+                  "value": {
+                    "stringValue": "http-200-empty-context-retry"
+                  }
+                },
+                {
+                  "key": "gen_ai.operation.name",
+                  "value": {
+                    "stringValue": "execute_tool"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.name",
+                  "value": {
+                    "stringValue": "escalate_workflow"
+                  }
+                },
+                {
+                  "key": "gen_ai.tool.call.id",
+                  "value": {
+                    "stringValue": "escalation-001"
+                  }
+                },
+                {
+                  "key": "agent.reliability.result.status",
+                  "value": {
+                    "stringValue": "accepted"
+                  }
+                }
+              ],
+              "events": [
+                {
+                  "name": "agent.reliability.escalation",
+                  "attributes": [
+                    {
+                      "key": "agent.reliability.id",
+                      "value": {
+                        "stringValue": "escalation-001"
+                      }
+                    },
+                    {
+                      "key": "agent.reliability.status",
+                      "value": {
+                        "stringValue": "required"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "name": "agent.reliability.abstention",
+                  "attributes": []
+                }
+              ]
+            },
+            {
               "traceId": "11111111111111111111111111111111",
               "spanId": "0000000000000010",
               "name": "execute_tool",

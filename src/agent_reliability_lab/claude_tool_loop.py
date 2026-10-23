@@ -113,6 +113,7 @@ class AnthropicToolLoopAdapter:
             }
         ]
         all_events: list[dict[str, object]] = []
+        workflow_metadata: dict[str, object] | None = None
         total_output_tokens = 0
         total_elapsed_seconds = 0.0
         total_estimated_cost_usd = 0.0
@@ -159,6 +160,15 @@ class AnthropicToolLoopAdapter:
                         "Return one content array containing identifier-only events.",
                     )
                 events = [item for item in content if isinstance(item, dict)]
+                if "workflow" in model_payload:
+                    workflow = model_payload["workflow"]
+                    if not isinstance(workflow, dict):
+                        raise ProviderPayloadError(
+                            "provider_workflow_invalid",
+                            "The workflow field was not an object.",
+                            "Return only the bounded identifier-and-number workflow object.",
+                        )
+                    workflow_metadata = workflow
                 if any(event.get("type") == "tool_result" for event in events):
                     raise ProviderPayloadError(
                         "provider_tool_result_forbidden",
@@ -202,6 +212,8 @@ class AnthropicToolLoopAdapter:
                         "estimated_cost_usd": total_estimated_cost_usd,
                     },
                 }
+                if workflow_metadata is not None:
+                    combined["workflow"] = workflow_metadata
                 translated = translate_provider_payload(
                     "anthropic",
                     combined,

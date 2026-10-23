@@ -64,6 +64,11 @@ _LIVE_INSTRUCTIONS = (
     "identifier must use the reviewed sha256 format. Emit at most one claim, "
     "answer, abstention, authorization, or side_effect classification per trace; "
     "omit a classification rather than repeating it. "
+    "For workflow scenarios, you may add one top-level workflow object containing "
+    "only workflow_id, transport_status, semantic_outcome, retry_count, "
+    "estimated_cost_usd, max_retries, max_estimated_cost_usd, escalation_status, "
+    "and escalation_id. Workflow values must be identifiers or non-negative numbers; "
+    "do not include workflow prose. "
     "A tool event is either {\"type\":\"tool_use\",\"name\":\"synthetic-tool\","
     "\"id\":\"synthetic-call-id\"} or a matching {\"type\":\"tool_result\","
     "\"tool_use_id\":\"synthetic-call-id\",\"status\":\"ok|not_found|missing|"
@@ -385,11 +390,11 @@ def _extract_model_payload(provider_id: str, response: object) -> dict[str, obje
         return payload
     text = _anthropic_output_text(response)
     payload = _json_object(text)
-    if set(payload) != {"content"}:
+    if set(payload) not in ({"content"}, {"content", "workflow"}):
         raise ProviderPayloadError(
             "provider_response_refused",
-            "The Anthropic response did not contain exactly the safe content field.",
-            "Return only a content array with identifier-only records.",
+            "The Anthropic response contained fields outside the safe content and workflow fields.",
+            "Return a content array and, only for workflow scenarios, the bounded workflow object.",
         )
     return payload
 
@@ -512,11 +517,14 @@ def _combine_payload(
 ) -> dict[str, object]:
     if provider_id == "openai":
         return {"events": model_payload["events"], "usage": usage}
-    return {
+    combined: dict[str, object] = {
         "content": model_payload["content"],
         "stop_reason": "end_turn",
         "usage": usage,
     }
+    if "workflow" in model_payload:
+        combined["workflow"] = model_payload["workflow"]
+    return combined
 
 
 def _default_transport(

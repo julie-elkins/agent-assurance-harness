@@ -347,7 +347,18 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
                                             "type": "reliability",
                                             "kind": "abstention",
                                         }
-                                    ]
+                                    ],
+                                    "workflow": {
+                                        "workflow_id": "workflow-001",
+                                        "transport_status": "ok",
+                                        "semantic_outcome": "escalated",
+                                        "retry_count": 0,
+                                        "estimated_cost_usd": 0.01,
+                                        "max_retries": 1,
+                                        "max_estimated_cost_usd": 0.10,
+                                        "escalation_status": "required",
+                                        "escalation_id": "escalation-001",
+                                    },
                                 }
                             ),
                         }
@@ -378,6 +389,7 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
     assert len(result.trace.tool_calls) == 1
     assert result.trace.tool_calls[0].result_status == "ok"
     assert result.trace.abstained is True
+    assert result.trace.workflow_id == "workflow-001"
     assert result.execution_budget is not None
     assert result.execution_budget.requests == 2
     assert len(observed) == 2

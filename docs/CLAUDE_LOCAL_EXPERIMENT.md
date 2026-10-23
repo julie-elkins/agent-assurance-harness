@@ -22,7 +22,8 @@ tool and sends back only its status and identifiers. The adapter accepts either
 the reviewed text-JSON event shape or a native Anthropic `tool_use` block, but
 native calls must have an empty input object; raw tool arguments are refused.
 Raw prompts, responses, and credentials are discarded after identifier-only
-normalization.
+normalization. The accepted output contract is versioned as schema `1` and is
+validated locally before the result reaches the harness evaluator.
 
 ## Ten-case smoke run
 

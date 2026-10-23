@@ -13,6 +13,11 @@ import time
 import urllib.error
 from dataclasses import dataclass, replace
 
+from .claude_schema import (
+    claude_output_schema,
+    synthetic_tool_definitions,
+    validate_claude_output,
+)
 from .environment import SimulatedToolEnvironment
 from .live import (
     HttpTransport,
@@ -140,6 +145,16 @@ class AnthropicToolLoopAdapter:
                     provider_response,
                     available_tools=request.available_tools,
                 )
+                schema_refusal = validate_claude_output(
+                    model_payload,
+                    available_tools=request.available_tools,
+                )
+                if schema_refusal is not None:
+                    raise ProviderPayloadError(
+                        schema_refusal.error,
+                        schema_refusal.message,
+                        schema_refusal.guidance,
+                    )
                 usage = _live_usage(
                     provider_response,
                     elapsed_seconds=elapsed_seconds,
@@ -200,8 +215,20 @@ class AnthropicToolLoopAdapter:
             tool_events = [
                 event for event in events if event.get("type") == "tool_use"
             ]
+            normalized_events = [
+                (
+                    {
+                        key: value
+                        for key, value in event.items()
+                        if key != "input"
+                    }
+                    if event.get("type") == "tool_use"
+                    else event
+                )
+                for event in events
+            ]
             if not tool_events:
-                all_events.extend(events)
+                all_events.extend(normalized_events)
                 combined = {
                     "content": all_events,
                     "stop_reason": "end_turn",
@@ -257,7 +284,7 @@ class AnthropicToolLoopAdapter:
                     ),
                 )
 
-            all_events.extend(events)
+            all_events.extend(normalized_events)
             tool_results: list[dict[str, object]] = []
             for event in tool_events:
                 name = event.get("name")
@@ -424,26 +451,15 @@ def _anthropic_conversation_body(
             "max_tokens": policy.limits.max_output_tokens,
             "system": (
                 _LIVE_INSTRUCTIONS
+                + f" Output schema version is {claude_output_schema()['schema_version']}. "
+                + "The reviewed output schema is "
+                + json.dumps(claude_output_schema(), sort_keys=True)
                 + " If you request a tool, return only tool_use events. "
                 + "After tool results appear in the next user message, return "
                 + "only reliability classification events."
             ),
             "messages": messages,
-            "tools": [
-                {
-                    "name": tool_name,
-                    "description": (
-                        "Zero-argument synthetic tool. Use only to obtain "
-                        "identifier-level evidence for this scenario."
-                    ),
-                    "input_schema": {
-                        "type": "object",
-                        "properties": {},
-                        "additionalProperties": False,
-                    },
-                }
-                for tool_name in available_tools
-            ],
+            "tools": synthetic_tool_definitions(available_tools),
         },
         separators=(",", ":"),
     ).encode("utf-8")
@@ -529,6 +545,7 @@ def _extract_loop_payload(
                     "type": "tool_use",
                     "name": name,
                     "id": call_id,
+                    "input": {},
                 }
             )
         if not native_events:

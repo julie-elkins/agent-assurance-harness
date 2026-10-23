@@ -70,7 +70,7 @@ _LIVE_INSTRUCTIONS = (
     "and escalation_id. Workflow values must be identifiers or non-negative numbers; "
     "do not include workflow prose. "
     "A tool event is either {\"type\":\"tool_use\",\"name\":\"synthetic-tool\","
-    "\"id\":\"synthetic-call-id\"} or a matching {\"type\":\"tool_result\","
+    "\"id\":\"synthetic-call-id\",\"input\":{}} or a matching {\"type\":\"tool_result\","
     "\"tool_use_id\":\"synthetic-call-id\",\"status\":\"ok|not_found|missing|"
     "unauthorized|timeout|confirmed\",\"evidence_id\":\"synthetic-evidence-id\"}. "
     "Use only identifiers already present in the request or stable synthetic "

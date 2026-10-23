@@ -102,6 +102,12 @@ from .claude_tool_loop import (
     AnthropicToolLoopAdapter,
     anthropic_tool_loop_adapter,
 )
+from .claude_schema import (
+    CLAUDE_SCHEMA_VERSION,
+    claude_output_schema,
+    synthetic_tool_definitions,
+    validate_claude_output,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,
@@ -453,6 +459,10 @@ __all__ = [
     "MAX_TOOL_LOOP_TURNS",
     "AnthropicToolLoopAdapter",
     "anthropic_tool_loop_adapter",
+    "CLAUDE_SCHEMA_VERSION",
+    "claude_output_schema",
+    "synthetic_tool_definitions",
+    "validate_claude_output",
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_provider_assurance",

@@ -317,18 +317,10 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
                 {
                     "content": [
                         {
-                            "type": "text",
-                            "text": json.dumps(
-                                {
-                                    "content": [
-                                        {
-                                            "type": "tool_use",
-                                            "name": "cancel_order",
-                                            "id": "call-001",
-                                        }
-                                    ]
-                                }
-                            ),
+                            "type": "tool_use",
+                            "name": "cancel_order",
+                            "id": "call-001",
+                            "input": {},
                         }
                     ],
                     "stop_reason": "end_turn",
@@ -393,6 +385,7 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
     assert result.execution_budget is not None
     assert result.execution_budget.requests == 2
     assert len(observed) == 2
+    assert observed[0]["tools"][0]["input_schema"]["additionalProperties"] is False
     assert observed[1]["messages"][-1]["content"].find("tool_results") >= 0
     assert b"test-secret" not in json.dumps(observed).encode("utf-8")
 

@@ -18,8 +18,11 @@ command argument, commit, issue, report, or CI secret for this local experiment.
 The adapter requires `--allow-network`, allows up to three bounded conversation
 turns per case, does not retry, and has a hard aggregate planning ceiling. A turn
 may contain a synthetic tool request; the local harness executes that synthetic
-tool and sends back only its status and identifiers. Raw prompts, responses, and
-credentials are discarded after identifier-only normalization.
+tool and sends back only its status and identifiers. The adapter accepts either
+the reviewed text-JSON event shape or a native Anthropic `tool_use` block, but
+native calls must have an empty input object; raw tool arguments are refused.
+Raw prompts, responses, and credentials are discarded after identifier-only
+normalization.
 
 ## Ten-case smoke run
 

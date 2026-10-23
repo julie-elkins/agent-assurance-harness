@@ -1245,7 +1245,9 @@ uv run python tools/claude_local_experiment.py \
 
 Set `ANTHROPIC_API_KEY` in the local process before running. The adapter emits only
 scenario identifiers, statuses, findings, and usage ceilings. It never writes the
-credential, prompts, raw responses, or model text to the report or repository.
+credential, prompts, raw responses, or model text to the report or repository. It
+accepts the reviewed text-JSON shape or a native Anthropic `tool_use` block, but
+refuses native tool calls with non-empty arguments.
 See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the
 pilot and Haiku replication commands.
 

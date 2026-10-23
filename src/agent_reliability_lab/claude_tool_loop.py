@@ -119,7 +119,7 @@ class AnthropicToolLoopAdapter:
         total_estimated_cost_usd = 0.0
 
         for turn in range(1, self.max_turns + 1):
-            response = self._request(messages)
+            response = self._request(messages, request.available_tools)
             if isinstance(response, AdapterRun):
                 return replace(
                     response,
@@ -136,9 +136,9 @@ class AnthropicToolLoopAdapter:
                 )
             provider_response, elapsed_seconds = response
             try:
-                model_payload = _extract_model_payload(
-                    "anthropic",
+                model_payload = _extract_loop_payload(
                     provider_response,
+                    available_tools=request.available_tools,
                 )
                 usage = _live_usage(
                     provider_response,
@@ -316,10 +316,15 @@ class AnthropicToolLoopAdapter:
     def _request(
         self,
         messages: list[dict[str, str]],
+        available_tools: tuple[str, ...],
     ) -> tuple[dict[str, object], float] | AdapterRun:
         """Send one safe text-only conversation turn and parse it in memory."""
 
-        body = _anthropic_conversation_body(self.policy, messages)
+        body = _anthropic_conversation_body(
+            self.policy,
+            messages,
+            available_tools,
+        )
         credential = os.environ[self.policy.credential_env_var]
         started = time.monotonic()
         try:
@@ -409,8 +414,9 @@ def _safe_request(request: ScenarioRequest) -> dict[str, object]:
 def _anthropic_conversation_body(
     policy: LiveProviderPolicy,
     messages: list[dict[str, str]],
+    available_tools: tuple[str, ...],
 ) -> bytes:
-    """Build a text-only Anthropic request from safe event summaries."""
+    """Build an Anthropic request from safe summaries and synthetic tools."""
 
     return json.dumps(
         {
@@ -423,6 +429,21 @@ def _anthropic_conversation_body(
                 + "only reliability classification events."
             ),
             "messages": messages,
+            "tools": [
+                {
+                    "name": tool_name,
+                    "description": (
+                        "Zero-argument synthetic tool. Use only to obtain "
+                        "identifier-level evidence for this scenario."
+                    ),
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {},
+                        "additionalProperties": False,
+                    },
+                }
+                for tool_name in available_tools
+            ],
         },
         separators=(",", ":"),
     ).encode("utf-8")
@@ -453,3 +474,51 @@ def _loop_budget(
             "estimated_cost_usd": estimated_cost_usd,
         }
     )
+
+
+def _extract_loop_payload(
+    response: dict[str, object],
+    *,
+    available_tools: tuple[str, ...],
+) -> dict[str, object]:
+    """Accept safe text JSON or native zero-argument Anthropic tool blocks."""
+
+    try:
+        return _extract_model_payload("anthropic", response)
+    except ProviderPayloadError:
+        content = response.get("content")
+        if not isinstance(content, list) or not content:
+            raise
+        native_events: list[dict[str, object]] = []
+        for block in content:
+            if not isinstance(block, dict) or block.get("type") != "tool_use":
+                raise
+            if set(block) != {"type", "id", "name", "input"}:
+                raise ProviderPayloadError(
+                    "provider_native_tool_block_refused",
+                    "The native tool block contained fields outside the reviewed shape.",
+                    "Return a zero-argument synthetic tool_use block.",
+                )
+            name = block.get("name")
+            call_id = block.get("id")
+            tool_input = block.get("input")
+            if (
+                not isinstance(name, str)
+                or name not in available_tools
+                or not isinstance(call_id, str)
+                or not isinstance(tool_input, dict)
+                or tool_input
+            ):
+                raise ProviderPayloadError(
+                    "provider_raw_tool_arguments_rejected",
+                    "The native tool block was not a permitted zero-argument synthetic call.",
+                    "Use one listed synthetic tool with an empty input object.",
+                )
+            native_events.append(
+                {
+                    "type": "tool_use",
+                    "name": name,
+                    "id": call_id,
+                }
+            )
+        return {"content": native_events}

@@ -97,6 +97,11 @@ from .claude_experiment import (
     ClaudeExperimentReport,
     run_claude_experiment,
 )
+from .claude_tool_loop import (
+    MAX_TOOL_LOOP_TURNS,
+    AnthropicToolLoopAdapter,
+    anthropic_tool_loop_adapter,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,
@@ -445,6 +450,9 @@ __all__ = [
     "ClaudeExperimentPolicy",
     "ClaudeExperimentReport",
     "run_claude_experiment",
+    "MAX_TOOL_LOOP_TURNS",
+    "AnthropicToolLoopAdapter",
+    "anthropic_tool_loop_adapter",
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_provider_assurance",

@@ -15,9 +15,11 @@ causality.
 Set `ANTHROPIC_API_KEY` in the current shell process. Do not put the key in a file,
 command argument, commit, issue, report, or CI secret for this local experiment.
 
-The adapter requires `--allow-network`, makes one request per case, does not retry,
-and has a hard aggregate planning ceiling. Raw prompts, responses, and credentials
-are discarded after identifier-only normalization.
+The adapter requires `--allow-network`, allows up to three bounded conversation
+turns per case, does not retry, and has a hard aggregate planning ceiling. A turn
+may contain a synthetic tool request; the local harness executes that synthetic
+tool and sends back only its status and identifiers. Raw prompts, responses, and
+credentials are discarded after identifier-only normalization.
 
 ## Ten-case smoke run
 
@@ -34,7 +36,8 @@ uv run python tools/claude_local_experiment.py \
 ## Twenty-to-thirty-case pilot
 
 The pilot repeats the fixed built-in scenario order to make provider variance
-visible. Thirty cases are the default:
+visible. Thirty cases are the default. The worst-case planning estimate is
+`30 cases × 3 turns × $0.05 = $4.50`, below the five-dollar ceiling:
 
 ```bash
 uv run python tools/claude_local_experiment.py \

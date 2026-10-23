@@ -1231,8 +1231,9 @@ repository's automated checks.
 The repository also includes a ten-case smoke run and a twenty-to-thirty-case pilot
 for local Claude validation. This is an external-validity check (whether the
 provider-facing adapter works against an actual model), not the primary deterministic
-research result. It uses built-in synthetic scenarios only, makes one request per
-case, does not retry, and has a five-dollar aggregate planning ceiling by default:
+research result. It uses built-in synthetic scenarios only, allows up to three
+bounded conversation turns per case, does not retry, and has a five-dollar
+aggregate planning ceiling by default:
 
 ```bash
 uv run python tools/claude_local_experiment.py \

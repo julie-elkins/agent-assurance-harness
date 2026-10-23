@@ -10,7 +10,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import ceil
-from .live import HttpTransport, LiveProviderPolicy, live_provider_adapter
+from .claude_tool_loop import (
+    MAX_TOOL_LOOP_TURNS,
+    anthropic_tool_loop_adapter,
+)
+from .live import HttpTransport, LiveProviderPolicy
 from .pack_evaluator import evaluate_pack_trace
 from .packs import (
     ScenarioPack,
@@ -28,7 +32,7 @@ SMOKE_CASE_COUNT = 10
 MIN_PILOT_CASE_COUNT = 20
 MAX_PILOT_CASE_COUNT = 30
 DEFAULT_TOTAL_COST_CEILING_USD = 5.0
-DEFAULT_ESTIMATED_COST_PER_REQUEST_USD = 0.10
+DEFAULT_ESTIMATED_COST_PER_REQUEST_USD = 0.05
 DEFAULT_OUTPUT_TOKEN_CEILING = 512
 DEFAULT_ELAPSED_SECONDS = 60.0
 
@@ -71,11 +75,13 @@ class ClaudeExperimentPolicy:
         if self.estimated_cost_usd_per_request <= 0:
             return "estimated_cost_usd_per_request must be greater than zero."
         if (
-            self.case_count * self.estimated_cost_usd_per_request
+            self.case_count
+            * MAX_TOOL_LOOP_TURNS
+            * self.estimated_cost_usd_per_request
             > self.max_total_cost_usd
         ):
             return (
-                "The planned case count exceeds the aggregate spend ceiling; "
+                "The planned case count and three-turn ceiling exceed the aggregate spend ceiling; "
                 "lower the per-request estimate or raise the total ceiling deliberately."
             )
         if self.max_output_tokens < 16:
@@ -256,7 +262,7 @@ def run_claude_experiment(
 
     packs = load_builtin_packs()
     selected = _repeat_packs(packs, policy.case_count)
-    adapter = live_provider_adapter(
+    adapter = anthropic_tool_loop_adapter(
         LiveProviderPolicy(
             provider_id=CLAUDE_PROVIDER_ID,
             model=policy.model,
@@ -273,6 +279,7 @@ def run_claude_experiment(
             allow_network=policy.allow_network,
         ),
         transport=transport,
+        max_turns=MAX_TOOL_LOOP_TURNS,
     )
 
     case_results: list[ClaudeCaseResult] = []

@@ -6,12 +6,17 @@ from pathlib import Path
 import pytest
 
 from agent_reliability_lab.environment import environment_for_scenario
+from agent_reliability_lab.claude_tool_loop import anthropic_tool_loop_adapter
 from agent_reliability_lab.live import (
     LiveProviderPolicy,
     _NoRedirectHandler,
     live_provider_adapter,
 )
-from agent_reliability_lab.packs import load_builtin_packs, request_from_pack
+from agent_reliability_lab.packs import (
+    build_environment_from_pack,
+    load_builtin_packs,
+    request_from_pack,
+)
 from agent_reliability_lab.providers import ProviderLimits
 
 
@@ -294,6 +299,90 @@ def test_anthropic_live_adapter_uses_approved_endpoint_and_headers(monkeypatch):
     assert observed["headers"]["x-api-key"] == "test-secret"
     assert observed["headers"]["anthropic-version"] == "2023-06-01"
     assert b"test-secret" not in observed["body"]
+
+
+def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
+    monkeypatch,
+):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-secret")
+    pack = next(
+        pack
+        for pack in load_builtin_packs()
+        if pack.scenario_id == "unauthorized-side-effect"
+    )
+    request = request_from_pack(pack)
+    responses = iter(
+        (
+            json.dumps(
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(
+                                {
+                                    "content": [
+                                        {
+                                            "type": "tool_use",
+                                            "name": "cancel_order",
+                                            "id": "call-001",
+                                        }
+                                    ]
+                                }
+                            ),
+                        }
+                    ],
+                    "stop_reason": "end_turn",
+                    "usage": {"output_tokens": 24},
+                }
+            ).encode("utf-8"),
+            json.dumps(
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(
+                                {
+                                    "content": [
+                                        {
+                                            "type": "reliability",
+                                            "kind": "abstention",
+                                        }
+                                    ]
+                                }
+                            ),
+                        }
+                    ],
+                    "stop_reason": "end_turn",
+                    "usage": {"output_tokens": 16},
+                }
+            ).encode("utf-8"),
+        )
+    )
+    observed = []
+
+    def transport(url, headers, body, timeout_seconds):
+        observed.append(json.loads(body))
+        return next(responses)
+
+    result = anthropic_tool_loop_adapter(
+        _policy(provider_id="anthropic"),
+        max_turns=3,
+        transport=transport,
+    ).run(
+        request,
+        environment=build_environment_from_pack(pack),
+    )
+
+    assert result.refusal is None
+    assert result.trace is not None
+    assert len(result.trace.tool_calls) == 1
+    assert result.trace.tool_calls[0].result_status == "ok"
+    assert result.trace.abstained is True
+    assert result.execution_budget is not None
+    assert result.execution_budget.requests == 2
+    assert len(observed) == 2
+    assert observed[1]["messages"][-1]["content"].find("tool_results") >= 0
+    assert b"test-secret" not in json.dumps(observed).encode("utf-8")
 
 
 def test_provider_contract_fixtures_remain_accepted(monkeypatch):

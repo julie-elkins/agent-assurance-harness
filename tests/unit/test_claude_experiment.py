@@ -36,7 +36,7 @@ def _policy(**overrides) -> ClaudeExperimentPolicy:
         "model": CLAUDE_SONNET_MODEL,
         "case_count": 10,
         "max_total_cost_usd": 5.0,
-        "estimated_cost_usd_per_request": 0.10,
+        "estimated_cost_usd_per_request": 0.05,
         "max_output_tokens": 64,
         "max_elapsed_seconds": 5.0,
         "allow_network": True,
@@ -104,7 +104,7 @@ def test_pilot_repeats_fixed_scenarios_without_exceeding_total_cap(monkeypatch):
     assert report.decision == "complete"
     assert report.attempted_case_count == 20
     assert report.completed_case_count == 20
-    assert report.total_estimated_cost_usd == 2.0
+    assert report.total_estimated_cost_usd == 1.0
     assert report.within_total_cost_limit is True
     assert report.cases[0].replicate == 1
     assert report.cases[-1].replicate == 2

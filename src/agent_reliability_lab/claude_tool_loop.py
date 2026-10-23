@@ -541,12 +541,30 @@ def _extract_loop_payload(
                 continue
             if block.get("type") != "tool_use":
                 raise
-            if set(block) != {"type", "id", "name", "input"}:
+            if not {"type", "id", "name", "input"}.issubset(block) or (
+                set(block) - {"type", "id", "name", "input", "caller"}
+            ):
                 raise ProviderPayloadError(
                     "provider_native_tool_fields_invalid",
-                    "The native tool block did not match the reviewed field set.",
-                    "Return exactly type, id, name, and input in the tool_use block.",
+                    "The native tool block contained unsupported fields.",
+                    "Return type, id, name, and input; caller metadata is the only optional provider field.",
                 )
+            caller = block.get("caller")
+            if caller is not None:
+                if (
+                    not isinstance(caller, dict)
+                    or set(caller) - {"type", "tool_id"}
+                    or not isinstance(caller.get("type"), str)
+                    or (
+                        "tool_id" in caller
+                        and not isinstance(caller.get("tool_id"), str)
+                    )
+                ):
+                    raise ProviderPayloadError(
+                        "provider_native_tool_caller_invalid",
+                        "The native tool caller metadata was not a safe identifier object.",
+                        "Use caller metadata with a string type and optional string tool_id.",
+                    )
             name = block.get("name")
             call_id = block.get("id")
             tool_input = block.get("input")

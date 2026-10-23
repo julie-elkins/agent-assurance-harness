@@ -1252,6 +1252,8 @@ bounded follow-up, with parallel tool calls disabled for simpler trace pairing.
 Lifecycle hooks check the
 request, response schema, tool boundary, and stop budget separately; refusal records
 include the stage where the run stopped, such as `after_response` or `before_tool`.
+The adapter accepts bounded provider caller metadata but does not retain it in the
+public trace.
 See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the
 pilot and Haiku replication commands.
 

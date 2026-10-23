@@ -325,6 +325,7 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
                             "name": "cancel_order",
                             "id": "call-001",
                             "input": {},
+                            "caller": {"type": "direct"},
                         }
                     ],
                     "stop_reason": "end_turn",

@@ -84,6 +84,22 @@ The pilot tests protocol integrity and controlled decision differences. It does 
 establish production safety, live model quality, or how every organization should
 govern an agent.
 
+Run the held-out robustness matrix after the original pilot:
+
+```bash
+uv run python tools/reauthorization_pilot.py \
+  --robustness \
+  --output /tmp/agent-reauthorization-robustness.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The robustness mode adds twelve compound-change cases that are not part of the
+original 18-case matrix. Expected decisions come from the checked-in
+`examples/reauthorization-pilot/reference-decisions.json` manifest rather than from
+the condition evaluator. This reduces coupling between the system being tested and
+the reference used to judge it; it still does not create production evidence.
+
 ### What this part does not prove
 
 The lab is offline, synthetic, and metadata-only. It does not establish live model

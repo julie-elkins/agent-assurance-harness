@@ -19,13 +19,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--markdown", action="store_true")
     parser.add_argument(
+        "--robustness",
+        action="store_true",
+        help="Include the twelve held-out compound-change cases.",
+    )
+    parser.add_argument(
         "--fail-on-findings",
         action="store_true",
         help="Return non-zero if pilot integrity controls do not pass.",
     )
     args = parser.parse_args(argv)
 
-    report = run_pilot()
+    report = run_pilot(include_held_out=args.robustness)
     serialized = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

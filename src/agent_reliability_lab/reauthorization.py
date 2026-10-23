@@ -1,4 +1,4 @@
-"""Deterministic synthetic pilot for change-aware agent reauthorization.
+"""Deterministic synthetic studies for change-aware agent reauthorization.
 
 The pilot compares three decision conditions over the same claim-change cases:
 
@@ -25,6 +25,12 @@ REFERENCE_DECISIONS_PATH = (
     / "examples"
     / "reauthorization-pilot"
     / "reference-decisions.json"
+)
+PHASE4_REFERENCE_DECISIONS_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "examples"
+    / "reauthorization-pilot"
+    / "phase4-reference-decisions.json"
 )
 
 
@@ -67,6 +73,11 @@ class ReauthorizationCase:
     accountable_owner_present: bool
     rollback_evidence_present: bool
     required_reevaluation_scope: str
+    phase: str = "pilot"
+    split: str = "pilot"
+    case_index: int | None = None
+    template_id: str | None = None
+    independence_group: str | None = None
 
     @property
     def requires_reevaluation(self) -> bool:
@@ -99,12 +110,36 @@ class ReauthorizationCase:
     ) -> dict[str, Any]:
         """Return a public-safe case record."""
 
-        value = asdict(self)
+        # Preserve the phase-1/3 metadata shape and hashes. New study metadata is
+        # emitted only for Phase-4 cases.
+        value = {
+            "case_id": self.case_id,
+            "change_family": self.change_family,
+            "variant": self.variant,
+            "changed_component": self.changed_component,
+            "prior_system_revision": self.prior_system_revision,
+            "current_system_revision": self.current_system_revision,
+            "prior_evidence_revision": self.prior_evidence_revision,
+            "current_task_result": self.current_task_result,
+            "accountable_owner_present": self.accountable_owner_present,
+            "rollback_evidence_present": self.rollback_evidence_present,
+            "required_reevaluation_scope": self.required_reevaluation_scope,
+        }
         value["variant"] = self.variant.value
         value["expected_decision"] = (
             reference_decision or self.expected_decision
         ).value
         value["requires_reevaluation"] = self.requires_reevaluation
+        if self.phase != "pilot":
+            value.update(
+                {
+                    "phase": self.phase,
+                    "split": self.split,
+                    "case_index": self.case_index,
+                    "template_id": self.template_id,
+                    "independence_group": self.independence_group,
+                }
+            )
         return value
 
 
@@ -250,6 +285,122 @@ def held_out_cases() -> tuple[ReauthorizationCase, ...]:
     return tuple(cases)
 
 
+def _phase4_split(case_index: int) -> str:
+    """Return the pre-registered split for one base-case index."""
+
+    if case_index < 4:
+        return "development"
+    if case_index < 7:
+        return "robustness"
+    return "locked_holdout"
+
+
+def _phase4_case(
+    family: str,
+    component: str,
+    variant: CaseVariant,
+    case_index: int,
+    *,
+    compound: bool = False,
+) -> ReauthorizationCase:
+    """Build one varied, metadata-only Phase-4 case."""
+
+    if compound:
+        case_id = (
+            f"reauth-phase4-compound-{family}-"
+            f"{variant.value.replace('_', '-')}-{case_index:02d}"
+        )
+        changed_component = f"{component}+deployment"
+        split = "locked_compound_holdout"
+        current_revision = f"system-{family}-compound-r{case_index + 3}"
+        scope_prefix = f"compound-change:{family}+deployment"
+        template_id = f"compound-{case_index % 3}"
+    else:
+        case_id = (
+            f"reauth-phase4-{family}-"
+            f"{variant.value.replace('_', '-')}-{case_index:02d}"
+        )
+        changed_component = f"{component}-variant-{case_index % 4}"
+        split = _phase4_split(case_index)
+        current_revision = f"system-{family}-phase4-r{case_index + 2}"
+        scope_prefix = f"scenario-family:{family}:phase4"
+        template_id = f"base-{case_index % 4}"
+
+    missing_pattern = case_index % 3
+    owner = not (
+        variant is CaseVariant.NEGATIVE_CONTROL
+        and missing_pattern in {0, 2}
+    )
+    rollback = not (
+        variant is CaseVariant.NEGATIVE_CONTROL
+        and missing_pattern in {1, 2}
+    )
+    return ReauthorizationCase(
+        case_id=case_id,
+        change_family=family,
+        variant=variant,
+        changed_component=changed_component,
+        prior_system_revision=f"system-{family}-r1",
+        current_system_revision=current_revision,
+        prior_evidence_revision=f"evidence-{family}-phase4-r{case_index % 5 + 1}",
+        current_task_result="pass",
+        accountable_owner_present=owner,
+        rollback_evidence_present=rollback,
+        required_reevaluation_scope=(
+            "none"
+            if variant is CaseVariant.CURRENT
+            else f"{scope_prefix}:{case_index:02d}"
+        ),
+        phase="phase4",
+        split=split,
+        case_index=case_index,
+        template_id=template_id,
+        independence_group=(
+            f"{'compound:' if compound else ''}"
+            f"{family}:{variant.value}:{case_index:02d}"
+        ),
+    )
+
+
+def phase4_cases() -> tuple[ReauthorizationCase, ...]:
+    """Return 210 pre-registered Phase-4 cases.
+
+    The base matrix has 10 cases per family/variant cell. The compound holdout
+    contains five cases per family and is never included in development.
+    """
+
+    families = (
+        ("prompt", "instruction"),
+        ("tool", "api-contract"),
+        ("retrieval", "policy-source"),
+        ("authorization", "permission-policy"),
+        ("evaluator", "threshold"),
+        ("deployment", "dependency"),
+    )
+    cases: list[ReauthorizationCase] = []
+    for family, component in families:
+        for variant in CaseVariant:
+            cases.extend(
+                _phase4_case(family, component, variant, index)
+                for index in range(10)
+            )
+        cases.extend(
+            _phase4_case(
+                family,
+                component,
+                (
+                    CaseVariant.REEVALUATION_REQUIRED
+                    if index < 3
+                    else CaseVariant.NEGATIVE_CONTROL
+                ),
+                index,
+                compound=True,
+            )
+            for index in range(5)
+        )
+    return tuple(cases)
+
+
 def load_reference_decisions(
     path: Path = REFERENCE_DECISIONS_PATH,
 ) -> dict[str, PilotDecision]:
@@ -258,6 +409,28 @@ def load_reference_decisions(
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, dict) or not raw:
         raise ValueError("Reference decision manifest must be a non-empty object.")
+    if "case_patterns" in raw:
+        decisions: dict[str, PilotDecision] = {}
+        families = (
+            "prompt",
+            "tool",
+            "retrieval",
+            "authorization",
+            "evaluator",
+            "deployment",
+        )
+        for pattern in raw["case_patterns"]:
+            decision = PilotDecision(pattern["decision"])
+            for family in pattern.get("families", families):
+                for index in pattern.get("indices", []):
+                    case_id = pattern["format"].format(
+                        family=family,
+                        index=index,
+                    )
+                    if case_id in decisions:
+                        raise ValueError(f"Duplicate reference case: {case_id}")
+                    decisions[case_id] = decision
+        return decisions
     try:
         return {
             case_id: PilotDecision(decision)
@@ -494,14 +667,145 @@ def run_pilot(*, include_held_out: bool = False) -> dict[str, Any]:
     return report
 
 
+def run_phase4() -> dict[str, Any]:
+    """Run the larger, split-aware Phase-4 synthetic study."""
+
+    cases = phase4_cases()
+    reference_decisions = load_reference_decisions(
+        PHASE4_REFERENCE_DECISIONS_PATH
+    )
+    case_ids = {case.case_id for case in cases}
+    manifest_ids = set(reference_decisions)
+    if case_ids != manifest_ids:
+        raise ValueError(
+            "Phase-4 reference manifest mismatch; "
+            f"missing={sorted(case_ids - manifest_ids)}, "
+            f"extra={sorted(manifest_ids - case_ids)}."
+        )
+    results = tuple(
+        _evaluate(case, condition, reference_decisions[case.case_id])
+        for case in cases
+        for condition in PilotCondition
+    )
+    base_cases = tuple(case for case in cases if "compound" not in case.case_id)
+    compound_cases = tuple(case for case in cases if "compound" in case.case_id)
+    expected_split_counts = {
+        "development": 72,
+        "robustness": 54,
+        "locked_holdout": 54,
+        "locked_compound_holdout": 30,
+    }
+    split_counts = {
+        split: sum(case.split == split for case in cases)
+        for split in expected_split_counts
+    }
+    family_variant_counts = {
+        f"{family}:{variant.value}": sum(
+            case.change_family == family
+            and case.variant is variant
+            and "compound" not in case.case_id
+            for case in cases
+        )
+        for family in {case.change_family for case in cases}
+        for variant in CaseVariant
+    }
+    prior_ids = {
+        case.case_id for case in synthetic_cases() + held_out_cases()
+    }
+    controls = {
+        "case_count_is_expected": len(cases) == 210,
+        "base_matrix_is_expected": len(base_cases) == 180,
+        "compound_holdout_is_expected": len(compound_cases) == 30,
+        "case_ids_are_unique": len(case_ids) == len(cases),
+        "independence_groups_are_unique": len(
+            {case.independence_group for case in cases}
+        ) == len(cases),
+        "phase4_manifest_is_complete": case_ids == manifest_ids,
+        "split_counts_are_expected": split_counts == expected_split_counts,
+        "base_family_variant_cells_are_balanced": all(
+            family_variant_counts[f"{family}:{variant.value}"] == 10
+            for family in {case.change_family for case in base_cases}
+            for variant in CaseVariant
+        ),
+        "no_overlap_with_prior_matrices": not case_ids.intersection(prior_ids),
+        "each_condition_has_full_coverage": all(
+            sum(result.condition == condition.value for result in results)
+            == len(cases)
+            for condition in PilotCondition
+        ),
+        "revision_condition_detects_all_affected_cases": all(
+            result.stale_claim_detected
+            for result in results
+            if result.condition == PilotCondition.REVISION_AWARE.value
+            and result.variant != CaseVariant.CURRENT.value
+        ),
+        "reauthorization_blocks_all_negative_controls": all(
+            result.decision == PilotDecision.BLOCKED.value
+            for result in results
+            if result.condition == PilotCondition.REAUTHORIZATION.value
+            and result.variant == CaseVariant.NEGATIVE_CONTROL.value
+        ),
+    }
+    return {
+        "report_version": 1,
+        "report_kind": "agent-reauthorization-phase4-v1",
+        "phase": "phase4",
+        "decision": "pass" if all(controls.values()) else "blocked",
+        "offline": True,
+        "synthetic_only": True,
+        "metadata_only": True,
+        "raw_payloads_included": False,
+        "provider_output_included": False,
+        "case_count": len(cases),
+        "base_case_count": len(base_cases),
+        "compound_holdout_case_count": len(compound_cases),
+        "condition_count": len(PilotCondition),
+        "split_counts": split_counts,
+        "family_variant_counts": family_variant_counts,
+        "case_set_sha256": _sha256(
+            [
+                case.to_metadata(
+                    reference_decision=reference_decisions[case.case_id]
+                )
+                for case in cases
+            ]
+        ),
+        "reference_manifest_sha256": hashlib.sha256(
+            PHASE4_REFERENCE_DECISIONS_PATH.read_bytes()
+        ).hexdigest(),
+        "controls": controls,
+        "conditions": [
+            _condition_summary(results, condition) for condition in PilotCondition
+        ],
+        "cases": [
+            case.to_metadata(
+                reference_decision=reference_decisions[case.case_id]
+            )
+            for case in cases
+        ],
+        "results": [result.to_dict() for result in results],
+        "limits": [
+            "The cases and outcomes are synthetic and deterministic.",
+            "The structured reference manifest is a study oracle, not a universal authority.",
+            "The locked holdout tests the frozen protocol but is not a production sample.",
+            "The study does not establish production safety, model quality, or human reviewer agreement.",
+            "Synthetic time units and evaluation runs are relative cost proxies, not financial estimates.",
+        ],
+    }
+
+
 def pilot_to_markdown(report: dict[str, Any]) -> str:
     """Render a reviewer-facing summary without content-bearing fields."""
 
     lines = [
         (
-            "# Agent reauthorization robustness study"
-            if report["report_kind"] == "agent-reauthorization-robustness-v1"
-            else "# Agent reauthorization pilot"
+            "# Agent reauthorization Phase 4 study"
+            if report["report_kind"] == "agent-reauthorization-phase4-v1"
+            else (
+                "# Agent reauthorization robustness study"
+                if report["report_kind"] == "agent-reauthorization-robustness-v1"
+                else "# Agent reauthorization pilot"
+            )
         ),
         "",
         f"- **Decision:** `{str(report['decision']).upper()}`",

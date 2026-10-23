@@ -6,7 +6,11 @@ import argparse
 import json
 from pathlib import Path
 
-from agent_reliability_lab.reauthorization import pilot_to_markdown, run_pilot
+from agent_reliability_lab.reauthorization import (
+    pilot_to_markdown,
+    run_phase4,
+    run_pilot,
+)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -24,13 +28,24 @@ def main(argv: list[str] | None = None) -> int:
         help="Include the twelve held-out compound-change cases.",
     )
     parser.add_argument(
+        "--phase4",
+        action="store_true",
+        help="Run the larger 210-case split-aware Phase-4 study.",
+    )
+    parser.add_argument(
         "--fail-on-findings",
         action="store_true",
         help="Return non-zero if pilot integrity controls do not pass.",
     )
     args = parser.parse_args(argv)
 
-    report = run_pilot(include_held_out=args.robustness)
+    if args.phase4 and args.robustness:
+        parser.error("--phase4 and --robustness are mutually exclusive")
+    report = (
+        run_phase4()
+        if args.phase4
+        else run_pilot(include_held_out=args.robustness)
+    )
     serialized = json.dumps(report, indent=2, sort_keys=True) + "\n"
     if args.output is not None:
         args.output.parent.mkdir(parents=True, exist_ok=True)

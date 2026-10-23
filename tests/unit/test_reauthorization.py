@@ -4,7 +4,9 @@ from agent_reliability_lab.reauthorization import (
     PilotDecision,
     held_out_cases,
     load_reference_decisions,
+    phase4_cases,
     run_pilot,
+    run_phase4,
     synthetic_cases,
 )
 
@@ -90,3 +92,37 @@ def test_negative_control_is_blocked_only_by_full_reauthorization_condition():
         decisions[PilotCondition.REAUTHORIZATION.value]
         == PilotDecision.BLOCKED.value
     )
+
+
+def test_phase4_is_large_balanced_and_split_aware():
+    cases = phase4_cases()
+
+    assert len(cases) == 210
+    assert len({case.case_id for case in cases}) == 210
+    assert len({case.independence_group for case in cases}) == 210
+    assert {
+        case.split for case in cases
+    } == {
+        "development",
+        "robustness",
+        "locked_holdout",
+        "locked_compound_holdout",
+    }
+
+
+def test_phase4_report_passes_integrity_controls_and_reauthorization():
+    report = run_phase4()
+
+    assert report["report_kind"] == "agent-reauthorization-phase4-v1"
+    assert report["case_count"] == 210
+    assert report["base_case_count"] == 180
+    assert report["compound_holdout_case_count"] == 30
+    assert all(report["controls"].values())
+
+    reauthorization = next(
+        item
+        for item in report["conditions"]
+        if item["condition"] == PilotCondition.REAUTHORIZATION.value
+    )
+    assert reauthorization["false_ready_count"] == 0
+    assert reauthorization["correct_escalation_count"] == 210

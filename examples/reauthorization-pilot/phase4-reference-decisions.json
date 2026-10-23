@@ -1,0 +1,31 @@
+{
+  "manifest_version": 1,
+  "description": "Frozen metadata-only Phase-4 reference decision manifest. Case IDs are enumerated by family, variant, and index so the evaluator cannot derive its oracle from its own result.",
+  "case_patterns": [
+    {
+      "format": "reauth-phase4-{family}-current-{index:02d}",
+      "indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "decision": "reauthorized"
+    },
+    {
+      "format": "reauth-phase4-{family}-reevaluation-required-{index:02d}",
+      "indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "decision": "review_required"
+    },
+    {
+      "format": "reauth-phase4-{family}-negative-control-{index:02d}",
+      "indices": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+      "decision": "blocked"
+    },
+    {
+      "format": "reauth-phase4-compound-{family}-reevaluation-required-{index:02d}",
+      "indices": [0, 1, 2],
+      "decision": "review_required"
+    },
+    {
+      "format": "reauth-phase4-compound-{family}-negative-control-{index:02d}",
+      "indices": [3, 4],
+      "decision": "blocked"
+    }
+  ]
+}

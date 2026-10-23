@@ -100,6 +100,29 @@ original 18-case matrix. Expected decisions come from the checked-in
 the condition evaluator. This reduces coupling between the system being tested and
 the reference used to judge it; it still does not create production evidence.
 
+Run Phase 4 after the earlier matrices:
+
+```bash
+.venv/bin/python tools/reauthorization_pilot.py \
+  --phase4 \
+  --output /tmp/agent-reauthorization-phase4.json \
+  --markdown \
+  --fail-on-findings
+```
+
+Phase 4 adds 210 new cases: 180 varied base cases and 30 compound-change cases held
+out from development. The base matrix is split into development, robustness, and
+locked-holdout sets. A locked holdout is a case set kept out of protocol tuning so
+the final run tests generalization rather than memorization. Each case carries a
+distinct independence group, revision lineage, component variation, evidence scope,
+and—where applicable—different missing-control patterns.
+
+The Phase-4 reference manifest is structured by explicit case-ID patterns in
+`examples/reauthorization-pilot/phase4-reference-decisions.json`. It is loaded
+separately from the condition evaluator and its digest is recorded in the report.
+This reduces evaluator/oracle coupling, but the study remains synthetic and the
+manifest is still a study oracle rather than an organizational authority.
+
 ### What this part does not prove
 
 The lab is offline, synthetic, and metadata-only. It does not establish live model

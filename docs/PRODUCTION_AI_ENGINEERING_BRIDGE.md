@@ -21,6 +21,12 @@ questions that determine whether the system is safe to run:
 cost-controlling, and recovering AI systems. The bridge teaches those practices with
 metadata-only synthetic evidence.
 
+**Observability** means being able to reconstruct what happened from bounded evidence.
+**Controllability** means being able to stop, isolate, narrow, or recover the workflow.
+Both are required: a system that can be observed but not stopped is not operationally
+controlled, and a system that can be stopped but not reconstructed cannot be reliably
+investigated.
+
 ## Lifecycle
 
 ```text
@@ -32,7 +38,9 @@ retrieval and model execution
     ↓
 tool scope and execution authority
     ↓
-telemetry and evaluation
+guardrail coverage across handoffs
+    ↓
+telemetry, evaluation, and bounded operating targets
     ↓
 failure detection
     ↓
@@ -53,9 +61,12 @@ After completing the bridge, a learner should be able to:
    a workflow;
 2. separate a successful transport response from a successful task outcome;
 3. describe the minimum authority needed for a proposed external action;
-4. name the telemetry needed to detect and investigate a failure;
-5. choose containment and staged recovery actions; and
-6. state what a synthetic lab does not prove about a live deployment.
+4. identify whether guardrails cover every agent, handoff, tool, and external-action
+   boundary;
+5. name the telemetry needed to detect and investigate a failure;
+6. choose containment and staged recovery actions;
+7. explain how privacy, retention, and reviewer transparency constrain the design; and
+8. state what a synthetic lab does not prove about a live deployment.
 
 ## Learner checkpoint
 
@@ -69,7 +80,9 @@ Then answer:
 
 - What would you preserve before changing the workflow?
 - Which action would you block pending approval?
+- What should happen if the approval or telemetry path is unavailable?
 - Which evidence would be missing if the system recorded only the final answer?
+- Which cost, latency, retry, and reliability target would you monitor?
 - What regression test would you run after recovery?
 
 ## Limits

@@ -16,6 +16,9 @@ EXPECTED = {
     "semantic_outcome": "empty_context",
     "tool_scope": "draft_only",
     "execution_authority": "missing_for_external_write",
+    "guardrail_coverage": "complete_for_synthetic_boundaries",
+    "privacy": "identifier_only",
+    "operating_targets": "within_synthetic_targets",
     "evaluation": "blocked_by_known_negative_control",
     "incident_state": "contained",
     "recovery": "staged_for_human_review",
@@ -38,6 +41,12 @@ def build_result() -> dict[str, object]:
         "semantic_outcome": "empty_context",
         "tool_scope": "draft_only",
         "execution_authority": "missing_for_external_write",
+        "guardrail_coverage": "complete_for_synthetic_boundaries",
+        "privacy": "identifier_only",
+        "operating_targets": "within_synthetic_targets",
+        "retry_count": 0,
+        "estimated_cost_usd": 0.0,
+        "latency_ms": 120,
         "telemetry": {
             "workflow_id": "workflow-bridge-001",
             "evidence_ids": [

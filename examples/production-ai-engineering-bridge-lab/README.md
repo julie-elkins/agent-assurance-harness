@@ -2,7 +2,8 @@
 
 This is a short, offline lab for learners who have built an agent workflow and now
 need to reason about operating it. It connects data, access, deployment, telemetry,
-evaluation, authorization, and incident recovery in one synthetic scenario.
+evaluation, authorization, guardrail coverage, privacy, and incident recovery in one
+synthetic scenario.
 
 **Telemetry** means the structured operational evidence needed to understand what a
 system did. This lab emits identifiers and bounded status metadata only; it does not
@@ -20,7 +21,8 @@ data → retrieval → model → tool → authorization → external action
 The scenario contains a realistic-looking failure: retrieval returns an empty context
 after a transport-success response, while the workflow still has a proposed external
 ticket action. The guarded path records the semantic failure, blocks the action,
-preserves evidence, contains the workflow, and stages recovery for human review.
+preserves bounded evidence, contains the workflow, and stages recovery for human
+review. It also checks bounded retry, cost, and latency targets.
 
 **Semantic outcome** means whether the requested task actually achieved its goal. It is
 different from transport status, which only says whether a request returned.
@@ -44,7 +46,12 @@ The output should show:
 - the retrieval request returned transport status `ok`;
 - the semantic outcome was `empty_context`;
 - the proposed external action was `blocked_pending_approval`;
+- guardrail coverage included the input, handoff, tool, and external-action boundaries;
+- the required control failed closed when execution authority was missing;
 - telemetry recorded the bounded evidence identifiers;
+- privacy output remained identifier-only and the reviewer-facing decision reason was
+  recorded;
+- retry, estimated cost, and latency stayed within the synthetic operating targets;
 - the synthetic incident was `contained`;
 - recovery was `staged_for_human_review`; and
 - the result does not claim production readiness.
@@ -61,8 +68,11 @@ Compare these fields in the output:
 - `semantic_outcome`
 - `tool_scope`
 - `execution_authority`
+- `guardrail_coverage`
 - `telemetry`
 - `evaluation`
+- `privacy`
+- `operating_targets`
 - `incident_response`
 - `what_it_does_not_prove`
 
@@ -75,9 +85,11 @@ After running the lab, write a short answer to each question:
 
 1. Which evidence would be needed to reconstruct the failed run?
 2. Why is the proposed ticket action blocked?
-3. Which boundary is outside the model?
-4. What should happen before the workflow is released again?
-5. Which claim would be dishonest if added to the report?
+3. Which guardrail boundaries must be covered before release?
+4. Which boundary is outside the model?
+5. What privacy or retention rule limits the evidence?
+6. What should happen before the workflow is released again?
+7. Which claim would be dishonest if added to the report?
 
 ## Learner checkpoint
 

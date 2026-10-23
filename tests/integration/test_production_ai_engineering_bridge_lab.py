@@ -28,6 +28,12 @@ def test_production_bridge_lab_is_deterministic_and_bounded() -> None:
     assert result["metadata_only"] is True
     assert result["transport_status"] == "ok"
     assert result["semantic_outcome"] == "empty_context"
+    assert result["guardrail_coverage"] == "complete_for_synthetic_boundaries"
+    assert result["privacy"] == "identifier_only"
+    assert result["operating_targets"] == "within_synthetic_targets"
+    assert result["retry_count"] == 0
+    assert result["estimated_cost_usd"] == 0.0
+    assert result["latency_ms"] == 120
     assert result["incident_response"]["external_action"] == (
         "blocked_pending_approval"
     )

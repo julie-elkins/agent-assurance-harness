@@ -114,6 +114,10 @@ For the organizational layer, continue to
 bounded communications, emergency changes, canary rollout, rollback, and recovery
 approval without turning the public lesson into a production runbook.
 
+After the tabletop, use the
+[Production AI Agent Readiness Checklist](PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
+to cross-check the evidence that should exist before a recovery or deployment decision.
+
 The lab combines three failure signals:
 
 - `misleading-tool-output` — untrusted content is treated as an instruction;

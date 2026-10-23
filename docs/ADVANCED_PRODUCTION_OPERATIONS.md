@@ -7,6 +7,11 @@ authorization, evidence, containment, and recovery.
 It is a learning guide, not an organization's incident runbook, legal process, security
 approval, or production-readiness assessment.
 
+Use the [Production AI Agent Readiness Checklist](PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
+as the capstone crosswalk after this lesson. It points back to the evidence required
+across the technical, organizational, and delivery-path controls instead of asking the
+learner to treat this document as a complete readiness decision.
+
 ## Why ownership is a technical control
 
 An incident can have a technically correct mitigation and still get worse when nobody

@@ -85,6 +85,16 @@ Then answer:
 - Which cost, latency, retry, and reliability target would you monitor?
 - What regression test would you run after recovery?
 
+## Readiness checklist
+
+Use the [Production AI Agent Readiness Checklist](PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
+as a capstone review after running the bridge lab. It maps the evidence questions across
+system ownership, delivery path, authorization, observability, evaluation, guardrails,
+human approval, change management, incident response, and recovery.
+
+The checklist is a review surface, not a green-light mechanism. A `missing`, `refused`,
+or `not_established` result remains visible instead of being converted into a pass.
+
 ## Limits
 
 This bridge uses a deterministic local fixture. It does not:

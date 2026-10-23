@@ -22,7 +22,9 @@ tool and sends back only its status and identifiers. The adapter accepts either
 the reviewed text-JSON event shape or a native Anthropic `tool_use` block. Native
 tool calls use strict tool schemas with an empty input object, and the follow-up
 uses native `tool_result` blocks containing only identifier-level result metadata;
-raw tool arguments and raw tool results are refused.
+raw tool arguments and raw tool results are refused. The local loop also disables
+parallel tool calls so each synthetic observation is paired and bounded before the
+next request.
 Raw prompts, responses, and credentials are discarded after identifier-only
 normalization. The accepted output contract is versioned as schema `1` and is
 validated locally before the result reaches the harness evaluator. Lifecycle hooks

@@ -391,6 +391,7 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
     assert len(observed) == 2
     assert observed[0]["tools"][0]["input_schema"]["additionalProperties"] is False
     assert observed[0]["tools"][0]["strict"] is True
+    assert observed[0]["tool_choice"]["disable_parallel_tool_use"] is True
     assert observed[1]["messages"][-2]["role"] == "assistant"
     assert observed[1]["messages"][-2]["content"][0]["type"] == "tool_use"
     assert observed[1]["messages"][-1]["content"][0]["type"] == "tool_result"

@@ -1248,7 +1248,8 @@ scenario identifiers, statuses, findings, and usage ceilings. It never writes th
 credential, prompts, raw responses, or model text to the report or repository. It
 accepts the reviewed text-JSON shape or a native Anthropic `tool_use` block, but
 uses strict zero-argument tool schemas and native `tool_result` blocks for the
-bounded follow-up. Lifecycle hooks check the
+bounded follow-up, with parallel tool calls disabled for simpler trace pairing.
+Lifecycle hooks check the
 request, response schema, tool boundary, and stop budget separately; refusal records
 include the stage where the run stopped, such as `after_response` or `before_tool`.
 See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the

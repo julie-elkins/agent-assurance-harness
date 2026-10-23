@@ -456,6 +456,10 @@ def _anthropic_conversation_body(
             ),
             "messages": messages,
             "tools": synthetic_tool_definitions(available_tools),
+            "tool_choice": {
+                "type": "auto",
+                "disable_parallel_tool_use": True,
+            },
         },
         separators=(",", ":"),
     ).encode("utf-8")
@@ -539,24 +543,36 @@ def _extract_loop_payload(
                 raise
             if set(block) != {"type", "id", "name", "input"}:
                 raise ProviderPayloadError(
-                    "provider_native_tool_block_refused",
-                    "The native tool block contained fields outside the reviewed shape.",
-                    "Return a zero-argument synthetic tool_use block.",
+                    "provider_native_tool_fields_invalid",
+                    "The native tool block did not match the reviewed field set.",
+                    "Return exactly type, id, name, and input in the tool_use block.",
                 )
             name = block.get("name")
             call_id = block.get("id")
             tool_input = block.get("input")
-            if (
-                not isinstance(name, str)
-                or name not in available_tools
-                or not isinstance(call_id, str)
-                or not isinstance(tool_input, dict)
-                or tool_input
-            ):
+            if not isinstance(name, str) or name not in available_tools:
                 raise ProviderPayloadError(
-                    "provider_raw_tool_arguments_rejected",
-                    "The native tool block was not a permitted zero-argument synthetic call.",
-                    "Use one listed synthetic tool with an empty input object.",
+                    "provider_native_tool_name_invalid",
+                    "The native tool block named a tool outside the scenario contract.",
+                    "Use one listed synthetic tool name.",
+                )
+            if not isinstance(call_id, str):
+                raise ProviderPayloadError(
+                    "provider_native_tool_identifier_invalid",
+                    "The native tool block did not contain a valid identifier.",
+                    "Return a stable identifier in the tool_use block.",
+                )
+            if not isinstance(tool_input, dict):
+                raise ProviderPayloadError(
+                    "provider_native_tool_input_invalid",
+                    "The native tool block input was not an object.",
+                    "Return an empty JSON object in the tool_use input field.",
+                )
+            if tool_input:
+                raise ProviderPayloadError(
+                    "provider_native_tool_arguments_rejected",
+                    "The native tool block contained arguments outside the synthetic contract.",
+                    "Return an empty input object for the zero-argument synthetic tool.",
                 )
             native_events.append(
                 {

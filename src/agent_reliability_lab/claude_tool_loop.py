@@ -491,7 +491,17 @@ def _extract_loop_payload(
             raise
         native_events: list[dict[str, object]] = []
         for block in content:
-            if not isinstance(block, dict) or block.get("type") != "tool_use":
+            if not isinstance(block, dict):
+                raise
+            if block.get("type") == "text":
+                if not isinstance(block.get("text"), str):
+                    raise ProviderPayloadError(
+                        "provider_native_text_block_refused",
+                        "The native text block was not a string.",
+                        "Return a valid text block or a zero-argument synthetic tool_use block.",
+                    )
+                continue
+            if block.get("type") != "tool_use":
                 raise
             if set(block) != {"type", "id", "name", "input"}:
                 raise ProviderPayloadError(
@@ -521,4 +531,6 @@ def _extract_loop_payload(
                     "id": call_id,
                 }
             )
+        if not native_events:
+            raise
         return {"content": native_events}

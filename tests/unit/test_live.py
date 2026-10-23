@@ -317,6 +317,10 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
                 {
                     "content": [
                         {
+                            "type": "text",
+                            "text": "I will inspect the synthetic record.",
+                        },
+                        {
                             "type": "tool_use",
                             "name": "cancel_order",
                             "id": "call-001",

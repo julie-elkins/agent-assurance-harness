@@ -1247,7 +1247,8 @@ Set `ANTHROPIC_API_KEY` in the local process before running. The adapter emits o
 scenario identifiers, statuses, findings, and usage ceilings. It never writes the
 credential, prompts, raw responses, or model text to the report or repository. It
 accepts the reviewed text-JSON shape or a native Anthropic `tool_use` block, but
-refuses native tool calls with non-empty arguments. Lifecycle hooks check the
+uses strict zero-argument tool schemas and native `tool_result` blocks for the
+bounded follow-up. Lifecycle hooks check the
 request, response schema, tool boundary, and stop budget separately; refusal records
 include the stage where the run stopped, such as `after_response` or `before_tool`.
 See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the

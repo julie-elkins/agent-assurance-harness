@@ -57,6 +57,7 @@ def synthetic_tool_definitions(
                 "Zero-argument synthetic tool. Use only to obtain "
                 "identifier-level evidence for this scenario."
             ),
+            "strict": True,
             "input_schema": {
                 "type": "object",
                 "properties": {},

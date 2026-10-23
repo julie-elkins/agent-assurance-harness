@@ -11,6 +11,7 @@ def test_schema_is_versioned_and_tools_are_zero_argument():
     tools = synthetic_tool_definitions(("lookup_policy",))
 
     assert tools[0]["name"] == "lookup_policy"
+    assert tools[0]["strict"] is True
     assert tools[0]["input_schema"]["properties"] == {}
     assert tools[0]["input_schema"]["additionalProperties"] is False
 

@@ -66,7 +66,7 @@ class AnthropicToolLoopAdapter:
     ) -> AdapterRun:
         """Run model decision, synthetic tool results, and final classification."""
 
-        messages: list[dict[str, str]] = [
+        messages: list[dict[str, object]] = [
             {
                 "role": "user",
                 "content": json.dumps(_safe_request(request), sort_keys=True),
@@ -279,6 +279,7 @@ class AnthropicToolLoopAdapter:
 
             all_events.extend(normalized_events)
             tool_results: list[dict[str, object]] = []
+            assistant_tool_events: list[dict[str, object]] = []
             for event in tool_events:
                 tool_hook = before_tool_hook(
                     event,
@@ -305,30 +306,32 @@ class AnthropicToolLoopAdapter:
                 result = tool_result_hook.value
                 all_events.append(result)
                 tool_results.append(result)
+                assistant_tool_events.append(
+                    {
+                        "type": "tool_use",
+                        "name": name,
+                        "id": call_id,
+                        "input": {},
+                    }
+                )
 
             messages.append(
                 {
                     "role": "assistant",
-                    "content": json.dumps(
-                        {"content": events},
-                        separators=(",", ":"),
-                    ),
+                    "content": assistant_tool_events,
                 }
             )
             messages.append(
                 {
                     "role": "user",
-                    "content": json.dumps(
-                        {"tool_results": tool_results},
-                        separators=(",", ":"),
-                    ),
+                    "content": _anthropic_tool_result_blocks(tool_results),
                 }
             )
         raise RuntimeError("Tool loop exited without a result.")
 
     def _request(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict[str, object]],
         available_tools: tuple[str, ...],
     ) -> tuple[dict[str, object], float] | AdapterRun:
         """Send one safe text-only conversation turn and parse it in memory."""
@@ -433,7 +436,7 @@ def _safe_request(request: ScenarioRequest) -> dict[str, object]:
 
 def _anthropic_conversation_body(
     policy: LiveProviderPolicy,
-    messages: list[dict[str, str]],
+    messages: list[dict[str, object]],
     available_tools: tuple[str, ...],
 ) -> bytes:
     """Build an Anthropic request from safe summaries and synthetic tools."""
@@ -456,6 +459,28 @@ def _anthropic_conversation_body(
         },
         separators=(",", ":"),
     ).encode("utf-8")
+
+
+def _anthropic_tool_result_blocks(
+    tool_results: list[dict[str, object]],
+) -> list[dict[str, object]]:
+    """Return native Claude tool_result blocks with safe identifier content."""
+
+    blocks = []
+    for result in tool_results:
+        safe_result = {
+            key: value
+            for key, value in result.items()
+            if key not in {"type", "tool_use_id"}
+        }
+        blocks.append(
+            {
+                "type": "tool_result",
+                "tool_use_id": result["tool_use_id"],
+                "content": json.dumps(safe_result, separators=(",", ":")),
+            }
+        )
+    return blocks
 
 
 def _loop_budget(

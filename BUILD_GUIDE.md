@@ -93,6 +93,7 @@ The current progression is intentionally operational:
 | 29 | Course freshness orchestration | Whether independent course workers can sweep revisions under bounded limits without hiding unavailable results |
 | 30 | Course Doctor review workflow | Whether findings become complete, metadata-only review packets and unresolved findings require human adjudication |
 | 31 | Untrusted claim-proposal worker | Whether agent-suggested claims are validated before they reach evidence evaluation |
+| 32 | Semantic outcome and builder--breaker teaching lab | Whether transport success is separated from task outcome, bounded retries and cost are visible, and an independent breaker catches the false pass |
 | 32 | Showcase hardening and bounded live-provider completion | Whether an outside reviewer can run the safe path quickly and the local live boundary refuses unsafe transport behavior |
 | 35 | Launch-to-field enablement pack | Whether a changing capability becomes a complete, source-checked, feedback-aware pack ready for human approval |
 | 36 | Instructor calibration | Whether a fixed observer rubric turns teaching evidence into coaching recommendations without pretending to certify an instructor |

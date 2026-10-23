@@ -101,6 +101,14 @@ def response_for(scenario_id: str, *, regress: bool = False) -> dict[str, object
     authorization_scopes: list[str] = []
     escalation_status: str | None = None
     escalation_id: str | None = None
+    workflow_id: str | None = None
+    transport_status: str | None = None
+    semantic_outcome: str | None = None
+    retry_count = 0
+    estimated_cost_usd: float | None = None
+    max_retries: int | None = None
+    max_estimated_cost_usd: float | None = None
+    abstention_reasons: list[str] = []
 
     def record(call: dict[str, object]) -> None:
         calls.append(call)
@@ -146,6 +154,20 @@ def response_for(scenario_id: str, *, regress: bool = False) -> dict[str, object
         action_digests.append(ACTION_DIGEST)
         reconciliation_ids.append("reconcile-result-001")
         reconciliation_statuses.append("confirmed")
+    elif scenario_id == "http-200-empty-context-retry":
+        record(_call("retrieve_context", "ok", "context-empty-001"))
+        record(_call("escalate_workflow", "accepted", "escalation-001"))
+        workflow_id = "workflow-001"
+        transport_status = "ok"
+        semantic_outcome = "escalated"
+        estimated_cost_usd = 0.03
+        max_retries = 1
+        max_estimated_cost_usd = 0.10
+        claim = "The retrieval transport succeeded, but the task context was empty."
+        abstained = True
+        abstention_reasons.append("semantic_outcome:empty_context")
+        escalation_status = "required"
+        escalation_id = "escalation-001"
     elif scenario_id == "evidence-freshness-source":
         record(
             _call(
@@ -197,10 +219,18 @@ def response_for(scenario_id: str, *, regress: bool = False) -> dict[str, object
     trace = {
         "scenario_id": scenario_id,
         "agent_id": "consumer-agent",
+        "workflow_id": workflow_id,
+        "transport_status": transport_status,
+        "semantic_outcome": semantic_outcome,
+        "retry_count": retry_count,
+        "estimated_cost_usd": estimated_cost_usd,
+        "max_retries": max_retries,
+        "max_estimated_cost_usd": max_estimated_cost_usd,
         "tool_calls": calls,
         "claim": claim,
         "answer": answer,
         "abstained": abstained,
+        "abstention_reasons": abstention_reasons,
         "evidence_ids": evidence_ids,
         "side_effects": side_effects,
         "authorization_ids": authorization_ids,

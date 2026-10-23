@@ -133,6 +133,23 @@ def _record_guarded_run(
         )
         recorder.record_claim("claim:evidence_quality_failed")
         recorder.record_abstention()
+    elif scenario_id == "http-200-empty-context-retry":
+        context = environment.invoke("retrieve_context")
+        _record_observation(recorder, context)
+        escalation = environment.invoke("escalate_workflow")
+        _record_observation(recorder, escalation)
+        recorder.record_workflow_outcome(
+            workflow_id="workflow-001",
+            transport_status="ok",
+            semantic_outcome="escalated",
+            retry_count=0,
+            estimated_cost_usd=0.03,
+            max_retries=1,
+            max_estimated_cost_usd=0.10,
+        )
+        recorder.record_escalation("escalation-001", "required")
+        recorder.record_claim("claim:empty_context_escalated")
+        recorder.record_abstention("when-empty-context")
     else:
         recorder.record_claim(f"claim:unknown_scenario:{scenario_id}")
     return recorder.finish()

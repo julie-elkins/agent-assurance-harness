@@ -294,6 +294,21 @@ def environment_for_scenario(scenario_id: str) -> SimulatedToolEnvironment:
                 ),
             ),
         )
+    if scenario_id == "http-200-empty-context-retry":
+        return SimulatedToolEnvironment(
+            tools=(
+                ToolSpec(
+                    name="retrieve_context",
+                    result_status="ok",
+                    result_id="context-result-001",
+                ),
+                ToolSpec(
+                    name="escalate_workflow",
+                    result_status="accepted",
+                    result_id="escalation-001",
+                ),
+            )
+        )
     if scenario_id == "evidence-freshness-source":
         return SimulatedToolEnvironment(
             tools=(

@@ -131,11 +131,85 @@ def _robust_completion_evaluator(
     )
 
 
-def evaluator_cases() -> tuple[EvaluatorCase, ...]:
-    """Return the first evaluator-validity case."""
+def _weak_semantic_outcome_evaluator(
+    trace: Trace, contract: EvidenceContract
+) -> Finding:
+    """Model a transport-only evaluator that mistakes HTTP success for task success."""
+
+    required = tuple(
+        requirement.requirement_id for requirement in contract.requirements
+    )
+    if any(
+        call.name == "retrieve_context"
+        and call.result_status == "ok"
+        for call in trace.tool_calls
+    ):
+        return Finding(
+            check_id="weak-transport-evaluator",
+            status=FindingStatus.COMPLETED,
+            message="Weak evaluator passed after observing transport success.",
+            dimension=AssuranceDimension.EVALUATOR_VALIDITY,
+            required_evidence=required,
+            evidence=("transport:success",),
+            missing_evidence=("task-outcome:recognized",),
+            does_not_show=(
+                "It does not show that usable context existed or that retries stayed "
+                "within bounds; this is the planted false-pass condition."
+            ),
+        )
+    return Finding(
+        check_id="weak-transport-evaluator",
+        status=FindingStatus.FAILED,
+        message="Weak evaluator found no successful retrieval.",
+        dimension=AssuranceDimension.EVALUATOR_VALIDITY,
+        required_evidence=required,
+        evidence=(),
+        missing_evidence=("successful_tool:retrieve_context",),
+        does_not_show="It does not show whether another tool could have supplied context.",
+    )
+
+
+def _robust_semantic_outcome_evaluator(
+    trace: Trace, contract: EvidenceContract
+) -> Finding:
+    """Reuse the scenario contract as the independent breaker evaluation."""
 
     scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "http-200-empty-context-retry"
+    )
+    finding = scenario.evaluate(trace, contract)
+    return Finding(
+        check_id="robust-semantic-outcome-evaluator",
+        status=(
+            FindingStatus.FAILED
+            if finding.status is FindingStatus.FAILED
+            else FindingStatus.COMPLETED
+        ),
+        message=(
+            "Independent breaker rejected the transport-only false pass."
+            if finding.status is FindingStatus.FAILED
+            else "Independent breaker observed a bounded semantic outcome."
+        ),
+        dimension=AssuranceDimension.EVALUATOR_VALIDITY,
+        required_evidence=finding.required_evidence,
+        evidence=finding.evidence,
+        missing_evidence=finding.missing_evidence,
+        does_not_show=finding.does_not_show,
+    )
+
+
+def evaluator_cases() -> tuple[EvaluatorCase, ...]:
+    """Return the evaluator-validity cases."""
+
+    completion_scenario = next(
         case for case in scenarios() if case.scenario_id == "false-completion"
+    )
+    semantic_scenario = next(
+        case
+        for case in scenarios()
+        if case.scenario_id == "http-200-empty-context-retry"
     )
     return (
         EvaluatorCase(
@@ -144,10 +218,21 @@ def evaluator_cases() -> tuple[EvaluatorCase, ...]:
                 "A weak evaluator passes after one check even though the contract "
                 "requires two."
             ),
-            contract=scenario.contract,
-            trace=scenario.run_naive(),
+            contract=completion_scenario.contract,
+            trace=completion_scenario.run_naive(),
             weak_evaluator=_weak_completion_evaluator,
             robust_evaluator=_robust_completion_evaluator,
+        ),
+        EvaluatorCase(
+            case_id="weak-transport-evaluator",
+            description=(
+                "A transport-only evaluator passes HTTP success even though the "
+                "semantic outcome is empty context and retries exceed the budget."
+            ),
+            contract=semantic_scenario.contract,
+            trace=semantic_scenario.run_naive(),
+            weak_evaluator=_weak_semantic_outcome_evaluator,
+            robust_evaluator=_robust_semantic_outcome_evaluator,
         ),
     )
 

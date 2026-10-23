@@ -49,14 +49,14 @@ def test_adapter_regression_report_passes_without_emitting_commands_or_traces(tm
     assert completed.returncode == 0
     report = json.loads(completed.stdout)
     assert report["passed"] is True
-    assert report["expected_scenario_count"] == 9
+    assert report["expected_scenario_count"] == 10
     attestation = report["assurance_attestation"]
     assert attestation["attestation_version"] == 1
     assert attestation["attestation_id"] == "adapter-regression-attestation-v1"
     assert attestation["package_version"] == "0.67.0"
     assert len(attestation["git_commit"]) == 40
     assert len(attestation["pack_set_sha256"]) == 64
-    assert len(attestation["pack_manifests"]) == 9
+    assert len(attestation["pack_manifests"]) == 10
     assert attestation["blocking_finding_count"] == 0
     assert attestation["observation_count"] == 0
     assert json.loads(attestation_path.read_text(encoding="utf-8")) == attestation

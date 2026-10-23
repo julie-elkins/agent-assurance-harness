@@ -548,6 +548,149 @@
             "event_id": "event-001",
             "event_type": "tool_call",
             "evidence_id": null,
+            "name": "retrieve_context",
+            "sequence": 1,
+            "status": null
+          },
+          {
+            "event_id": "event-002",
+            "event_type": "tool_result",
+            "evidence_id": "context-result-001",
+            "name": "retrieve_context",
+            "sequence": 2,
+            "status": "ok"
+          },
+          {
+            "event_id": "event-003",
+            "event_type": "tool_call",
+            "evidence_id": null,
+            "name": "escalate_workflow",
+            "sequence": 3,
+            "status": null
+          },
+          {
+            "event_id": "event-004",
+            "event_type": "tool_result",
+            "evidence_id": "escalation-001",
+            "name": "escalate_workflow",
+            "sequence": 4,
+            "status": "accepted"
+          },
+          {
+            "event_id": "event-005",
+            "event_type": "workflow",
+            "evidence_id": null,
+            "name": "workflow-001",
+            "sequence": 5,
+            "status": null
+          },
+          {
+            "event_id": "event-006",
+            "event_type": "semantic_outcome",
+            "evidence_id": null,
+            "name": "escalated",
+            "sequence": 6,
+            "status": "ok"
+          },
+          {
+            "event_id": "event-007",
+            "event_type": "retry",
+            "evidence_id": null,
+            "name": "retry-count:0",
+            "sequence": 7,
+            "status": null
+          },
+          {
+            "event_id": "event-008",
+            "event_type": "usage",
+            "evidence_id": null,
+            "name": "estimated-cost-usd",
+            "sequence": 8,
+            "status": "0.0300"
+          },
+          {
+            "event_id": "event-009",
+            "event_type": "escalation",
+            "evidence_id": "escalation-001",
+            "name": "escalation-001",
+            "sequence": 9,
+            "status": "required"
+          },
+          {
+            "event_id": "event-010",
+            "event_type": "claim",
+            "evidence_id": null,
+            "name": "claim",
+            "sequence": 10,
+            "status": null
+          },
+          {
+            "event_id": "event-011",
+            "event_type": "abstention",
+            "evidence_id": null,
+            "name": "abstention",
+            "sequence": 11,
+            "status": null
+          }
+        ],
+        "trace": {
+          "abstained": true,
+          "abstention_reasons": [
+            "when-empty-context"
+          ],
+          "action_digests": [],
+          "agent_id": "external",
+          "answer": null,
+          "authorization_action_digests": [],
+          "authorization_ids": [],
+          "authorization_operation_ids": [],
+          "authorization_scopes": [],
+          "claim": "claim:empty_context_escalated",
+          "escalation_id": "escalation-001",
+          "escalation_status": "required",
+          "estimated_cost_usd": 0.03,
+          "evidence_ids": [
+            "context-result-001",
+            "escalation-001"
+          ],
+          "idempotency_keys": [],
+          "max_estimated_cost_usd": 0.1,
+          "max_retries": 1,
+          "operation_ids": [],
+          "policy_digest": null,
+          "policy_version": null,
+          "reconciliation_ids": [],
+          "reconciliation_statuses": [],
+          "retry_count": 0,
+          "scenario_id": "http-200-empty-context-retry",
+          "semantic_outcome": "escalated",
+          "side_effects": [],
+          "tool_calls": [
+            {
+              "name": "retrieve_context",
+              "result_id": "context-result-001",
+              "result_status": "ok"
+            },
+            {
+              "name": "escalate_workflow",
+              "result_id": "escalation-001",
+              "result_status": "accepted"
+            }
+          ],
+          "tool_output_flags": [],
+          "transport_status": "ok",
+          "workflow_id": "workflow-001"
+        }
+      },
+      "scenario_id": "http-200-empty-context-retry"
+    },
+    {
+      "response": {
+        "events": [
+          {
+            "event_id": "event-001",
+            "event_type": "tool_call",
+            "evidence_id": null,
             "name": "lookup_authoritative_record",
             "sequence": 1,
             "status": null

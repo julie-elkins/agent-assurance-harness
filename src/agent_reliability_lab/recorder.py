@@ -65,6 +65,15 @@ class TraceRecorder:
         self._action_digests: list[str] = []
         self._reconciliation_ids: list[str] = []
         self._reconciliation_statuses: list[str] = []
+        self._workflow_id: str | None = None
+        self._transport_status: str | None = None
+        self._semantic_outcome: str | None = None
+        self._retry_count = 0
+        self._estimated_cost_usd: float | None = None
+        self._max_retries: int | None = None
+        self._max_estimated_cost_usd: float | None = None
+        self._escalation_status: str | None = None
+        self._escalation_id: str | None = None
         self._claim: str | None = None
         self._answer: str | None = None
         self._abstained = False
@@ -374,6 +383,88 @@ class TraceRecorder:
             evidence_id=reconciliation_id,
         )
 
+    def record_workflow_outcome(
+        self,
+        *,
+        workflow_id: str,
+        transport_status: str,
+        semantic_outcome: str,
+        retry_count: int,
+        estimated_cost_usd: float,
+        max_retries: int,
+        max_estimated_cost_usd: float,
+    ) -> RecorderResult:
+        """Record bounded workflow metadata without accepting task payloads."""
+
+        blocked = self._blocked()
+        if blocked is not None:
+            return blocked
+        values = (
+            (workflow_id, "workflow_id"),
+            (transport_status, "transport_status"),
+            (semantic_outcome, "semantic_outcome"),
+        )
+        invalid = next(
+            (
+                _identifier_refusal(value, field)
+                for value, field in values
+                if _identifier_refusal(value, field) is not None
+            ),
+            None,
+        )
+        if invalid is not None:
+            return self._set_refusal(invalid)
+        if (
+            retry_count < 0
+            or max_retries < 0
+            or estimated_cost_usd < 0
+            or max_estimated_cost_usd < 0
+        ):
+            return self._refuse(
+                error="invalid_workflow_usage",
+                message="Workflow retry and cost metadata must be non-negative.",
+                guidance="Record bounded non-negative usage metadata.",
+            )
+        self._workflow_id = workflow_id
+        self._transport_status = transport_status
+        self._semantic_outcome = semantic_outcome
+        self._retry_count = retry_count
+        self._estimated_cost_usd = estimated_cost_usd
+        self._max_retries = max_retries
+        self._max_estimated_cost_usd = max_estimated_cost_usd
+        self._event(EventType.WORKFLOW, workflow_id)
+        self._event(
+            EventType.SEMANTIC_OUTCOME,
+            semantic_outcome,
+            status=transport_status,
+        )
+        self._event(EventType.RETRY, f"retry-count:{retry_count}")
+        return self._event(
+            EventType.USAGE,
+            "estimated-cost-usd",
+            status=f"{estimated_cost_usd:.4f}",
+        )
+
+    def record_escalation(self, escalation_id: str, status: str) -> RecorderResult:
+        """Record a human-review handoff as identifiers and a classification."""
+
+        blocked = self._blocked()
+        if blocked is not None:
+            return blocked
+        invalid = _identifier_refusal(escalation_id, "escalation_id")
+        if invalid is None:
+            invalid = _identifier_refusal(status, "escalation_status")
+        if invalid is not None:
+            return self._set_refusal(invalid)
+        self._escalation_id = escalation_id
+        self._escalation_status = status
+        return self._event(
+            EventType.ESCALATION,
+            escalation_id,
+            status=status,
+            evidence_id=escalation_id,
+        )
+
     def finish(self) -> AdapterRun:
         """Return the accepted run or a structured refusal."""
 
@@ -395,6 +486,13 @@ class TraceRecorder:
             trace=Trace(
                 scenario_id=self._scenario_id,
                 agent_id=self._agent_id,
+                workflow_id=self._workflow_id,
+                transport_status=self._transport_status,
+                semantic_outcome=self._semantic_outcome,
+                retry_count=self._retry_count,
+                estimated_cost_usd=self._estimated_cost_usd,
+                max_retries=self._max_retries,
+                max_estimated_cost_usd=self._max_estimated_cost_usd,
                 tool_calls=tuple(self._tool_calls),
                 claim=self._claim,
                 answer=self._answer,
@@ -413,6 +511,8 @@ class TraceRecorder:
                 action_digests=tuple(self._action_digests),
                 reconciliation_ids=tuple(self._reconciliation_ids),
                 reconciliation_statuses=tuple(self._reconciliation_statuses),
+                escalation_status=self._escalation_status,
+                escalation_id=self._escalation_id,
             ),
             events=tuple(self._events),
         )

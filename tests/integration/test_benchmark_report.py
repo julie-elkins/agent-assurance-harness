@@ -16,6 +16,7 @@ def test_public_synthetic_benchmark_reports_guarded_paths_and_controls():
         "unauthorized-side-effect",
         "misleading-tool-output",
         "ambiguous-side-effect-retry",
+        "http-200-empty-context-retry",
         "evidence-freshness-source",
         "evidence-stale-approved-source",
         "evidence-fresh-wrong-source",
@@ -29,7 +30,7 @@ def test_public_synthetic_benchmark_reports_guarded_paths_and_controls():
     assert data["evaluator_controls"] == {
         "mutation_count": 3,
         "mutations_caught": 3,
-        "evaluator_case_count": 1,
-        "evaluator_failures_caught": 1,
+        "evaluator_case_count": 2,
+        "evaluator_failures_caught": 2,
     }
     assert "findings" not in json.dumps(data)

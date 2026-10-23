@@ -26,7 +26,7 @@ offline synthetic assurance demo and documents the optional metadata-only demons
 against a local checkout of the public
 [Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab).
 
-The showcase currently reports 9 scenarios, a passing guarded agent, 1 evaluator
+The showcase currently reports 10 scenarios, a passing guarded agent, 2 evaluator
 control caught, 3 mutation controls caught, 1 complete Course Doctor packet, and a
 passing launch-to-field pack with four degraded controls caught. The combined portfolio
 report adds one reviewer-facing handoff across the assurance lanes. See the
@@ -43,7 +43,7 @@ answer. It is whether the agent can show:
 - what the result still does not prove; and
 - whether the evaluator itself can catch a known false pass.
 
-The current harness compares a deliberately naive agent with a guarded agent across nine
+The current harness compares a deliberately naive agent with a guarded agent across ten
 synthetic agent cases:
 
 1. **Tool misuse** — a plausible result comes from the wrong tool.
@@ -58,13 +58,17 @@ synthetic agent cases:
    the resulting state before reporting success. Authorization evidence must also bind to
    the protected operation and canonical action digest rather than merely appearing
    somewhere in the trace.
-7. **Evidence freshness and source authority** — a result must come from the approved
+7. **HTTP success with empty context and retry amplification** — a retrieval request
+   can return transport success while the task outcome is empty context; the guarded
+   path records the semantic outcome, stays within retry and cost ceilings, and
+   escalates instead of reporting success.
+8. **Evidence freshness and source authority** — a result must come from the approved
    source and remain within the declared age window. A result that is correct but stale,
    or current but from the wrong source, is not accepted as complete evidence.
-8. **Stale evidence requires abstention** — evidence from the approved source still
+9. **Stale evidence requires abstention** — evidence from the approved source still
    requires a refusal when it is outside the freshness window, and the report records
    `evidence_stale` as the blocking condition.
-9. **Fresh evidence from the wrong source requires abstention** — freshness alone must
+10. **Fresh evidence from the wrong source requires abstention** — freshness alone must
    not permit an answer, and the report records `evidence_wrong_source` as the blocking
    condition.
 
@@ -150,6 +154,25 @@ The lane is offline and metadata-only. It contains no model calls, provider cred
 live repository execution, raw prompts, tool arguments, or tool output. See the
 [Developer Workflow Assurance guide](docs/DEVELOPER_WORKFLOW_ASSURANCE.md) for the
 reviewer path and its limits.
+
+## Agent workflow teaching lab
+
+The [Agent Workflow Teaching Lab](examples/agent-workflow-teaching-lab/README.md) is
+the shortest learner path through the harness. It teaches one complete workflow:
+bounded execution, independent breaker evaluation, semantic-outcome checks, bounded
+retry and cost metadata, and human escalation.
+
+Run it from the repository root:
+
+```bash
+uv run python examples/agent-workflow-teaching-lab/run_lab.py
+```
+
+The lab deliberately shows a transport-success result with empty context. The naive
+path retries and reports success; the guarded path records the semantic outcome,
+stays within its declared ceilings, and escalates. It proves the synthetic control
+only. It does not prove live model quality, production observability, learner reach,
+or business adoption.
 
 Phase 29 adds a bounded course-freshness coordinator and one-course workers:
 
@@ -521,7 +544,7 @@ requirements, and named simulator faults. Packs are data only: the loader reject
 fields and unsupported evidence types, and it never executes predicates, imports pack code,
 or discovers files outside a directory explicitly supplied by the caller.
 
-The nine built-in packs are the source of truth for the reference scenarios. List and
+The ten built-in packs are the source of truth for the reference scenarios. List and
 validate them without running an agent:
 
 ```bash

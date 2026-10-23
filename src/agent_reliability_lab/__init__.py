@@ -88,6 +88,15 @@ from .live import (
     extract_provider_payload,
     live_provider_adapter,
 )
+from .claude_experiment import (
+    CLAUDE_HAIKU_MODEL,
+    CLAUDE_PROVIDER_ID,
+    CLAUDE_SONNET_MODEL,
+    ClaudeCaseResult,
+    ClaudeExperimentPolicy,
+    ClaudeExperimentReport,
+    run_claude_experiment,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,
@@ -429,6 +438,13 @@ __all__ = [
     "pack_sha256",
     "evaluate_pack_trace",
     "live_provider_adapter",
+    "CLAUDE_PROVIDER_ID",
+    "CLAUDE_SONNET_MODEL",
+    "CLAUDE_HAIKU_MODEL",
+    "ClaudeCaseResult",
+    "ClaudeExperimentPolicy",
+    "ClaudeExperimentReport",
+    "run_claude_experiment",
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_provider_assurance",

@@ -1226,6 +1226,28 @@ write the credential, request, response body, or model text to a replay or repor
 `--allow-network` is intentionally absent from CI; no live provider call runs in the
 repository's automated checks.
 
+### Run the bounded local Claude experiment
+
+The repository also includes a ten-case smoke run and a twenty-to-thirty-case pilot
+for local Claude validation. This is an external-validity check (whether the
+provider-facing adapter works against an actual model), not the primary deterministic
+research result. It uses built-in synthetic scenarios only, makes one request per
+case, does not retry, and has a five-dollar aggregate planning ceiling by default:
+
+```bash
+uv run python tools/claude_local_experiment.py \
+  --smoke \
+  --model claude-sonnet-5-5 \
+  --allow-network \
+  --markdown
+```
+
+Set `ANTHROPIC_API_KEY` in the local process before running. The adapter emits only
+scenario identifiers, statuses, findings, and usage ceilings. It never writes the
+credential, prompts, raw responses, or model text to the report or repository.
+See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the
+pilot and Haiku replication commands.
+
 ### Production-readiness checks
 
 The repository has a small boundary check that scans tracked files for high-signal

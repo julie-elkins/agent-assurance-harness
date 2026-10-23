@@ -109,6 +109,15 @@ Exercise the new control so the change is observable.
 The companion [AI Incident Response Tabletop Lab](../examples/ai-incident-response-lab/README.md)
 uses only synthetic identifiers and the harness's existing offline scenarios.
 
+For the organizational layer, continue to
+[Advanced Production Operations](ADVANCED_PRODUCTION_OPERATIONS.md). It adds ownership,
+bounded communications, emergency changes, canary rollout, rollback, and recovery
+approval without turning the public lesson into a production runbook.
+
+After the tabletop, use the
+[Production AI Agent Readiness Checklist](PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
+to cross-check the evidence that should exist before a recovery or deployment decision.
+
 The lab combines three failure signals:
 
 - `misleading-tool-output` — untrusted content is treated as an instruction;
@@ -131,5 +140,5 @@ regression test should prevent recurrence.
 ## First-party references
 
 - [NIST AI Incident Response Guidebook](https://www.nist.gov/document/iqt-ai-incident-response-guidebook-0)
-- [OpenAI Agent Builder safety](https://developers.openai.com/api/docs/guides/agent-builder-safety/)
+- [OpenAI Agent Builder safety](https://developers.openai.com/api/docs/guides/agent-builder-safety)
 - [Anthropic Trustworthy agents](https://www.anthropic.com/research/trustworthy-agents)

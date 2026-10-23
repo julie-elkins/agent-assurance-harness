@@ -234,6 +234,17 @@ bounded evidence, contains the synthetic incident, and stages recovery for human
 review. It is offline and metadata-only; it does not establish live model quality,
 production observability, security approval, rollback capability, or business impact.
 
+For the organizational layer behind that recovery decision, read the
+[Advanced Production Operations lesson](docs/ADVANCED_PRODUCTION_OPERATIONS.md), then
+return to the [AI Incident Response Tabletop Lab](examples/ai-incident-response-lab/README.md)
+to assign owners, draft a bounded status update, and choose a controlled recovery
+change. The lesson uses a RACI model (Responsible, Accountable, Consulted, and Informed)
+and remains a synthetic learning exercise, not a production runbook.
+
+Use the [Production AI Agent Readiness Checklist](docs/PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
+last. It is a crosswalk into the existing evidence, workflow, evaluation, security,
+incident-response, and delivery-path guides; it is not a production approval.
+
 Phase 29 adds a bounded course-freshness coordinator and one-course workers:
 
 ```bash

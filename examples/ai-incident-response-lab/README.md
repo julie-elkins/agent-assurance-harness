@@ -90,6 +90,32 @@ Explain this sentence in your own words:
 Then explain why an incident record that contains only a final answer cannot reconstruct
 what the model saw, what it attempted, or which control allowed the action.
 
+## Advanced organizational exercise
+
+Continue with the
+[Advanced Production Operations lesson](../../docs/ADVANCED_PRODUCTION_OPERATIONS.md)
+to add ownership, communications, and production change management to this scenario.
+
+Assign an incident commander, technical lead, security/privacy lead, product owner,
+communications lead, scribe, and change approver. In a small team, one person may hold
+several roles, but do not let the person who made a high-risk change be the only person
+who approves it.
+
+Answer these questions:
+
+1. Who owns the next containment decision?
+2. Who can pause the workflow and external tool?
+3. What is the first bounded internal update, and when is the next update due?
+4. Which detail belongs only in the restricted evidence record?
+5. Is the recovery action a standard or emergency change?
+6. What is the narrowest canary scope?
+7. What result stops the canary or triggers rollback?
+8. Who approves broader restoration?
+
+The expected answer must name an owner for every decision, distinguish responsibility
+from approval authority, preserve identifier-only evidence, and state what the recovery
+change does not undo.
+
 ## What this lab does not prove
 
 This is a synthetic teaching exercise. It does not prove live model behavior, production

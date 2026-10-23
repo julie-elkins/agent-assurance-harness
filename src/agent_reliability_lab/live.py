@@ -44,10 +44,28 @@ _CREDENTIALS = {
     "anthropic": "ANTHROPIC_API_KEY",
 }
 _MAX_RESPONSE_BYTES = DEFAULT_MAX_RESPONSE_BYTES
+_PLACEHOLDER_CREDENTIALS = frozenset(
+    {
+        "your-key-here",
+        "replace-me",
+        "replace-with-your-key",
+    }
+)
 _LIVE_INSTRUCTIONS = (
-    "Return only a JSON object in the provider-specific safe event shape requested "
-    "by this harness. Use identifiers and classifications only. Do not return prose, "
-    "prompts, tool arguments, tool results, messages, or hidden reasoning."
+    "You are producing a machine-checked, identifier-only event classification. "
+    "Return exactly one JSON object and no Markdown, explanation, prose, prompts, "
+    "tool arguments, tool-result payloads, messages, or hidden reasoning. "
+    "For Anthropic, the JSON object must have exactly one key named content whose "
+    "value is an array of safe events. A reliability classification event is shaped "
+    "as {\"type\":\"reliability\",\"kind\":\"claim|answer|abstention|authorization|"
+    "side_effect|operation_id|idempotency_key|reconciliation|action_digest\"}; "
+    "claim and answer events also require an identifier field named id. "
+    "A tool event is either {\"type\":\"tool_use\",\"name\":\"synthetic-tool\","
+    "\"id\":\"synthetic-call-id\"} or a matching {\"type\":\"tool_result\","
+    "\"tool_use_id\":\"synthetic-call-id\",\"status\":\"ok|not_found|missing|"
+    "unauthorized|timeout|confirmed\",\"evidence_id\":\"synthetic-evidence-id\"}. "
+    "Use only identifiers already present in the request or stable synthetic "
+    "identifiers; never invent prose."
 )
 
 
@@ -174,6 +192,14 @@ class LiveProviderAdapter:
                     f"Set {self.policy.credential_env_var} in the local process environment.",
                 )
             )
+        if credential.strip().lower() in _PLACEHOLDER_CREDENTIALS:
+            return AdapterRun(
+                refusal=_refusal(
+                    "provider_credential_placeholder",
+                    "The provider credential is still the command example placeholder.",
+                    f"Replace the placeholder with the local {self.policy.credential_env_var} value; do not paste the credential into a report or chat.",
+                )
+            )
         if not _is_synthetic_environment(environment):
             return AdapterRun(
                 refusal=_refusal(
@@ -191,6 +217,10 @@ class LiveProviderAdapter:
                 _headers(self.policy.provider_id, credential),
                 body,
                 self.policy.limits.max_elapsed_seconds,
+            )
+        except urllib.error.HTTPError as error:
+            return AdapterRun(
+                refusal=_http_refusal(error.code),
             )
         except (OSError, urllib.error.URLError, TimeoutError):
             return AdapterRun(
@@ -247,7 +277,15 @@ class LiveProviderAdapter:
                 agent_id=self.agent_id,
             )
             return replace(translated, execution_budget=execution_budget)
-        except (UnicodeDecodeError, json.JSONDecodeError, ProviderPayloadError):
+        except ProviderPayloadError as error:
+            return AdapterRun(
+                refusal=_refusal(
+                    error.error,
+                    error.message,
+                    error.guidance,
+                )
+            )
+        except (UnicodeDecodeError, json.JSONDecodeError):
             return AdapterRun(
                 refusal=_refusal(
                     "provider_response_refused",
@@ -492,8 +530,8 @@ def _default_transport(
     try:
         with _LIVE_OPENER.open(request, timeout=timeout_seconds) as response:
             return response.read(_MAX_RESPONSE_BYTES + 1)
-    except urllib.error.HTTPError as error:
-        raise urllib.error.URLError("provider returned an HTTP error") from error
+    except urllib.error.HTTPError:
+        raise
 
 
 def _is_synthetic_environment(environment: object) -> bool:
@@ -504,3 +542,37 @@ def _is_synthetic_environment(environment: object) -> bool:
 
 def _refusal(error: str, message: str, guidance: str) -> AdapterRefusal:
     return AdapterRefusal(error=error, message=message, guidance=guidance)
+
+
+def _http_refusal(status_code: int) -> AdapterRefusal:
+    """Map an HTTP status to a safe diagnostic without exposing response content."""
+
+    if status_code in {401, 403}:
+        return _refusal(
+            "provider_authentication_failed",
+            f"The provider rejected the credential or permission with HTTP {status_code}.",
+            "Check that the local API key is current, belongs to the intended workspace, and has available credits.",
+        )
+    if status_code == 404:
+        return _refusal(
+            "provider_model_or_endpoint_not_found",
+            "The provider did not recognise the configured model or endpoint.",
+            "Check the exact API model identifier shown by the provider dashboard.",
+        )
+    if status_code == 429:
+        return _refusal(
+            "provider_rate_limited",
+            "The provider rate-limited the request with HTTP 429.",
+            "Wait for the provider limit window or reduce request volume; this adapter does not retry.",
+        )
+    if 500 <= status_code <= 599:
+        return _refusal(
+            "provider_service_unavailable",
+            f"The provider returned a server error with HTTP {status_code}.",
+            "Check provider status and rerun once the service is available; this adapter does not retry.",
+        )
+    return _refusal(
+        "provider_request_rejected",
+        f"The provider rejected the request with HTTP {status_code}.",
+        "Check the model identifier and reviewed request contract; response content was discarded.",
+    )

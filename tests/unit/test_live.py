@@ -161,6 +161,56 @@ def test_live_adapter_refuses_missing_credential_before_transport(monkeypatch):
     assert calls == 0
 
 
+def test_live_adapter_refuses_placeholder_credential_before_transport(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "your-key-here")
+    calls = 0
+
+    def transport(*args):
+        nonlocal calls
+        calls += 1
+        return b"{}"
+
+    result = live_provider_adapter(
+        _policy(),
+        transport=transport,
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.trace is None
+    assert result.refusal is not None
+    assert result.refusal.error == "provider_credential_placeholder"
+    assert calls == 0
+
+
+def test_live_adapter_classifies_http_failure_without_response_body(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
+
+    def transport(*args):
+        raise urllib.error.HTTPError(
+            "https://api.openai.com/v1/responses",
+            401,
+            "Unauthorized",
+            hdrs=None,
+            fp=None,
+        )
+
+    result = live_provider_adapter(
+        _policy(),
+        transport=transport,
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.trace is None
+    assert result.refusal is not None
+    assert result.refusal.error == "provider_authentication_failed"
+    assert "Unauthorized" not in result.refusal.message
+    assert "test-secret" not in result.refusal.message
+
+
 def test_live_adapter_refuses_raw_model_output_without_echoing_it(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
 

@@ -33,6 +33,8 @@ system and learning how to validate the evaluation itself.
 
 - **Part 1:** Start with the [Claude Architect Lab learning path](https://github.com/julie-elkins/claude-architect-lab/blob/main/LEARNING-PATH.md)
   to learn the system patterns.
+- **Production bridge:** Run the [Production AI Engineering Bridge Lab](examples/production-ai-engineering-bridge-lab/README.md)
+  to connect data, access, telemetry, evaluation, authorization, and incident recovery.
 - **Part 2:** Run the [Agent Workflow Teaching Lab](examples/agent-workflow-teaching-lab/README.md)
   to catch a transport-success result whose task outcome is still unsafe.
 - **Part 3:** Continue to [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity)
@@ -211,6 +213,26 @@ path retries and reports success; the guarded path records the semantic outcome,
 stays within its declared ceilings, and escalates. It proves the synthetic control
 only. It does not prove live model quality, production observability, learner reach,
 or business adoption.
+
+## Production AI engineering bridge
+
+The [Production AI Engineering Bridge](docs/PRODUCTION_AI_ENGINEERING_BRIDGE.md)
+connects a locally working workflow to the operational evidence needed to deploy,
+observe, evaluate, contain, and recover it. **LLMOps** means the operational practices
+for monitoring, evaluating, versioning, cost-controlling, and recovering
+large-language-model systems.
+
+Run the synthetic bridge lab from the repository root:
+
+```bash
+uv run python examples/production-ai-engineering-bridge-lab/run_lab.py
+```
+
+The lab records a data contract and access check, separates transport status from
+semantic outcome, blocks an external write without execution authority, preserves
+bounded evidence, contains the synthetic incident, and stages recovery for human
+review. It is offline and metadata-only; it does not establish live model quality,
+production observability, security approval, rollback capability, or business impact.
 
 Phase 29 adds a bounded course-freshness coordinator and one-course workers:
 

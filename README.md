@@ -234,6 +234,13 @@ bounded evidence, contains the synthetic incident, and stages recovery for human
 review. It is offline and metadata-only; it does not establish live model quality,
 production observability, security approval, rollback capability, or business impact.
 
+For the organizational layer behind that recovery decision, read the
+[Advanced Production Operations lesson](docs/ADVANCED_PRODUCTION_OPERATIONS.md), then
+return to the [AI Incident Response Tabletop Lab](examples/ai-incident-response-lab/README.md)
+to assign owners, draft a bounded status update, and choose a controlled recovery
+change. The lesson uses a RACI model (Responsible, Accountable, Consulted, and Informed)
+and remains a synthetic learning exercise, not a production runbook.
+
 Phase 29 adds a bounded course-freshness coordinator and one-course workers:
 
 ```bash

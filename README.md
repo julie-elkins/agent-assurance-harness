@@ -53,6 +53,37 @@ Run the teaching lab and explain why both paths can report transport status `ok`
 only the guarded path is accepted. The expected result and troubleshooting steps are in
 the lab README.
 
+### Research pilot: from evaluation to reauthorization
+
+The [agent reauthorization pilot](tools/reauthorization_pilot.py) is the first executable
+study artifact for the companion working paper in
+[LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity/tree/main/research/agent-reauthorization).
+
+It compares three conditions over the same 18 synthetic claim-change cases:
+
+1. pass/fail reporting;
+2. revision-aware evidence; and
+3. revision-aware evidence plus reauthorization controls.
+
+Reauthorization means an explicit decision that current evidence still supports
+continued use after a relevant system change. The pilot is offline and metadata-only:
+it emits case identifiers, revision identifiers, status codes, counts, hashes, and
+relative cost units. It does not call a provider or store prompts, tool payloads, or
+model output.
+
+Run it from the repository root:
+
+```bash
+uv run python tools/reauthorization_pilot.py \
+  --output /tmp/agent-reauthorization-pilot.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The pilot tests protocol integrity and controlled decision differences. It does not
+establish production safety, live model quality, or how every organization should
+govern an agent.
+
 ### What this part does not prove
 
 The lab is offline, synthetic, and metadata-only. It does not establish live model

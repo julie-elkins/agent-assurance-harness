@@ -552,8 +552,19 @@ def _is_synthetic_environment(environment: object) -> bool:
     return isinstance(environment, SimulatedToolEnvironment)
 
 
-def _refusal(error: str, message: str, guidance: str) -> AdapterRefusal:
-    return AdapterRefusal(error=error, message=message, guidance=guidance)
+def _refusal(
+    error: str,
+    message: str,
+    guidance: str,
+    *,
+    stage: str | None = None,
+) -> AdapterRefusal:
+    return AdapterRefusal(
+        error=error,
+        message=message,
+        guidance=guidance,
+        stage=stage,
+    )
 
 
 def _http_refusal(status_code: int) -> AdapterRefusal:

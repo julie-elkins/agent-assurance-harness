@@ -16,9 +16,14 @@ from dataclasses import dataclass, replace
 from .claude_schema import (
     claude_output_schema,
     synthetic_tool_definitions,
-    validate_claude_output,
 )
-from .environment import SimulatedToolEnvironment
+from .claude_hooks import (
+    after_response_hook,
+    after_tool_hook,
+    before_request_hook,
+    before_tool_hook,
+    stop_hook,
+)
 from .live import (
     HttpTransport,
     LiveProviderPolicy,
@@ -33,15 +38,11 @@ from .live import (
     _refusal,
 )
 from .models import ExecutionBudget
-from .packs import build_environment_from_pack
 from .protocol import AdapterRun, ScenarioRequest
 from .providers import ProviderLimits, ProviderPayloadError, translate_provider_payload
 
 
 MAX_TOOL_LOOP_TURNS = 3
-_PLACEHOLDER_CREDENTIALS = frozenset(
-    {"your-key-here", "replace-me", "replace-with-your-key"}
-)
 
 
 @dataclass(frozen=True)
@@ -65,52 +66,6 @@ class AnthropicToolLoopAdapter:
     ) -> AdapterRun:
         """Run model decision, synthetic tool results, and final classification."""
 
-        refusal = self.policy.validate()
-        if refusal is not None:
-            return AdapterRun(refusal=refusal)
-        if self.policy.provider_id != "anthropic":
-            return AdapterRun(
-                refusal=_refusal(
-                    "tool_loop_provider_required",
-                    "The synthetic tool loop supports Anthropic only.",
-                    "Use the direct live adapter for another supported provider.",
-                )
-            )
-        if not 2 <= self.max_turns <= MAX_TOOL_LOOP_TURNS:
-            return AdapterRun(
-                refusal=_refusal(
-                    "invalid_tool_loop_turn_limit",
-                    "The synthetic tool loop must allow two or three turns.",
-                    "Use two turns for a simple exchange or three for a final classification.",
-                )
-            )
-        if not isinstance(environment, SimulatedToolEnvironment):
-            return AdapterRun(
-                refusal=_refusal(
-                    "invalid_environment",
-                    "The live tool loop requires the local synthetic environment.",
-                    "Use a built-in scenario through the local experiment runner.",
-                )
-            )
-
-        credential = os.environ.get(self.policy.credential_env_var)
-        if not credential:
-            return AdapterRun(
-                refusal=_refusal(
-                    "provider_credential_missing",
-                    "The required provider credential is not present.",
-                    f"Set {self.policy.credential_env_var} in the local process environment.",
-                )
-            )
-        if credential.strip().lower() in _PLACEHOLDER_CREDENTIALS:
-            return AdapterRun(
-                refusal=_refusal(
-                    "provider_credential_placeholder",
-                    "The provider credential is still the command example placeholder.",
-                    f"Replace the placeholder with the local {self.policy.credential_env_var} value; do not paste the credential into a report or chat.",
-                )
-            )
-
         messages: list[dict[str, str]] = [
             {
                 "role": "user",
@@ -124,6 +79,28 @@ class AnthropicToolLoopAdapter:
         total_estimated_cost_usd = 0.0
 
         for turn in range(1, self.max_turns + 1):
+            before_request = before_request_hook(
+                self.policy,
+                environment=environment,
+                turn=turn,
+                max_turns=self.max_turns,
+            )
+            if not before_request.allowed:
+                return AdapterRun(
+                    refusal=before_request.refusal,
+                    execution_budget=(
+                        _loop_budget(
+                            self.policy,
+                            requests=turn - 1,
+                            output_tokens=total_output_tokens,
+                            elapsed_seconds=total_elapsed_seconds,
+                            estimated_cost_usd=total_estimated_cost_usd,
+                            max_turns=self.max_turns,
+                        )
+                        if turn > 1
+                        else None
+                    ),
+                )
             response = self._request(messages, request.available_tools)
             if isinstance(response, AdapterRun):
                 return replace(
@@ -145,15 +122,15 @@ class AnthropicToolLoopAdapter:
                     provider_response,
                     available_tools=request.available_tools,
                 )
-                schema_refusal = validate_claude_output(
+                response_hook = after_response_hook(
                     model_payload,
                     available_tools=request.available_tools,
                 )
-                if schema_refusal is not None:
+                if not response_hook.allowed:
                     raise ProviderPayloadError(
-                        schema_refusal.error,
-                        schema_refusal.message,
-                        schema_refusal.guidance,
+                        response_hook.refusal.error,
+                        response_hook.refusal.message,
+                        response_hook.refusal.guidance,
                     )
                 usage = _live_usage(
                     provider_response,
@@ -201,7 +178,19 @@ class AnthropicToolLoopAdapter:
                         error.error,
                         error.message,
                         error.guidance,
-                    )
+                        stage="after_response",
+                    ),
+                    execution_budget=_loop_budget(
+                        self.policy,
+                        requests=turn,
+                        output_tokens=total_output_tokens,
+                        elapsed_seconds=total_elapsed_seconds,
+                        estimated_cost_usd=(
+                            total_estimated_cost_usd
+                            + self.policy.estimated_cost_usd_per_request
+                        ),
+                        max_turns=self.max_turns,
+                    ),
                 )
             except (UnicodeDecodeError, json.JSONDecodeError):
                 return AdapterRun(
@@ -267,13 +256,17 @@ class AnthropicToolLoopAdapter:
                         "Return only tool_use events before the harness supplies tool results.",
                     )
                 )
-            if turn == self.max_turns:
+            stop = stop_hook(
+                turn=turn,
+                max_turns=self.max_turns,
+                estimated_cost_usd=total_estimated_cost_usd,
+                max_estimated_cost_usd=(
+                    self.policy.limits.max_estimated_cost_usd * self.max_turns
+                ),
+            )
+            if not stop.allowed:
                 return AdapterRun(
-                    refusal=_refusal(
-                        "tool_loop_turn_limit_exceeded",
-                        "The model requested another tool after the local turn ceiling.",
-                        "Reduce tool steps or raise the bounded turn limit deliberately.",
-                    ),
+                    refusal=stop.refusal,
                     execution_budget=_loop_budget(
                         self.policy,
                         requests=turn,
@@ -287,36 +280,29 @@ class AnthropicToolLoopAdapter:
             all_events.extend(normalized_events)
             tool_results: list[dict[str, object]] = []
             for event in tool_events:
-                name = event.get("name")
-                call_id = event.get("id")
-                if not isinstance(name, str) or name not in request.available_tools:
+                tool_hook = before_tool_hook(
+                    event,
+                    available_tools=request.available_tools,
+                )
+                if not tool_hook.allowed:
                     return AdapterRun(
-                        refusal=_refusal(
-                            "provider_tool_not_allowed",
-                            "The model requested a tool outside the scenario contract.",
-                            "Request only one of the synthetic tools listed in the scenario.",
-                        )
+                        refusal=tool_hook.refusal,
+                        execution_budget=_loop_budget(
+                            self.policy,
+                            requests=turn,
+                            output_tokens=total_output_tokens,
+                            elapsed_seconds=total_elapsed_seconds,
+                            estimated_cost_usd=total_estimated_cost_usd,
+                            max_turns=self.max_turns,
+                        ),
                     )
-                if not isinstance(call_id, str):
-                    return AdapterRun(
-                        refusal=_refusal(
-                            "provider_tool_identifier_invalid",
-                            "The model tool request did not contain a valid identifier.",
-                            "Return a stable identifier for each synthetic tool request.",
-                        )
-                    )
+                name, call_id = tool_hook.value
                 observation = environment.invoke(name)
-                result: dict[str, object] = {
-                    "type": "tool_result",
-                    "tool_use_id": call_id,
-                    "status": observation.result_status,
-                    "evidence_id": observation.result_id,
-                    "output_flags": list(observation.output_flags),
-                }
-                if observation.source is not None:
-                    result["source"] = observation.source
-                if observation.age_seconds is not None:
-                    result["age_seconds"] = observation.age_seconds
+                tool_result_hook = after_tool_hook(
+                    observation,
+                    call_id=call_id,
+                )
+                result = tool_result_hook.value
                 all_events.append(result)
                 tool_results.append(result)
 
@@ -363,13 +349,16 @@ class AnthropicToolLoopAdapter:
                 self.policy.limits.max_elapsed_seconds,
             )
         except urllib.error.HTTPError as error:
-            return AdapterRun(refusal=_http_refusal(error.code))
+            return AdapterRun(
+                refusal=replace(_http_refusal(error.code), stage="request_transport")
+            )
         except (OSError, urllib.error.URLError, TimeoutError):
             return AdapterRun(
                 refusal=_refusal(
                     "provider_transport_failed",
                     "The provider request did not complete.",
                     "Check the local network and provider availability; no retry was attempted.",
+                    stage="request_transport",
                 )
             )
         elapsed_seconds = time.monotonic() - started
@@ -379,6 +368,7 @@ class AnthropicToolLoopAdapter:
                     "provider_transport_invalid_response",
                     "The provider transport did not return bytes.",
                     "Use a bytes response and keep provider parsing inside the adapter.",
+                    stage="request_transport",
                 )
             )
         if len(response_bytes) > _MAX_RESPONSE_BYTES:
@@ -387,6 +377,7 @@ class AnthropicToolLoopAdapter:
                     "provider_response_too_large",
                     "The provider response exceeded the local response-size ceiling.",
                     "Reduce the provider output before retrying.",
+                    stage="request_transport",
                 )
             )
         try:
@@ -397,6 +388,7 @@ class AnthropicToolLoopAdapter:
                     "provider_response_refused",
                     "The provider response was not valid UTF-8 JSON.",
                     "Return the requested safe JSON object without surrounding prose.",
+                    stage="request_transport",
                 )
             )
         if not isinstance(decoded, dict):
@@ -405,6 +397,7 @@ class AnthropicToolLoopAdapter:
                     "provider_response_refused",
                     "The provider response was not a JSON object.",
                     "Return one provider response object containing the safe content.",
+                    stage="request_transport",
                 )
             )
         return decoded, elapsed_seconds

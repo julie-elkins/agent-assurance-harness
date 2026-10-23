@@ -23,7 +23,11 @@ the reviewed text-JSON event shape or a native Anthropic `tool_use` block, but
 native calls must have an empty input object; raw tool arguments are refused.
 Raw prompts, responses, and credentials are discarded after identifier-only
 normalization. The accepted output contract is versioned as schema `1` and is
-validated locally before the result reaches the harness evaluator.
+validated locally before the result reaches the harness evaluator. Lifecycle hooks
+(deterministic checks at request, response, tool, and stop boundaries) record only a
+safe refusal stage such as `before_request`, `after_response`, `before_tool`,
+`after_tool`, `request_transport`, or `stop`. This separates a model contract
+failure from a harness or budget refusal without retaining provider content.
 
 ## Ten-case smoke run
 

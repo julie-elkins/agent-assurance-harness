@@ -82,15 +82,19 @@ class AdapterRefusal:
     error: str
     message: str
     guidance: str
+    stage: str | None = None
 
     def to_dict(self) -> dict[str, str]:
         """Return a JSON-safe refusal."""
 
-        return {
+        result = {
             "error": self.error,
             "message": self.message,
             "guidance": self.guidance,
         }
+        if self.stage is not None:
+            result["stage"] = self.stage
+        return result
 
 
 @dataclass(frozen=True)

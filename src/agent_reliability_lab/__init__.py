@@ -108,6 +108,14 @@ from .claude_schema import (
     synthetic_tool_definitions,
     validate_claude_output,
 )
+from .claude_hooks import (
+    HookResult,
+    after_response_hook,
+    after_tool_hook,
+    before_request_hook,
+    before_tool_hook,
+    stop_hook,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,

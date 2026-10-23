@@ -107,6 +107,7 @@ class ClaudeCaseResult:
     finding_status: str | None = None
     refusal_error: str | None = None
     refusal_guidance: str | None = None
+    refusal_stage: str | None = None
     execution_budget: dict[str, object] | None = None
 
     def to_dict(self) -> dict[str, object]:
@@ -124,6 +125,8 @@ class ClaudeCaseResult:
             result["refusal_error"] = self.refusal_error
         if self.refusal_guidance is not None:
             result["refusal_guidance"] = self.refusal_guidance
+        if self.refusal_stage is not None:
+            result["refusal_stage"] = self.refusal_stage
         if self.execution_budget is not None:
             result["execution_budget"] = self.execution_budget
         return result
@@ -216,14 +219,15 @@ class ClaudeExperimentReport:
             "",
             "## Cases",
             "",
-            "| Case | Scenario | Replicate | Status | Finding | Refusal | Guidance |",
-            "| --- | --- | ---: | --- | --- | --- | --- |",
+            "| Case | Scenario | Replicate | Status | Finding | Refusal | Stage | Guidance |",
+            "| --- | --- | ---: | --- | --- | --- | --- | --- |",
         ]
         for case in self.cases:
             lines.append(
                 f"| `{case.case_id}` | `{case.scenario_id}` | {case.replicate} | "
                 f"{case.status} | {case.finding_status or '—'} | "
-                f"{case.refusal_error or '—'} | {case.refusal_guidance or '—'} |"
+                f"{case.refusal_error or '—'} | {case.refusal_stage or '—'} | "
+                f"{case.refusal_guidance or '—'} |"
             )
         if self.refusal_error is not None:
             lines.extend(
@@ -308,6 +312,7 @@ def run_claude_experiment(
                     status="refused",
                     refusal_error=run.refusal.error,
                     refusal_guidance=run.refusal.guidance,
+                    refusal_stage=run.refusal.stage,
                     execution_budget=(
                         run.execution_budget.to_dict()
                         if run.execution_budget is not None

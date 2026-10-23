@@ -192,6 +192,14 @@ the shortest learner path through the harness. It teaches one complete workflow:
 bounded execution, independent breaker evaluation, semantic-outcome checks, bounded
 retry and cost metadata, and human escalation.
 
+For the security path, read the [AI Incident Response
+Guide](docs/AI_INCIDENT_RESPONSE.md), then run the [AI Incident Response Tabletop
+Lab](examples/ai-incident-response-lab/README.md). These materials add an AI-specific
+incident overlay: model and context revisions, untrusted content, tool authority,
+execution authority, containment, evidence preservation, and staged recovery. The
+guide and tabletop remain synthetic and metadata-only; they do not claim production
+incident-response readiness.
+
 Run it from the repository root:
 
 ```bash

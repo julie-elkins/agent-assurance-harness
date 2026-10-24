@@ -1257,6 +1257,48 @@ public trace.
 See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the
 pilot, structured-output comparison, and Haiku replication commands.
 
+### Run the bounded local OpenAI replication
+
+The cross-provider arm uses the same ten synthetic scenarios, three replicates,
+three-turn ceiling, local evidence validator, and five-dollar planning ceiling.
+It changes only the provider boundary and native function-call protocol. The
+default model is a documented OpenAI model identifier; override it with
+`--model` when the local account uses another approved model:
+
+```bash
+uv run python tools/openai_local_experiment.py \
+  --pilot \
+  --case-count 30 \
+  --model gpt-5.6 \
+  --allow-network \
+  --max-total-cost-usd 5 \
+  --markdown \
+  --output /tmp/openai-pilot.json
+```
+
+Run the separate provider-enforced JSON Schema condition only after recording
+the baseline:
+
+```bash
+uv run python tools/openai_local_experiment.py \
+  --pilot \
+  --case-count 30 \
+  --model gpt-5.6 \
+  --allow-network \
+  --max-total-cost-usd 5 \
+  --structured-output \
+  --markdown \
+  --output /tmp/openai-structured-pilot.json
+```
+
+Set `OPENAI_API_KEY` in the local process before running. The adapter uses the
+native Responses function-call/result loop, but reports only scenario
+identifiers, statuses, refusal stages, findings, and usage ceilings. It does
+not persist prompts, raw function arguments, raw function results, model text,
+or credentials. See
+[`docs/OPENAI_LOCAL_EXPERIMENT.md`](docs/OPENAI_LOCAL_EXPERIMENT.md) for the
+research boundary and interpretation rules.
+
 ### Production-readiness checks
 
 The repository has a small boundary check that scans tracked files for high-signal

@@ -497,7 +497,11 @@ def adapter_run_from_dict(value: object) -> AdapterRun:
             error=_string(refusal_data.get("error"), "refusal error") or "",
             message=_string(refusal_data.get("message"), "refusal message") or "",
             guidance=_string(refusal_data.get("guidance"), "refusal guidance") or "",
-            stage=_string(refusal_data.get("stage"), "refusal stage"),
+            stage=_string(
+                refusal_data.get("stage"),
+                "refusal stage",
+                allow_none=True,
+            ),
         )
     event_values = data.get("events", [])
     if not isinstance(event_values, list):

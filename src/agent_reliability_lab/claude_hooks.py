@@ -1,4 +1,4 @@
-"""Deterministic lifecycle hooks for the local Claude tool loop.
+"""Deterministic lifecycle hooks for local provider tool loops.
 
 Hooks are small checks that run at named boundaries.  They keep provider formatting,
 tool permission, and stop-budget failures distinguishable without retaining model text
@@ -48,13 +48,13 @@ def before_request_hook(
     refusal = policy.validate()
     if refusal is not None:
         return _blocked(stage, refusal)
-    if policy.provider_id != "anthropic":
+    if policy.provider_id not in {"anthropic", "openai"}:
         return _blocked(
             stage,
             _refusal(
                 "tool_loop_provider_required",
-                "The synthetic tool loop supports Anthropic only.",
-                "Use the direct live adapter for another supported provider.",
+                "The synthetic tool loop supports Anthropic and OpenAI only.",
+                "Use one of the supported provider tool-loop adapters.",
             ),
         )
     if not 2 <= max_turns <= 3:

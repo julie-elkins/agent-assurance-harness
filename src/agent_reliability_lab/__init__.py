@@ -117,6 +117,25 @@ from .claude_hooks import (
     before_tool_hook,
     stop_hook,
 )
+from .openai_experiment import (
+    OPENAI_DEFAULT_MODEL,
+    OPENAI_PROVIDER_ID,
+    OpenAICaseResult,
+    OpenAIExperimentPolicy,
+    OpenAIExperimentReport,
+    run_openai_experiment,
+)
+from .openai_tool_loop import (
+    MAX_OPENAI_TOOL_LOOP_TURNS,
+    OpenAIToolLoopAdapter,
+    openai_tool_loop_adapter,
+)
+from .openai_schema import (
+    OPENAI_SCHEMA_VERSION,
+    openai_structured_output_schema,
+    openai_tool_definitions,
+    validate_openai_output,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,
@@ -472,6 +491,19 @@ __all__ = [
     "claude_output_schema",
     "synthetic_tool_definitions",
     "validate_claude_output",
+    "OPENAI_DEFAULT_MODEL",
+    "OPENAI_PROVIDER_ID",
+    "OpenAICaseResult",
+    "OpenAIExperimentPolicy",
+    "OpenAIExperimentReport",
+    "run_openai_experiment",
+    "MAX_OPENAI_TOOL_LOOP_TURNS",
+    "OpenAIToolLoopAdapter",
+    "openai_tool_loop_adapter",
+    "OPENAI_SCHEMA_VERSION",
+    "openai_structured_output_schema",
+    "openai_tool_definitions",
+    "validate_openai_output",
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_provider_assurance",

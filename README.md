@@ -1226,6 +1226,79 @@ write the credential, request, response body, or model text to a replay or repor
 `--allow-network` is intentionally absent from CI; no live provider call runs in the
 repository's automated checks.
 
+### Run the bounded local Claude experiment
+
+The repository also includes a ten-case smoke run and a twenty-to-thirty-case pilot
+for local Claude validation. This is an external-validity check (whether the
+provider-facing adapter works against an actual model), not the primary deterministic
+research result. It uses built-in synthetic scenarios only, allows up to three
+bounded conversation turns per case, does not retry, and has a five-dollar
+aggregate planning ceiling by default:
+
+```bash
+uv run python tools/claude_local_experiment.py \
+  --smoke \
+  --model claude-sonnet-5-5 \
+  --allow-network \
+  --markdown
+```
+
+Set `ANTHROPIC_API_KEY` in the local process before running. The adapter emits only
+scenario identifiers, statuses, findings, and usage ceilings. It never writes the
+credential, prompts, raw responses, or model text to the report or repository. It
+accepts the reviewed text-JSON shape or a native Anthropic `tool_use` block, but
+uses strict zero-argument tool schemas and native `tool_result` blocks for the
+bounded follow-up, with parallel tool calls disabled for simpler trace pairing.
+Lifecycle hooks check the
+request, response schema, tool boundary, and stop budget separately; refusal records
+include the stage where the run stopped, such as `after_response` or `before_tool`.
+The adapter accepts bounded provider caller metadata but does not retain it in the
+public trace.
+See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the
+pilot, structured-output comparison, and Haiku replication commands.
+
+### Run the bounded local OpenAI replication
+
+The cross-provider arm uses the same ten synthetic scenarios, three replicates,
+three-turn ceiling, local evidence validator, and five-dollar planning ceiling.
+It changes only the provider boundary and native function-call protocol. The
+default model is a documented OpenAI model identifier; override it with
+`--model` when the local account uses another approved model:
+
+```bash
+uv run python tools/openai_local_experiment.py \
+  --pilot \
+  --case-count 30 \
+  --model gpt-5.6 \
+  --allow-network \
+  --max-total-cost-usd 5 \
+  --markdown \
+  --output /tmp/openai-pilot.json
+```
+
+Run the separate provider-enforced JSON Schema condition only after recording
+the baseline:
+
+```bash
+uv run python tools/openai_local_experiment.py \
+  --pilot \
+  --case-count 30 \
+  --model gpt-5.6 \
+  --allow-network \
+  --max-total-cost-usd 5 \
+  --structured-output \
+  --markdown \
+  --output /tmp/openai-structured-pilot.json
+```
+
+Set `OPENAI_API_KEY` in the local process before running. The adapter uses the
+native Responses function-call/result loop, but reports only scenario
+identifiers, statuses, refusal stages, findings, and usage ceilings. It does
+not persist prompts, raw function arguments, raw function results, model text,
+or credentials. See
+[`docs/OPENAI_LOCAL_EXPERIMENT.md`](docs/OPENAI_LOCAL_EXPERIMENT.md) for the
+research boundary and interpretation rules.
+
 ### Production-readiness checks
 
 The repository has a small boundary check that scans tracked files for high-signal

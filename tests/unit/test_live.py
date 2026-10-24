@@ -6,12 +6,17 @@ from pathlib import Path
 import pytest
 
 from agent_reliability_lab.environment import environment_for_scenario
+from agent_reliability_lab.claude_tool_loop import anthropic_tool_loop_adapter
 from agent_reliability_lab.live import (
     LiveProviderPolicy,
     _NoRedirectHandler,
     live_provider_adapter,
 )
-from agent_reliability_lab.packs import load_builtin_packs, request_from_pack
+from agent_reliability_lab.packs import (
+    build_environment_from_pack,
+    load_builtin_packs,
+    request_from_pack,
+)
 from agent_reliability_lab.providers import ProviderLimits
 
 
@@ -161,6 +166,56 @@ def test_live_adapter_refuses_missing_credential_before_transport(monkeypatch):
     assert calls == 0
 
 
+def test_live_adapter_refuses_placeholder_credential_before_transport(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "your-key-here")
+    calls = 0
+
+    def transport(*args):
+        nonlocal calls
+        calls += 1
+        return b"{}"
+
+    result = live_provider_adapter(
+        _policy(),
+        transport=transport,
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.trace is None
+    assert result.refusal is not None
+    assert result.refusal.error == "provider_credential_placeholder"
+    assert calls == 0
+
+
+def test_live_adapter_classifies_http_failure_without_response_body(monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
+
+    def transport(*args):
+        raise urllib.error.HTTPError(
+            "https://api.openai.com/v1/responses",
+            401,
+            "Unauthorized",
+            hdrs=None,
+            fp=None,
+        )
+
+    result = live_provider_adapter(
+        _policy(),
+        transport=transport,
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.trace is None
+    assert result.refusal is not None
+    assert result.refusal.error == "provider_authentication_failed"
+    assert "Unauthorized" not in result.refusal.message
+    assert "test-secret" not in result.refusal.message
+
+
 def test_live_adapter_refuses_raw_model_output_without_echoing_it(monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-secret")
 
@@ -244,6 +299,134 @@ def test_anthropic_live_adapter_uses_approved_endpoint_and_headers(monkeypatch):
     assert observed["headers"]["x-api-key"] == "test-secret"
     assert observed["headers"]["anthropic-version"] == "2023-06-01"
     assert b"test-secret" not in observed["body"]
+
+
+def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
+    monkeypatch,
+):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-secret")
+    pack = next(
+        pack
+        for pack in load_builtin_packs()
+        if pack.scenario_id == "unauthorized-side-effect"
+    )
+    request = request_from_pack(pack)
+    responses = iter(
+        (
+            json.dumps(
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": "I will inspect the synthetic record.",
+                        },
+                        {
+                            "type": "tool_use",
+                            "name": "cancel_order",
+                            "id": "call-001",
+                            "input": {},
+                            "caller": {"type": "direct"},
+                        }
+                    ],
+                    "stop_reason": "end_turn",
+                    "usage": {"output_tokens": 24},
+                }
+            ).encode("utf-8"),
+            json.dumps(
+                {
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": json.dumps(
+                                {
+                                    "content": [
+                                        {
+                                            "type": "reliability",
+                                            "kind": "abstention",
+                                        }
+                                    ],
+                                    "workflow": {
+                                        "workflow_id": "workflow-001",
+                                        "transport_status": "ok",
+                                        "semantic_outcome": "escalated",
+                                        "retry_count": 0,
+                                        "estimated_cost_usd": 0.01,
+                                        "max_retries": 1,
+                                        "max_estimated_cost_usd": 0.10,
+                                        "escalation_status": "required",
+                                        "escalation_id": "escalation-001",
+                                    },
+                                }
+                            ),
+                        }
+                    ],
+                    "stop_reason": "end_turn",
+                    "usage": {"output_tokens": 16},
+                }
+            ).encode("utf-8"),
+        )
+    )
+    observed = []
+
+    def transport(url, headers, body, timeout_seconds):
+        observed.append(json.loads(body))
+        return next(responses)
+
+    result = anthropic_tool_loop_adapter(
+        _policy(provider_id="anthropic"),
+        max_turns=3,
+        transport=transport,
+    ).run(
+        request,
+        environment=build_environment_from_pack(pack),
+    )
+
+    assert result.refusal is None
+    assert result.trace is not None
+    assert len(result.trace.tool_calls) == 1
+    assert result.trace.tool_calls[0].result_status == "ok"
+    assert result.trace.abstained is True
+    assert result.trace.workflow_id == "workflow-001"
+    assert result.execution_budget is not None
+    assert result.execution_budget.requests == 2
+    assert len(observed) == 2
+    assert observed[0]["tools"][0]["input_schema"]["additionalProperties"] is False
+    assert observed[0]["tools"][0]["strict"] is True
+    assert observed[0]["tool_choice"]["disable_parallel_tool_use"] is True
+    assert observed[1]["messages"][-2]["role"] == "assistant"
+    assert observed[1]["messages"][-2]["content"][0]["type"] == "tool_use"
+    assert observed[1]["messages"][-1]["content"][0]["type"] == "tool_result"
+    assert observed[1]["messages"][-1]["content"][0]["tool_use_id"] == "call-001"
+    assert '"evidence_id":"tool-result-006"' in (
+        observed[1]["messages"][-1]["content"][0]["content"]
+    )
+    assert b"test-secret" not in json.dumps(observed).encode("utf-8")
+
+
+def test_anthropic_structured_condition_sends_provider_schema(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-secret")
+    observed = []
+
+    def transport(url, headers, body, timeout_seconds):
+        observed.append(json.loads(body))
+        return _provider_fixture("anthropic-messages-safe.json")
+
+    result = anthropic_tool_loop_adapter(
+        _policy(provider_id="anthropic"),
+        structured_output=True,
+        transport=transport,
+    ).run(
+        _request(),
+        environment=environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.refusal is None
+    assert result.trace is not None
+    assert observed[0]["output_config"]["format"]["type"] == "json_schema"
+    assert (
+        observed[0]["output_config"]["format"]["schema"]["additionalProperties"]
+        is False
+    )
 
 
 def test_provider_contract_fixtures_remain_accepted(monkeypatch):

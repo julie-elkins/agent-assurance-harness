@@ -88,6 +88,54 @@ from .live import (
     extract_provider_payload,
     live_provider_adapter,
 )
+from .claude_experiment import (
+    CLAUDE_HAIKU_MODEL,
+    CLAUDE_PROVIDER_ID,
+    CLAUDE_SONNET_MODEL,
+    ClaudeCaseResult,
+    ClaudeExperimentPolicy,
+    ClaudeExperimentReport,
+    run_claude_experiment,
+)
+from .claude_tool_loop import (
+    MAX_TOOL_LOOP_TURNS,
+    AnthropicToolLoopAdapter,
+    anthropic_tool_loop_adapter,
+)
+from .claude_schema import (
+    CLAUDE_SCHEMA_VERSION,
+    claude_output_schema,
+    claude_structured_output_schema,
+    synthetic_tool_definitions,
+    validate_claude_output,
+)
+from .claude_hooks import (
+    HookResult,
+    after_response_hook,
+    after_tool_hook,
+    before_request_hook,
+    before_tool_hook,
+    stop_hook,
+)
+from .openai_experiment import (
+    OPENAI_DEFAULT_MODEL,
+    OPENAI_PROVIDER_ID,
+    OpenAICaseResult,
+    OpenAIExperimentPolicy,
+    OpenAIExperimentReport,
+    run_openai_experiment,
+)
+from .openai_tool_loop import (
+    MAX_OPENAI_TOOL_LOOP_TURNS,
+    OpenAIToolLoopAdapter,
+    openai_tool_loop_adapter,
+)
+from .openai_schema import (
+    OPENAI_SCHEMA_VERSION,
+    openai_structured_output_schema,
+    openai_tool_definitions,
+    validate_openai_output,
+)
 from .providers import (
     DEFAULT_PROVIDER_LIMITS,
     MockProviderAdapter,
@@ -429,6 +477,33 @@ __all__ = [
     "pack_sha256",
     "evaluate_pack_trace",
     "live_provider_adapter",
+    "CLAUDE_PROVIDER_ID",
+    "CLAUDE_SONNET_MODEL",
+    "CLAUDE_HAIKU_MODEL",
+    "ClaudeCaseResult",
+    "ClaudeExperimentPolicy",
+    "ClaudeExperimentReport",
+    "run_claude_experiment",
+    "MAX_TOOL_LOOP_TURNS",
+    "AnthropicToolLoopAdapter",
+    "anthropic_tool_loop_adapter",
+    "CLAUDE_SCHEMA_VERSION",
+    "claude_output_schema",
+    "synthetic_tool_definitions",
+    "validate_claude_output",
+    "OPENAI_DEFAULT_MODEL",
+    "OPENAI_PROVIDER_ID",
+    "OpenAICaseResult",
+    "OpenAIExperimentPolicy",
+    "OpenAIExperimentReport",
+    "run_openai_experiment",
+    "MAX_OPENAI_TOOL_LOOP_TURNS",
+    "OpenAIToolLoopAdapter",
+    "openai_tool_loop_adapter",
+    "OPENAI_SCHEMA_VERSION",
+    "openai_structured_output_schema",
+    "openai_tool_definitions",
+    "validate_openai_output",
     "mock_provider_adapters",
     "translate_provider_payload",
     "run_provider_assurance",

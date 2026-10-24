@@ -24,6 +24,7 @@ def test_provider_structured_schema_uses_finite_kinds_and_closed_objects():
     assert event["properties"]["kind"]["enum"]
     assert event["additionalProperties"] is False
     assert schema["additionalProperties"] is False
+    assert "minimum" not in schema["properties"]["workflow"]["properties"]["retry_count"]
 
 
 def test_schema_accepts_final_classification():

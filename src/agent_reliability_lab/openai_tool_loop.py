@@ -454,7 +454,11 @@ def _openai_conversation_body(
             _LIVE_INSTRUCTIONS
             + " The final response must contain an events array of OpenAI "
             "classification objects. Tool calls must be zero-argument native "
-            "function calls; after tool results, emit classifications only."
+            "function calls; after tool results, emit classifications only. "
+            "For this OpenAI adapter, every final event must use "
+            "\"type\":\"classification\"; do not use the Anthropic "
+            "\"type\":\"reliability\" event type, and do not include "
+            "function_call or function_result items in final events."
         ),
         "input": input_items,
         "max_output_tokens": policy.limits.max_output_tokens,

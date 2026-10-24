@@ -143,6 +143,7 @@ def test_openai_structured_condition_sends_strict_schema(monkeypatch):
     assert observed[0]["text"]["format"]["type"] == "json_schema"
     assert observed[0]["text"]["format"]["strict"] is True
     assert observed[0]["text"]["format"]["schema"]["additionalProperties"] is False
+    assert '"type":"classification"' in observed[0]["instructions"]
 
 
 def test_openai_tool_schema_and_final_schema_are_closed():

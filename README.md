@@ -1255,7 +1255,7 @@ include the stage where the run stopped, such as `after_response` or `before_too
 The adapter accepts bounded provider caller metadata but does not retain it in the
 public trace.
 See [`docs/CLAUDE_LOCAL_EXPERIMENT.md`](docs/CLAUDE_LOCAL_EXPERIMENT.md) for the
-pilot and Haiku replication commands.
+pilot, structured-output comparison, and Haiku replication commands.
 
 ### Production-readiness checks
 

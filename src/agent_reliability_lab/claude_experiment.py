@@ -50,12 +50,23 @@ class ClaudeExperimentPolicy:
     max_output_tokens: int = DEFAULT_OUTPUT_TOKEN_CEILING
     max_elapsed_seconds: float = DEFAULT_ELAPSED_SECONDS
     allow_network: bool = False
+    structured_output: bool = False
 
     @property
     def mode(self) -> str:
         """Return the selected bounded run mode."""
 
         return "smoke" if self.case_count == SMOKE_CASE_COUNT else "pilot"
+
+    @property
+    def output_condition(self) -> str:
+        """Return the controlled response-format condition."""
+
+        return (
+            "provider_structured_output"
+            if self.structured_output
+            else "prompt_and_local_validation"
+        )
 
     def validate(self) -> str | None:
         """Return a refusal message when the experiment is not safely bounded."""
@@ -139,6 +150,7 @@ class ClaudeExperimentReport:
     provider_id: str
     model: str
     mode: str
+    output_condition: str
     requested_case_count: int
     attempted_case_count: int
     completed_case_count: int
@@ -174,6 +186,7 @@ class ClaudeExperimentReport:
             "provider_id": self.provider_id,
             "model": self.model,
             "mode": self.mode,
+            "output_condition": self.output_condition,
             "requested_case_count": self.requested_case_count,
             "attempted_case_count": self.attempted_case_count,
             "completed_case_count": self.completed_case_count,
@@ -206,6 +219,7 @@ class ClaudeExperimentReport:
             f"- Provider: `{self.provider_id}`",
             f"- Model: `{self.model}`",
             f"- Mode: `{self.mode}`",
+            f"- Output condition: `{self.output_condition}`",
             f"- Decision: **{self.decision.upper()}**",
             f"- Cases attempted: `{self.attempted_case_count}` / "
             f"`{self.requested_case_count}`",
@@ -254,6 +268,7 @@ def run_claude_experiment(
             provider_id=CLAUDE_PROVIDER_ID,
             model=policy.model,
             mode=policy.mode,
+            output_condition=policy.output_condition,
             requested_case_count=policy.case_count,
             attempted_case_count=0,
             completed_case_count=0,
@@ -284,6 +299,7 @@ def run_claude_experiment(
         ),
         transport=transport,
         max_turns=MAX_TOOL_LOOP_TURNS,
+        structured_output=policy.structured_output,
     )
 
     case_results: list[ClaudeCaseResult] = []
@@ -354,6 +370,7 @@ def run_claude_experiment(
         provider_id=CLAUDE_PROVIDER_ID,
         model=policy.model,
         mode=policy.mode,
+        output_condition=policy.output_condition,
         requested_case_count=policy.case_count,
         attempted_case_count=len(case_results),
         completed_case_count=completed,

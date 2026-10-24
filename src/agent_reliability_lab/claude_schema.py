@@ -115,6 +115,67 @@ def claude_output_schema() -> dict[str, object]:
     }
 
 
+def claude_structured_output_schema() -> dict[str, object]:
+    """Return the provider-facing schema for the comparison condition."""
+
+    return {
+        "type": "object",
+        "properties": {
+            "content": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "type": {
+                            "type": "string",
+                            "enum": ["reliability"],
+                        },
+                        "kind": {
+                            "type": "string",
+                            "enum": sorted(_RELIABILITY_KINDS),
+                        },
+                        "id": {"type": "string"},
+                        "status": {"type": "string"},
+                        "operation_id": {"type": "string"},
+                        "action_digest": {"type": "string"},
+                    },
+                    "required": ["type", "kind"],
+                    "additionalProperties": False,
+                },
+            },
+            "workflow": {
+                "type": "object",
+                "properties": {
+                    "workflow_id": {"type": "string"},
+                    "transport_status": {"type": "string"},
+                    "semantic_outcome": {"type": "string"},
+                    "retry_count": {"type": "integer", "minimum": 0},
+                    "estimated_cost_usd": {"type": "number", "minimum": 0},
+                    "max_retries": {"type": "integer", "minimum": 0},
+                    "max_estimated_cost_usd": {
+                        "type": "number",
+                        "minimum": 0,
+                    },
+                    "escalation_status": {"type": "string"},
+                    "escalation_id": {"type": "string"},
+                },
+                "required": [
+                    "workflow_id",
+                    "transport_status",
+                    "semantic_outcome",
+                    "retry_count",
+                    "estimated_cost_usd",
+                    "max_retries",
+                    "max_estimated_cost_usd",
+                ],
+                "additionalProperties": False,
+            },
+        },
+        "required": ["content"],
+        "additionalProperties": False,
+    }
+
+
 def validate_claude_output(
     payload: object,
     *,

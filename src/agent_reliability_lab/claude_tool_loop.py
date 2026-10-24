@@ -15,6 +15,7 @@ from dataclasses import dataclass, replace
 
 from .claude_schema import (
     claude_output_schema,
+    claude_structured_output_schema,
     synthetic_tool_definitions,
 )
 from .claude_hooks import (
@@ -52,6 +53,7 @@ class AnthropicToolLoopAdapter:
     policy: LiveProviderPolicy
     max_turns: int = MAX_TOOL_LOOP_TURNS
     transport: HttpTransport | None = None
+    structured_output: bool = False
 
     @property
     def agent_id(self) -> str:
@@ -340,6 +342,7 @@ class AnthropicToolLoopAdapter:
             self.policy,
             messages,
             available_tools,
+            structured_output=self.structured_output,
         )
         credential = os.environ[self.policy.credential_env_var]
         started = time.monotonic()
@@ -411,6 +414,7 @@ def anthropic_tool_loop_adapter(
     *,
     max_turns: int = MAX_TOOL_LOOP_TURNS,
     transport: HttpTransport | None = None,
+    structured_output: bool = False,
 ) -> AnthropicToolLoopAdapter:
     """Construct a bounded Anthropic tool-loop adapter."""
 
@@ -418,6 +422,7 @@ def anthropic_tool_loop_adapter(
         policy=policy,
         max_turns=max_turns,
         transport=transport,
+        structured_output=structured_output,
     )
 
 
@@ -438,31 +443,38 @@ def _anthropic_conversation_body(
     policy: LiveProviderPolicy,
     messages: list[dict[str, object]],
     available_tools: tuple[str, ...],
+    *,
+    structured_output: bool = False,
 ) -> bytes:
     """Build an Anthropic request from safe summaries and synthetic tools."""
 
-    return json.dumps(
-        {
-            "model": policy.model,
-            "max_tokens": policy.limits.max_output_tokens,
-            "system": (
-                _LIVE_INSTRUCTIONS
-                + f" Output schema version is {claude_output_schema()['schema_version']}. "
-                + "The reviewed output schema is "
-                + json.dumps(claude_output_schema(), sort_keys=True)
-                + " If you request a tool, return only tool_use events. "
-                + "After tool results appear in the next user message, return "
-                + "only reliability classification events."
-            ),
-            "messages": messages,
-            "tools": synthetic_tool_definitions(available_tools),
-            "tool_choice": {
-                "type": "auto",
-                "disable_parallel_tool_use": True,
-            },
+    body: dict[str, object] = {
+        "model": policy.model,
+        "max_tokens": policy.limits.max_output_tokens,
+        "system": (
+            _LIVE_INSTRUCTIONS
+            + f" Output schema version is {claude_output_schema()['schema_version']}. "
+            + "The reviewed output schema is "
+            + json.dumps(claude_output_schema(), sort_keys=True)
+            + " If you request a tool, return only tool_use events. "
+            + "After tool results appear in the next user message, return "
+            + "only reliability classification events."
+        ),
+        "messages": messages,
+        "tools": synthetic_tool_definitions(available_tools),
+        "tool_choice": {
+            "type": "auto",
+            "disable_parallel_tool_use": True,
         },
-        separators=(",", ":"),
-    ).encode("utf-8")
+    }
+    if structured_output:
+        body["output_config"] = {
+            "format": {
+                "type": "json_schema",
+                "schema": claude_structured_output_schema(),
+            }
+        }
+    return json.dumps(body, separators=(",", ":")).encode("utf-8")
 
 
 def _anthropic_tool_result_blocks(

@@ -80,3 +80,25 @@ The report's cost is a conservative planning estimate, not a billing statement.
 Compare the provider dashboard after the run if an accounting record is needed.
 The report is useful only alongside the model identifier, case count, refusal count,
 and limitations; it must not be presented as a benchmark or production claim.
+
+## Structured-output comparison condition
+
+The frozen baseline uses prompt instructions plus local schema validation. To test
+whether provider-enforced formatting changes protocol acceptance, run the same
+matrix with `--structured-output`:
+
+```bash
+uv run python tools/claude_local_experiment.py \
+  --pilot \
+  --case-count 30 \
+  --model claude-sonnet-5-5 \
+  --allow-network \
+  --max-total-cost-usd 5 \
+  --structured-output \
+  --markdown \
+  --output /tmp/claude-sonnet-structured-pilot.json
+```
+
+This is a separate comparison condition, not a replacement for the frozen
+baseline. The local evidence validator remains authoritative, so a provider
+that produces valid JSON can still fail a scenario's evidence contract.

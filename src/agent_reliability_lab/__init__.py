@@ -105,6 +105,7 @@ from .claude_tool_loop import (
 from .claude_schema import (
     CLAUDE_SCHEMA_VERSION,
     claude_output_schema,
+    claude_structured_output_schema,
     synthetic_tool_definitions,
     validate_claude_output,
 )

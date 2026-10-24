@@ -81,6 +81,14 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Required explicit opt-in for the local provider request.",
     )
+    parser.add_argument(
+        "--structured-output",
+        action="store_true",
+        help=(
+            "Enable the separate provider-enforced JSON Schema comparison "
+            "condition; the default baseline remains prompt_and_local_validation."
+        ),
+    )
     output = parser.add_mutually_exclusive_group()
     output.add_argument("--json", action="store_true")
     output.add_argument("--markdown", action="store_true")
@@ -110,6 +118,7 @@ def main(argv: list[str] | None = None) -> int:
             max_output_tokens=args.max_output_tokens,
             max_elapsed_seconds=args.max_elapsed_seconds,
             allow_network=args.allow_network,
+            structured_output=args.structured_output,
         )
     )
     serialized = json.dumps(report.to_dict(), indent=2, sort_keys=True) + "\n"

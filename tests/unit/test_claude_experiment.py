@@ -108,3 +108,16 @@ def test_pilot_repeats_fixed_scenarios_without_exceeding_total_cap(monkeypatch):
     assert report.within_total_cost_limit is True
     assert report.cases[0].replicate == 1
     assert report.cases[-1].replicate == 2
+
+
+def test_structured_output_condition_is_reported_separately(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "synthetic-secret")
+
+    report = run_claude_experiment(
+        _policy(structured_output=True),
+        transport=lambda *args: _anthropic_response(),
+    )
+
+    assert report.output_condition == "provider_structured_output"
+    assert report.to_dict()["output_condition"] == "provider_structured_output"
+    assert "Output condition: `provider_structured_output`" in report.to_markdown()

@@ -403,6 +403,32 @@ def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
     assert b"test-secret" not in json.dumps(observed).encode("utf-8")
 
 
+def test_anthropic_structured_condition_sends_provider_schema(monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-secret")
+    observed = []
+
+    def transport(url, headers, body, timeout_seconds):
+        observed.append(json.loads(body))
+        return _provider_fixture("anthropic-messages-safe.json")
+
+    result = anthropic_tool_loop_adapter(
+        _policy(provider_id="anthropic"),
+        structured_output=True,
+        transport=transport,
+    ).run(
+        _request(),
+        environment=environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.refusal is None
+    assert result.trace is not None
+    assert observed[0]["output_config"]["format"]["type"] == "json_schema"
+    assert (
+        observed[0]["output_config"]["format"]["schema"]["additionalProperties"]
+        is False
+    )
+
+
 def test_provider_contract_fixtures_remain_accepted(monkeypatch):
     for provider_id, credential_name, fixture_name in (
         ("openai", "OPENAI_API_KEY", "openai-responses-safe.json"),

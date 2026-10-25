@@ -26,7 +26,7 @@ def test_reusable_action_runner_emits_metadata_only_outputs(tmp_path):
             "--adapter-command-json",
             json.dumps(
                 [
-                    "python",
+                    sys.executable,
                     "guarded_adapter.py",
                 ]
             ),

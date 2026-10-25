@@ -84,6 +84,44 @@ The pilot tests protocol integrity and controlled decision differences. It does 
 establish production safety, live model quality, or how every organization should
 govern an agent.
 
+### Canonical run manifest
+
+The run manifest is the portable integration contract for evidence-validity decisions.
+It binds a result to the model, harness, prompt, tools, policy, data, repository,
+execution environment, grader, actor, agent identity, budget, stop condition,
+repeatability, evidence scope, expiration, and resume checkpoint.
+
+The gate asks whether the evidence still supports its declared decision target. If a
+dependency revision changes, the result becomes `reauthorization_required` rather than
+being silently reused. A reauthorization decision is an explicit decision that current
+evidence still supports continued use after a relevant system change.
+
+The first version is local and offline. It emits metadata and digests only; it does not
+call Anthropic, OpenAI, or any other provider.
+
+Run the passing synthetic example:
+
+```bash
+uv run python tools/run_manifest_gate.py \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --fail-on-non-reauthorized
+```
+
+Run the changed-dependency negative control:
+
+```bash
+uv run python tools/run_manifest_gate.py \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/changed-revisions.json \
+  --fail-on-non-reauthorized
+```
+
+The second command must return a non-zero exit code and identify the changed prompt and
+tool revisions. The manifest is evidence about the bounded run described by its metadata;
+it does not prove live model quality, production safety, or that the evidence applies
+outside its declared scope.
+
 Run the held-out robustness matrix after the original pilot:
 
 ```bash

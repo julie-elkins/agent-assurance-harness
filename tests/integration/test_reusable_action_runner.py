@@ -92,3 +92,79 @@ def test_reusable_action_runner_refuses_shell_command_strings(tmp_path):
     assert "python examples/guarded_adapter.py" not in output.read_text(
         encoding="utf-8"
     )
+
+
+def test_reusable_action_runner_binds_optional_run_manifest(tmp_path):
+    output = tmp_path / "report.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(TOOL),
+            "--agent-id",
+            "consumer-agent",
+            "--adapter-command-json",
+            json.dumps([sys.executable, "guarded_adapter.py"]),
+            "--adapter-working-directory",
+            str(REPOSITORY / "examples" / "consumer-repository"),
+            "--output",
+            str(output),
+            "--run-manifest",
+            str(REPOSITORY / "examples" / "run-manifest" / "manifest.json"),
+            "--current-revisions",
+            str(
+                REPOSITORY
+                / "examples"
+                / "run-manifest"
+                / "action-current-revisions.json"
+            ),
+        ],
+        cwd=REPOSITORY,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert completed.returncode == 0
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["passed"] is True
+    assert data["run_manifest"]["status"] == "reauthorized"
+    assert data["run_manifest"]["supports_decision"] is True
+
+
+def test_reusable_action_runner_blocks_changed_run_manifest(tmp_path):
+    output = tmp_path / "report.json"
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(TOOL),
+            "--agent-id",
+            "consumer-agent",
+            "--adapter-command-json",
+            json.dumps([sys.executable, "guarded_adapter.py"]),
+            "--adapter-working-directory",
+            str(REPOSITORY / "examples" / "consumer-repository"),
+            "--output",
+            str(output),
+            "--run-manifest",
+            str(REPOSITORY / "examples" / "run-manifest" / "manifest.json"),
+            "--current-revisions",
+            str(
+                REPOSITORY
+                / "examples"
+                / "run-manifest"
+                / "action-changed-revisions.json"
+            ),
+            "--fail-on-findings",
+            "true",
+        ],
+        cwd=REPOSITORY,
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert completed.returncode == 1
+    data = json.loads(output.read_text(encoding="utf-8"))
+    assert data["passed"] is False
+    assert data["decision"] == "blocked"
+    assert data["run_manifest"]["status"] == "reauthorization_required"

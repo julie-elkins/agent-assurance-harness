@@ -1,0 +1,11 @@
+{
+  "data": "data-r1",
+  "environment": "sandbox-r1",
+  "grader": "grader-r1",
+  "harness": "harness-r1",
+  "model": "model-r1",
+  "policy": "policy-r1",
+  "prompt": "prompt-r2",
+  "repository": "repo-r1",
+  "tools": "tools-r2"
+}

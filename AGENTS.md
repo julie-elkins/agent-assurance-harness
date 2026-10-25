@@ -245,6 +245,12 @@ to another manifest. “Provenance” means metadata about where a result came f
 gate must never read or export the underlying trace, transcript, grader result, model
 response, prompt, or tool payload.
 
+New public synthetic provenance fixtures should include the additive
+`validity_metadata` block: receipt fields, grader calibration and independent-breaker
+fields, and deployment-realism fields. These values must remain synthetic identifiers,
+counts, timestamps, and statuses. Signed attestations—cryptographically verifiable
+producer statements—are future work and must not be implied by the current digest.
+
 ## Output channels
 
 The CLI may write only:

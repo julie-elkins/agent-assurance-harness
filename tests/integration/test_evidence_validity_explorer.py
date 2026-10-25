@@ -9,6 +9,10 @@ EXPLORER_TOOL = ROOT / "tools" / "evidence_validity_explorer.py"
 MANIFEST = ROOT / "examples" / "run-manifest" / "manifest.json"
 CURRENT = ROOT / "examples" / "run-manifest" / "current-revisions.json"
 CHANGED = ROOT / "examples" / "run-manifest" / "changed-revisions.json"
+PROVENANCE = ROOT / "examples" / "run-manifest" / "evidence-provenance.json"
+MISSING_PROVENANCE = (
+    ROOT / "examples" / "run-manifest" / "evidence-provenance-missing.json"
+)
 _SPEC = importlib.util.spec_from_file_location(
     "evidence_validity_explorer",
     EXPLORER_TOOL,
@@ -51,6 +55,43 @@ def test_explorer_renders_current_and_changed_decisions(tmp_path):
     assert "tools" in rendered
     assert "provider_output" not in rendered
     assert "credentials" not in rendered
+    assert "explorer written" in result.stderr
+
+
+def test_explorer_renders_four_step_assurance_story(tmp_path):
+    output = tmp_path / "assurance-story.html"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(EXPLORER_TOOL),
+            "--manifest",
+            str(MANIFEST),
+            "--current-revisions",
+            str(CURRENT),
+            "--changed-revisions",
+            str(CHANGED),
+            "--provenance",
+            str(PROVENANCE),
+            "--missing-provenance",
+            str(MISSING_PROVENANCE),
+            "--output",
+            str(output),
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    rendered = output.read_text(encoding="utf-8")
+    assert "The five-minute assurance story" in rendered
+    assert "evidence observed" in rendered
+    assert "reauthorization required" in rendered
+    assert "evidence missing" in rendered
+    assert "Reuse is blocked until a producer records evidence." in rendered
+    assert "grader_calibration_status" not in rendered
+    assert "provider_output" not in rendered
     assert "explorer written" in result.stderr
 
 

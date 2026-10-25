@@ -22,6 +22,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from agent_reliability_lab.evidence_provenance import (
+    EvidenceProvenanceDecision,
+    EvidenceValidityMetadata,
+    evaluate_evidence_provenance,
+)
 from agent_reliability_lab.run_manifest import (
     REQUIRED_REVISION_KEYS,
     ReauthorizationDecision,
@@ -41,6 +46,8 @@ class ExplorerData:
     changed_revisions: dict[str, str]
     current_decision: ReauthorizationDecision
     changed_decision: ReauthorizationDecision
+    current_provenance_decision: EvidenceProvenanceDecision | None = None
+    missing_provenance_decision: EvidenceProvenanceDecision | None = None
 
     @classmethod
     def from_inputs(
@@ -48,17 +55,35 @@ class ExplorerData:
         manifest: RunManifest,
         current_revisions: Mapping[str, str],
         changed_revisions: Mapping[str, str],
+        current_provenance: Mapping[str, object] | None = None,
+        missing_provenance: Mapping[str, object] | None = None,
     ) -> "ExplorerData":
+        if (current_provenance is None) != (missing_provenance is None):
+            raise ValueError(
+                "current_provenance and missing_provenance must be supplied together."
+            )
         current = dict(current_revisions)
         changed = dict(changed_revisions)
         current_decision = evaluate_reauthorization(manifest, current)
         changed_decision = evaluate_reauthorization(manifest, changed)
+        current_provenance_decision = (
+            evaluate_evidence_provenance(manifest, current_provenance)
+            if current_provenance is not None
+            else None
+        )
+        missing_provenance_decision = (
+            evaluate_evidence_provenance(manifest, missing_provenance)
+            if missing_provenance is not None
+            else None
+        )
         return cls(
             manifest=manifest,
             current_revisions=current,
             changed_revisions=changed,
             current_decision=current_decision,
             changed_decision=changed_decision,
+            current_provenance_decision=current_provenance_decision,
+            missing_provenance_decision=missing_provenance_decision,
         )
 
 
@@ -101,6 +126,24 @@ def render_explorer(
     changed_status = _status_label(data.changed_decision.status)
     current_class = _status_class(data.current_decision.status)
     changed_class = _status_class(data.changed_decision.status)
+    provenance_story = ""
+    if (
+        data.current_provenance_decision is not None
+        and data.missing_provenance_decision is not None
+    ):
+        provenance_story = _render_provenance_story(
+            current=data.current_provenance_decision,
+            changed=data.changed_decision,
+            missing=data.missing_provenance_decision,
+        )
+    validity_metadata = ""
+    if (
+        data.current_provenance_decision is not None
+        and data.current_provenance_decision.validity_metadata is not None
+    ):
+        validity_metadata = _render_validity_metadata(
+            data.current_provenance_decision.validity_metadata
+        )
     source_fingerprint = _escape(
         hashlib.sha256(
             json.dumps(
@@ -229,6 +272,43 @@ def render_explorer(
     .scenario {{ padding: 19px; }}
     .scenario--current {{ border-top: 4px solid var(--green); }}
     .scenario--changed {{ border-top: 4px solid var(--amber); }}
+    .story-grid {{
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }}
+    .story-step {{
+      background: var(--background);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      min-height: 145px;
+      padding: 15px;
+      position: relative;
+    }}
+    .story-step::after {{
+      color: var(--muted);
+      content: "→";
+      font-size: 1.3rem;
+      position: absolute;
+      right: -9px;
+      top: 56px;
+      z-index: 1;
+    }}
+    .story-step:last-child::after {{ content: ""; }}
+    .story-step--observed {{ border-top: 4px solid var(--green); }}
+    .story-step--review {{ border-top: 4px solid var(--amber); }}
+    .story-step--missing {{ border-top: 4px solid var(--red); }}
+    .story-number {{
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }}
+    .story-title {{ font-size: 0.98rem; font-weight: 800; margin-top: 7px; }}
+    .story-status {{ margin-top: 10px; }}
+    .story-action {{ color: var(--muted); font-size: 0.82rem; margin-top: 10px; }}
+    .story-caption {{ color: var(--muted); font-size: 0.86rem; margin-top: 16px; }}
     .scenario-header {{
       align-items: start;
       display: flex;
@@ -293,7 +373,12 @@ def render_explorer(
       .hero-status {{ margin-top: 18px; }}
       .summary {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .scenario-grid, .limits {{ grid-template-columns: 1fr; }}
+      .story-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
+      .story-step::after {{ content: ""; }}
       .panel-heading p {{ margin-top: 6px; }}
+    }}
+    @media (max-width: 480px) {{
+      .story-grid {{ grid-template-columns: 1fr; }}
     }}
     @media print {{
       body {{ background: #fff; }}
@@ -324,6 +409,10 @@ def render_explorer(
       {_metric("Repeat count", str(manifest.repeatability.run_count))}
       {_metric("Observed outcome", manifest.observed_outcome)}
     </section>
+
+    {provenance_story}
+
+    {validity_metadata}
 
     <section class="panel" aria-labelledby="decision-heading">
       <div class="panel-heading">
@@ -424,6 +513,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--current-revisions", type=Path, required=True)
     parser.add_argument("--changed-revisions", type=Path, required=True)
+    parser.add_argument(
+        "--provenance",
+        type=Path,
+        help="Synthetic observed-evidence producer record for the story view.",
+    )
+    parser.add_argument(
+        "--missing-provenance",
+        type=Path,
+        help="Synthetic missing-evidence negative control for the story view.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
 
@@ -432,6 +531,16 @@ def main(argv: list[str] | None = None) -> int:
             load_manifest(str(args.manifest)),
             load_current_revisions(str(args.current_revisions)),
             load_current_revisions(str(args.changed_revisions)),
+            current_provenance=(
+                _load_object(args.provenance)
+                if args.provenance is not None
+                else None
+            ),
+            missing_provenance=(
+                _load_object(args.missing_provenance)
+                if args.missing_provenance is not None
+                else None
+            ),
         )
         rendered = render_explorer(
             data,
@@ -456,6 +565,107 @@ def main(argv: list[str] | None = None) -> int:
 
     print(f"explorer written to {args.output}", file=sys.stderr)
     return 0
+
+
+def _load_object(path: Path | None) -> dict[str, object] | None:
+    if path is None:
+        return None
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"{path} must contain a JSON object.")
+    return value
+
+
+def _render_provenance_story(
+    *,
+    current: EvidenceProvenanceDecision,
+    changed: ReauthorizationDecision,
+    missing: EvidenceProvenanceDecision,
+) -> str:
+    return f"""
+    <section class="panel" aria-labelledby="story-heading">
+      <div class="panel-heading">
+        <h2 id="story-heading">The five-minute assurance story</h2>
+        <p>One result · four visible control states</p>
+      </div>
+      <div class="story-grid">
+        {_story_step(
+            "1",
+            "Evidence observed",
+            current.status,
+            "The producer record is bound to this manifest.",
+            "story-step--observed",
+        )}
+        {_story_step(
+            "2",
+            "A revision changes",
+            changed.status,
+            "The prompt and tool revisions no longer match.",
+            "story-step--review",
+        )}
+        {_story_step(
+            "3",
+            "Reuse requires review",
+            changed.status,
+            "The earlier result cannot be silently reused.",
+            "story-step--review",
+        )}
+        {_story_step(
+            "4",
+            "Evidence is missing",
+            missing.status,
+            "Reuse is blocked until a producer records evidence.",
+            "story-step--missing",
+        )}
+      </div>
+      <p class="story-caption">The page shows decision metadata only. It does not
+      inspect or publish traces, transcripts, prompts, tool payloads, credentials, or
+      provider output.</p>
+    </section>
+    """
+
+
+def _render_validity_metadata(metadata: EvidenceValidityMetadata) -> str:
+    values = metadata.to_dict()
+    return f"""
+    <section class="panel" aria-labelledby="validity-heading">
+      <div class="panel-heading">
+        <h2 id="validity-heading">Metadata an evaluator can inspect safely</h2>
+        <p>Receipt · grader · synthetic deployment context</p>
+      </div>
+      <div class="limits">
+        {_limit("Receipt", f"{values['artifact_type']} · {values['producer_version']}")}
+        {_limit("Capture scope", values["capture_scope"])}
+        {_limit("Retention", values["retention_status"])}
+        {_limit("Grader", f"{values['grader_type']} · {values['grader_calibration_status']}")}
+        {_limit("Independent breaker", values["independent_breaker_id"])}
+        {_limit("Sample count", values["sample_count"])}
+        {_limit("Scenario source", values["scenario_source"])}
+        {_limit("Trajectory horizon", values["trajectory_horizon"])}
+        {_limit("Tool risk tier", values["tool_risk_tier"])}
+      </div>
+      <p class="story-caption">These are identifiers, counts, timestamps, and status
+      values only. The page does not expose the evidence artifact itself.</p>
+    </section>
+    """
+
+
+def _story_step(
+    number: str,
+    title: str,
+    status: str,
+    action: str,
+    class_name: str,
+) -> str:
+    return f"""
+    <article class="story-step {class_name}">
+      <p class="story-number">Step {number}</p>
+      <h3 class="story-title">{_escape(title)}</h3>
+      <p class="story-status"><span class="status {_status_class(status)}">
+      {_escape(_status_label(status))}</span></p>
+      <p class="story-action">{_escape(action)}</p>
+    </article>
+    """
 
 
 def _metric(label: str, value: object) -> str:

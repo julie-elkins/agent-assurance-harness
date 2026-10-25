@@ -6,5 +6,21 @@
   "artifact_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
   "artifact_count": 1,
   "observed": true,
-  "redaction_policy": "metadata-only-v1"
+  "redaction_policy": "metadata-only-v1",
+  "validity_metadata": {
+    "artifact_type": "synthetic-evaluator-report",
+    "producer_version": "synthetic-evaluator-r1",
+    "observed_at": "2026-10-25T12:00:00Z",
+    "capture_scope": "metadata-only-decision",
+    "retention_status": "retained",
+    "retention_expires_at": "2026-12-01T00:00:00Z",
+    "grader_type": "independent-code-grader",
+    "grader_calibration_status": "calibrated",
+    "independent_breaker_id": "breaker-synthetic-r1",
+    "sample_count": 3,
+    "scenario_source": "synthetic",
+    "trajectory_horizon": "bounded-5-tool-calls",
+    "tool_risk_tier": "read-only-synthetic",
+    "coverage_profile": "revision-and-provenance-negative-controls"
+  }
 }

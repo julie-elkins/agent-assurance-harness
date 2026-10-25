@@ -113,12 +113,15 @@ uv run python tools/evidence_validity_explorer.py \
   --manifest examples/run-manifest/manifest.json \
   --current-revisions examples/run-manifest/current-revisions.json \
   --changed-revisions examples/run-manifest/changed-revisions.json \
+  --provenance examples/run-manifest/evidence-provenance.json \
+  --missing-provenance examples/run-manifest/evidence-provenance-missing.json \
   --output /tmp/agent-evidence-validity-explorer.html
 ```
 
 Open the generated file locally. The current snapshot remains `reauthorized`; the
-changed prompt and tool revisions become `reauthorization_required`, with an explicit
-rerun action. The page is static, synthetic, and metadata-only, so it is suitable for
+changed prompt and tool revisions become `reauthorization_required`, and the missing
+producer record becomes `evidence_missing`, blocking reuse. The page also shows the
+bounded receipt, grader-validity, and synthetic deployment metadata. It is suitable for
 a public screenshot without exposing provider output, credentials, personal cloud
 details, or private work.
 

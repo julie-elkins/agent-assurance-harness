@@ -14,6 +14,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Mapping
 
 from .run_manifest import RunManifest
@@ -28,6 +29,8 @@ EVIDENCE_PROVENANCE_BLOCKED = "blocked"
 # identifiers requires a new version so existing consumers do not misread a record.
 _DIGEST_PATTERN = re.compile(r"^sha256:[0-9a-f]{64}$")
 _IDENTIFIER_PATTERN = re.compile(r"^[^\s]{1,128}$")
+_RETENTION_STATUSES = {"retained", "expired", "not_observed"}
+_CALIBRATION_STATUSES = {"calibrated", "not_calibrated", "not_applicable"}
 
 
 def manifest_digest(manifest: RunManifest) -> str:
@@ -46,6 +49,127 @@ def manifest_digest(manifest: RunManifest) -> str:
 
 
 @dataclass(frozen=True)
+class EvidenceValidityMetadata:
+    """Bounded receipt, grader, and synthetic deployment-context metadata."""
+
+    artifact_type: str
+    producer_version: str
+    observed_at: str | None
+    capture_scope: str
+    retention_status: str
+    retention_expires_at: str | None
+    grader_type: str
+    grader_calibration_status: str
+    independent_breaker_id: str
+    sample_count: int
+    scenario_source: str
+    trajectory_horizon: str
+    tool_risk_tier: str
+    coverage_profile: str
+
+    def to_dict(self) -> dict[str, object]:
+        """Return bounded validity metadata without evidence content."""
+
+        record = {
+            "artifact_type": self.artifact_type,
+            "producer_version": self.producer_version,
+            "observed_at": self.observed_at,
+            "capture_scope": self.capture_scope,
+            "retention_status": self.retention_status,
+            "retention_expires_at": self.retention_expires_at,
+            "grader_type": self.grader_type,
+            "grader_calibration_status": self.grader_calibration_status,
+            "independent_breaker_id": self.independent_breaker_id,
+            "sample_count": self.sample_count,
+            "scenario_source": self.scenario_source,
+            "trajectory_horizon": self.trajectory_horizon,
+            "tool_risk_tier": self.tool_risk_tier,
+            "coverage_profile": self.coverage_profile,
+        }
+        return record
+
+    @classmethod
+    def from_dict(cls, value: object) -> "EvidenceValidityMetadata":
+        """Validate receipt, grader, and synthetic deployment metadata."""
+
+        if not isinstance(value, dict):
+            raise ValueError("validity_metadata must be a JSON object.")
+        observed_at = _optional_timestamp(value.get("observed_at"), "observed_at")
+        retention_expires_at = _optional_timestamp(
+            value.get("retention_expires_at"),
+            "retention_expires_at",
+        )
+        retention_status = _identifier(
+            value.get("retention_status"),
+            "retention_status",
+        )
+        if retention_status not in _RETENTION_STATUSES:
+            raise ValueError(
+                "retention_status must be retained, expired, or not_observed."
+            )
+        if retention_status == "not_observed" and observed_at is not None:
+            raise ValueError(
+                "not_observed retention_status requires a null observed_at."
+            )
+        if retention_status != "not_observed" and observed_at is None:
+            raise ValueError(
+                "Observed retention status requires an observed_at timestamp."
+            )
+        calibration_status = _identifier(
+            value.get("grader_calibration_status"),
+            "grader_calibration_status",
+        )
+        if calibration_status not in _CALIBRATION_STATUSES:
+            raise ValueError(
+                "grader_calibration_status is not a supported calibration state."
+            )
+        sample_count = value.get("sample_count")
+        if (
+            not isinstance(sample_count, int)
+            or isinstance(sample_count, bool)
+            or sample_count < 1
+        ):
+            raise ValueError("sample_count must be a positive integer.")
+        return cls(
+            artifact_type=_identifier(value.get("artifact_type"), "artifact_type"),
+            producer_version=_identifier(
+                value.get("producer_version"),
+                "producer_version",
+            ),
+            observed_at=observed_at,
+            capture_scope=_identifier(
+                value.get("capture_scope"),
+                "capture_scope",
+            ),
+            retention_status=retention_status,
+            retention_expires_at=retention_expires_at,
+            grader_type=_identifier(value.get("grader_type"), "grader_type"),
+            grader_calibration_status=calibration_status,
+            independent_breaker_id=_identifier(
+                value.get("independent_breaker_id"),
+                "independent_breaker_id",
+            ),
+            sample_count=sample_count,
+            scenario_source=_identifier(
+                value.get("scenario_source"),
+                "scenario_source",
+            ),
+            trajectory_horizon=_identifier(
+                value.get("trajectory_horizon"),
+                "trajectory_horizon",
+            ),
+            tool_risk_tier=_identifier(
+                value.get("tool_risk_tier"),
+                "tool_risk_tier",
+            ),
+            coverage_profile=_identifier(
+                value.get("coverage_profile"),
+                "coverage_profile",
+            ),
+        )
+
+
+@dataclass(frozen=True)
 class EvidenceProvenance:
     """A producer's metadata-only statement about one evidence artifact."""
 
@@ -57,11 +181,12 @@ class EvidenceProvenance:
     redaction_policy: str
     provenance_version: int = EVIDENCE_PROVENANCE_VERSION
     provenance_id: str = EVIDENCE_PROVENANCE_ID
+    validity_metadata: EvidenceValidityMetadata | None = None
 
     def to_dict(self) -> dict[str, object]:
         """Return only the bounded provenance metadata."""
 
-        return {
+        record = {
             "provenance_version": self.provenance_version,
             "provenance_id": self.provenance_id,
             "manifest_digest": self.manifest_digest,
@@ -81,6 +206,9 @@ class EvidenceProvenance:
                 ),
             },
         }
+        if self.validity_metadata is not None:
+            record["validity_metadata"] = self.validity_metadata.to_dict()
+        return record
 
     @classmethod
     def from_dict(cls, value: object) -> "EvidenceProvenance":
@@ -122,6 +250,12 @@ class EvidenceProvenance:
             value.get("redaction_policy"),
             "redaction_policy",
         )
+        validity_value = value.get("validity_metadata")
+        validity_metadata = (
+            EvidenceValidityMetadata.from_dict(validity_value)
+            if validity_value is not None
+            else None
+        )
         if observed and (artifact_digest is None or artifact_count < 1):
             raise ValueError(
                 "Observed evidence requires an artifact digest and positive artifact_count."
@@ -137,6 +271,7 @@ class EvidenceProvenance:
             artifact_count=artifact_count,
             observed=observed,
             redaction_policy=redaction_policy,
+            validity_metadata=validity_metadata,
         )
 
 
@@ -151,11 +286,12 @@ class EvidenceProvenanceDecision:
     artifact_digest: str | None
     reasons: tuple[str, ...]
     required_action: str
+    validity_metadata: EvidenceValidityMetadata | None = None
 
     def to_dict(self) -> dict[str, object]:
         """Return a safe decision record."""
 
-        return {
+        result = {
             "status": self.status,
             "supports_evidence": self.supports_evidence,
             "manifest_digest": self.manifest_digest,
@@ -164,6 +300,9 @@ class EvidenceProvenanceDecision:
             "reasons": list(self.reasons),
             "required_action": self.required_action,
         }
+        if self.validity_metadata is not None:
+            result["validity_metadata"] = self.validity_metadata.to_dict()
+        return result
 
 
 def evaluate_evidence_provenance(
@@ -202,6 +341,7 @@ def evaluate_evidence_provenance(
                 "Regenerate provenance from the exact run manifest before reusing "
                 "the evidence."
             ),
+            validity_metadata=record.validity_metadata,
         )
 
     if not record.observed or record.artifact_count < 1:
@@ -216,6 +356,7 @@ def evaluate_evidence_provenance(
                 "Collect and record the bounded evidence artifact before reusing "
                 "the manifest result."
             ),
+            validity_metadata=record.validity_metadata,
         )
 
     return EvidenceProvenanceDecision(
@@ -226,6 +367,7 @@ def evaluate_evidence_provenance(
         artifact_digest=record.artifact_digest,
         reasons=(),
         required_action="The producer record is bound to an observed evidence artifact.",
+        validity_metadata=record.validity_metadata,
     )
 
 
@@ -237,6 +379,7 @@ def build_evidence_provenance(
     artifact_count: int,
     observed: bool,
     redaction_policy: str,
+    validity_metadata: EvidenceValidityMetadata | None = None,
 ) -> EvidenceProvenance:
     """Build a producer record from metadata supplied by a local adapter."""
 
@@ -247,12 +390,66 @@ def build_evidence_provenance(
         artifact_count=artifact_count,
         observed=observed,
         redaction_policy=_identifier(redaction_policy, "redaction_policy"),
+        validity_metadata=validity_metadata,
     )
     # Validate builder output through the same boundary as JSON input. Otherwise a
     # local adapter could create an impossible "observed" record that the file gate
     # would correctly refuse, making in-process and file-based behaviour disagree.
     EvidenceProvenance.from_dict(record.to_dict())
     return record
+
+
+def build_evidence_validity_metadata(
+    *,
+    artifact_type: str,
+    producer_version: str,
+    observed_at: str | None,
+    capture_scope: str,
+    retention_status: str,
+    retention_expires_at: str | None,
+    grader_type: str,
+    grader_calibration_status: str,
+    independent_breaker_id: str,
+    sample_count: int,
+    scenario_source: str,
+    trajectory_horizon: str,
+    tool_risk_tier: str,
+    coverage_profile: str,
+) -> EvidenceValidityMetadata:
+    """Build and validate bounded validity metadata for a local adapter."""
+
+    return EvidenceValidityMetadata.from_dict(
+        {
+            "artifact_type": artifact_type,
+            "producer_version": producer_version,
+            "observed_at": observed_at,
+            "capture_scope": capture_scope,
+            "retention_status": retention_status,
+            "retention_expires_at": retention_expires_at,
+            "grader_type": grader_type,
+            "grader_calibration_status": grader_calibration_status,
+            "independent_breaker_id": independent_breaker_id,
+            "sample_count": sample_count,
+            "scenario_source": scenario_source,
+            "trajectory_horizon": trajectory_horizon,
+            "tool_risk_tier": tool_risk_tier,
+            "coverage_profile": coverage_profile,
+        }
+    )
+
+
+def _optional_timestamp(value: object, field: str) -> str | None:
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ValueError(f"{field} must be null or an ISO 8601 timestamp.")
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError as error:
+        raise ValueError(f"{field} must be null or an ISO 8601 timestamp.") from error
+    if parsed.tzinfo is None:
+        raise ValueError(f"{field} must include a timezone.")
+    return value
 
 
 def _identifier(value: object, field: str) -> str:
@@ -269,7 +466,9 @@ __all__ = [
     "EVIDENCE_PROVENANCE_VERSION",
     "EvidenceProvenance",
     "EvidenceProvenanceDecision",
+    "EvidenceValidityMetadata",
     "build_evidence_provenance",
+    "build_evidence_validity_metadata",
     "evaluate_evidence_provenance",
     "manifest_digest",
 ]

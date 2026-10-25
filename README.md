@@ -199,6 +199,26 @@ tool revisions. The manifest is evidence about the bounded run described by its 
 it does not prove live model quality, production safety, or that the evidence applies
 outside its declared scope.
 
+### Evidence Validity Explorer
+
+To make the run-manifest decision easy to inspect or screenshot, render the local
+before-and-after explorer:
+
+```bash
+uv run python tools/evidence_validity_explorer.py \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --changed-revisions examples/run-manifest/changed-revisions.json \
+  --output /tmp/agent-evidence-validity-explorer.html
+```
+
+The page shows the current `reauthorized` result beside the changed-revision
+`reauthorization_required` result and names the required rerun action. It asks whether
+the evidence still supports its declared decision; it does not claim that a green
+result proves model quality or production safety. It reuses the canonical evaluator;
+it is not a second gate. The page is local, synthetic, metadata-only, and intended as
+a reviewer and public-demo surface.
+
 Run the held-out robustness matrix after the original pilot:
 
 ```bash

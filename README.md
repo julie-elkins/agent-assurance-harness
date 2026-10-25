@@ -141,8 +141,40 @@ uv run python tools/hosted_control_plane_client.py \
 `--provider all` runs the checked-in synthetic OpenAI-shaped and Anthropic-shaped
 adapter bridge through the same manifest contract. It does not call either provider,
 read either provider credential, or send prompts, tool arguments, or provider output to
-the hosted service. The client prints only bounded decision metadata; a GitHub Action
-and live provider execution remain later milestones.
+the hosted service. The client prints only bounded decision metadata; the live-provider
+bridge below is a separate local-only path.
+
+### Local live-provider bridge
+
+The live-provider bridge is a local adapter that makes a real OpenAI or Anthropic
+request for one built-in synthetic scenario, repeats it twice by default, and submits
+only the resulting metadata manifest to the hosted control plane. It requires explicit
+network opt-in, the provider's fixed environment variable, a model revision, and
+request/time/output/spend ceilings:
+
+```bash
+uv run python tools/live_provider_hosted_client.py \
+  --endpoint https://<api-id>.execute-api.<region>.amazonaws.com/v1 \
+  --profile <aws-profile> \
+  --region <region> \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --provider openai \
+  --model <openai-model-id> \
+  --model-revision <approved-model-revision> \
+  --scenario-id tool-misuse \
+  --allow-network \
+  --max-output-tokens 256 \
+  --max-elapsed-seconds 30 \
+  --max-estimated-cost-usd 0.20 \
+  --estimated-cost-usd-per-request 0.05
+```
+
+Run the same command with `--provider anthropic` and Anthropic's model identifier.
+The provider credential stays local, provider responses are processed in memory and
+discarded, and the hosted service receives only identifiers, usage, status, digests,
+and repeatability metadata. This path is not enabled in CI and does not prove live
+model quality or production safety.
 
 Run the passing synthetic example:
 

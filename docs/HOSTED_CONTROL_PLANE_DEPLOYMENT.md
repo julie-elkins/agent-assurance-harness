@@ -114,6 +114,37 @@ The provider option uses synthetic OpenAI-shaped and Anthropic-shaped identifier
 through the same run-manifest contract. It is a contract demonstration, not evidence of
 live provider quality or production readiness.
 
+## Local live-provider bridge
+
+The live-provider bridge is separate from the hosted service. It uses the existing
+bounded local adapter to make one real request per trial against an official OpenAI or
+Anthropic endpoint, repeats the scenario twice by default, and submits only an
+identifier-and-usage manifest to AWS. It requires explicit network opt-in and all
+request, time, output-token, and spend ceilings.
+
+```bash
+uv run python tools/live_provider_hosted_client.py \
+  --endpoint https://<api-id>.execute-api.<region>.amazonaws.com/v1 \
+  --profile <aws-profile> \
+  --region <region> \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --provider anthropic \
+  --model <anthropic-model-id> \
+  --model-revision <approved-model-revision> \
+  --scenario-id tool-misuse \
+  --allow-network \
+  --max-output-tokens 256 \
+  --max-elapsed-seconds 30 \
+  --max-estimated-cost-usd 0.20 \
+  --estimated-cost-usd-per-request 0.05
+```
+
+The provider key remains in the local process under the fixed provider environment
+variable. The bridge does not run in CI, does not retry, does not follow redirects,
+and does not send prompts, tool arguments, model output, or raw provider responses to
+the hosted service. Security review is required before team or production use.
+
 ## Rollback
 
 Rollback means returning the stack to a known-good template and code revision. For the

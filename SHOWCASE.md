@@ -101,6 +101,30 @@ metadata only: no prompts, traces, source text, credentials, provider output, or
 source paths. See [`docs/PORTFOLIO_DASHBOARD.md`](docs/PORTFOLIO_DASHBOARD.md) for the
 input boundary and refusal behaviour.
 
+## Evidence Validity Explorer
+
+The Evidence Validity Explorer is the shortest visual demonstration of the
+provider-neutral run-manifest idea. It places the same evidence record beside two
+revision snapshots: the current state and a deliberately changed negative control
+(a case that should be caught):
+
+```bash
+uv run python tools/evidence_validity_explorer.py \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --changed-revisions examples/run-manifest/changed-revisions.json \
+  --output /tmp/agent-evidence-validity-explorer.html
+```
+
+Open the generated file locally. The current snapshot remains `reauthorized`; the
+changed prompt and tool revisions become `reauthorization_required`, with an explicit
+rerun action. The page is static, synthetic, and metadata-only, so it is suitable for
+a public screenshot without exposing provider output, credentials, personal cloud
+details, or private work.
+
+See [`docs/EVIDENCE_VALIDITY_EXPLORER.md`](docs/EVIDENCE_VALIDITY_EXPLORER.md) for
+the input boundary and deliberate limits.
+
 ## Instructor calibration
 
 - Ready for human sign-off: `PASS`

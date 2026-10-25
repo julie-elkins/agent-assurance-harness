@@ -1,0 +1,80 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Metadata-only agent assurance reauthorization control plane.
+
+Globals:
+  Function:
+    Runtime: python3.14
+    Timeout: 10
+    MemorySize: 256
+    Environment:
+      Variables:
+        ASSURANCE_TABLE_NAME: !Ref AssuranceAuditTable
+
+Resources:
+  AssuranceApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: v1
+      Description: IAM-authenticated metadata-only assurance API.
+      Auth:
+        DefaultAuthorizer: AWS_IAM
+
+  AssuranceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: agent_reliability_lab.control_plane_handler.lambda_handler
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:PutItem
+                - dynamodb:GetItem
+                - dynamodb:Query
+              Resource: !GetAtt AssuranceAuditTable.Arn
+      Events:
+        SubmitReauthorization:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AssuranceApi
+            Path: /v1/reauthorizations
+            Method: post
+        GetRun:
+          Type: Api
+          Properties:
+            RestApiId: !Ref AssuranceApi
+            Path: /v1/runs/{run_id}
+            Method: get
+
+  AssuranceAuditTable:
+    Type: AWS::DynamoDB::Table
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: run_id
+          AttributeType: S
+        - AttributeName: event_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: run_id
+          KeyType: HASH
+        - AttributeName: event_id
+          KeyType: RANGE
+      PointInTimeRecoverySpecification:
+        PointInTimeRecoveryEnabled: true
+      SSESpecification:
+        SSEEnabled: true
+      TimeToLiveSpecification:
+        AttributeName: expires_at_epoch
+        Enabled: true
+
+Outputs:
+  AssuranceApiUrl:
+    Description: IAM-authenticated API base URL.
+    Value: !Sub https://${AssuranceApi}.execute-api.${AWS::Region}.amazonaws.com/v1
+  AssuranceTableName:
+    Description: Metadata-only append-only audit table.
+    Value: !Ref AssuranceAuditTable

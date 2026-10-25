@@ -14,6 +14,11 @@ from agent_reliability_lab.consumer_contract import (
     evaluate_consumer_contract,
     load_consumer_policy_manifest,
 )
+from agent_reliability_lab.run_manifest import (
+    evaluate_reauthorization,
+    load_current_revisions,
+    load_manifest,
+)
 from agent_reliability_lab.packs import (
     load_builtin_packs,
     load_pack_directory,
@@ -77,6 +82,7 @@ def _metadata_report(
     packs: tuple[Any, ...],
     custom_packs: bool,
     consumer_contract: ConsumerContractReport | None = None,
+    run_manifest: dict[str, object] | None = None,
 ) -> dict[str, object]:
     agent_report = (
         report.reports[0] if hasattr(report, "reports") else report
@@ -89,7 +95,11 @@ def _metadata_report(
     consumer_failed = (
         consumer_contract is not None and not consumer_contract.passed
     )
-    failed = bool(assurance_failed or consumer_failed)
+    manifest_failed = (
+        run_manifest is not None
+        and run_manifest.get("supports_decision") is not True
+    )
+    failed = bool(assurance_failed or consumer_failed or manifest_failed)
     data: dict[str, object] = {
         "reusable_action_version": ACTION_REPORT_VERSION,
         "decision": "blocked" if failed else "pass",
@@ -122,6 +132,8 @@ def _metadata_report(
     }
     if consumer_contract is not None:
         data["consumer_contract"] = consumer_contract.to_dict()
+    if run_manifest is not None:
+        data["run_manifest"] = run_manifest
     return data
 
 
@@ -189,6 +201,16 @@ def _write_summary(data: dict[str, object]) -> None:
                     "",
                 ]
             )
+        manifest = data.get("run_manifest")
+        if isinstance(manifest, dict):
+            lines.extend(
+                [
+                    f"- **Run-manifest decision:** `{manifest.get('status', 'blocked')}`",
+                    f"- **Run-manifest dependencies changed:** "
+                    f"`{manifest.get('changed_dependencies', [])}`",
+                    "",
+                ]
+            )
     else:
         lines = [
             "# Reusable Agent Assurance",
@@ -210,6 +232,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--adapter-working-directory", type=Path, required=True)
     parser.add_argument("--scenario-pack-directory", default="")
     parser.add_argument("--consumer-policy-manifest", default="")
+    parser.add_argument(
+        "--run-manifest",
+        default="",
+        help="Optional metadata-only run manifest, resolved from the adapter workdir.",
+    )
+    parser.add_argument(
+        "--current-revisions",
+        default="",
+        help="Optional current revision map paired with --run-manifest.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mutations", default="true")
     parser.add_argument("--fail-on-findings", default="true")
@@ -280,11 +312,30 @@ def main(argv: list[str] | None = None) -> int:
                 manifest,
                 tuple(pack.scenario_id for pack in packs),
             )
+        run_manifest = None
+        if bool(args.run_manifest) != bool(args.current_revisions):
+            raise ValueError(
+                "--run-manifest and --current-revisions must be supplied together."
+            )
+        if args.run_manifest:
+            run_manifest_path = Path(args.run_manifest)
+            current_revisions_path = Path(args.current_revisions)
+            if not run_manifest_path.is_absolute():
+                run_manifest_path = args.adapter_working_directory / run_manifest_path
+            if not current_revisions_path.is_absolute():
+                current_revisions_path = (
+                    args.adapter_working_directory / current_revisions_path
+                )
+            run_manifest = evaluate_reauthorization(
+                load_manifest(str(run_manifest_path)),
+                load_current_revisions(str(current_revisions_path)),
+            ).to_dict()
         data = _metadata_report(
             report=report,
             packs=packs,
             custom_packs=pack_directory is not None,
             consumer_contract=consumer_contract,
+            run_manifest=run_manifest,
         )
     except (OSError, RuntimeError, TypeError, ValueError) as error:
         data = _refusal(error)

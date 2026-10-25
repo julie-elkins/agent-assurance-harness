@@ -20,6 +20,14 @@ inputs:
     description: Optional path to a checked-in metadata-only consumer policy manifest.
     required: false
     default: ""
+  run-manifest:
+    description: Optional metadata-only run manifest bound to the assurance result.
+    required: false
+    default: ""
+  current-revisions:
+    description: Optional current revision map paired with run-manifest.
+    required: false
+    default: ""
   python-version:
     description: Python version used to run the harness.
     required: false
@@ -70,6 +78,8 @@ runs:
         ASSURANCE_ADAPTER_WORKDIR: ${{ inputs.adapter-working-directory }}
         ASSURANCE_PACK_DIRECTORY: ${{ inputs.scenario-pack-directory }}
         ASSURANCE_CONSUMER_POLICY_MANIFEST: ${{ inputs.consumer-policy-manifest }}
+        ASSURANCE_RUN_MANIFEST: ${{ inputs.run-manifest }}
+        ASSURANCE_CURRENT_REVISIONS: ${{ inputs.current-revisions }}
         ASSURANCE_MUTATIONS: ${{ inputs.mutations }}
         ASSURANCE_FAIL_ON_FINDINGS: ${{ inputs.fail-on-findings }}
         ASSURANCE_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
@@ -88,6 +98,8 @@ runs:
         --max-response-bytes "$ASSURANCE_MAX_RESPONSE_BYTES"
         --scenario-pack-directory "$ASSURANCE_PACK_DIRECTORY"
         --consumer-policy-manifest "$ASSURANCE_CONSUMER_POLICY_MANIFEST"
+        --run-manifest "$ASSURANCE_RUN_MANIFEST"
+        --current-revisions "$ASSURANCE_CURRENT_REVISIONS"
 
     - name: Upload metadata-only assurance report
       if: always()

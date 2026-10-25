@@ -99,6 +99,11 @@ evidence still supports continued use after a relevant system change.
 The first version is local and offline. It emits metadata and digests only; it does not
 call Anthropic, OpenAI, or any other provider.
 
+The reusable GitHub Action accepts the same contract through optional
+`run-manifest` and `current-revisions` inputs. When both are supplied, a changed
+revision blocks the action with `reauthorization_required`; omitting both preserves
+backward compatibility for existing consumers.
+
 Run the passing synthetic example:
 
 ```bash

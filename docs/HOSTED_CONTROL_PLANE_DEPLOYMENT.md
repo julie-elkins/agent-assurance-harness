@@ -92,6 +92,28 @@ IAM identity:
 Do not send provider credentials, prompts, tool arguments, model output, private paths,
 or other private material.
 
+## Local hosted client
+
+The local hosted client is the first reusable caller for the deployed service. It uses
+an AWS CLI profile to obtain temporary credentials and signs the two metadata-only
+routes; it does not store provider credentials in AWS and does not contact OpenAI or
+Anthropic:
+
+```bash
+uv run python tools/hosted_control_plane_client.py \
+  --endpoint https://<api-id>.execute-api.<region>.amazonaws.com/v1 \
+  --profile <aws-profile> \
+  --region <region> \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --provider all \
+  --fail-on-non-reauthorized
+```
+
+The provider option uses synthetic OpenAI-shaped and Anthropic-shaped identifiers
+through the same run-manifest contract. It is a contract demonstration, not evidence of
+live provider quality or production readiness.
+
 ## Rollback
 
 Rollback means returning the stack to a known-good template and code revision. For the

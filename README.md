@@ -123,6 +123,27 @@ The deployment-readiness procedure is documented in
 It keeps account selection, ownership, retention, rollback, and live smoke testing
 outside the public repository's synthetic CI path.
 
+Run the local hosted-client demonstration after deployment. The AWS profile is a named
+local credential configuration; the client uses temporary credentials from that profile
+and AWS SigV4 request signing, which is AWS's request-authentication method:
+
+```bash
+uv run python tools/hosted_control_plane_client.py \
+  --endpoint https://<api-id>.execute-api.<region>.amazonaws.com/v1 \
+  --profile <aws-profile> \
+  --region <region> \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --provider all \
+  --fail-on-non-reauthorized
+```
+
+`--provider all` runs the checked-in synthetic OpenAI-shaped and Anthropic-shaped
+adapter bridge through the same manifest contract. It does not call either provider,
+read either provider credential, or send prompts, tool arguments, or provider output to
+the hosted service. The client prints only bounded decision metadata; a GitHub Action
+and live provider execution remain later milestones.
+
 Run the passing synthetic example:
 
 ```bash

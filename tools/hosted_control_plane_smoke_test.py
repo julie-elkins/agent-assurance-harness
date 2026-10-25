@@ -57,7 +57,7 @@ def _post(payload: dict[str, object]) -> dict[str, object]:
     event = {
         **_principal_context(),
         "httpMethod": "POST",
-        "resource": "/v1/reauthorizations",
+        "resource": "/reauthorizations",
         "body": json.dumps(payload, sort_keys=True),
     }
     return control_plane_handler.lambda_handler(event, None)
@@ -67,7 +67,7 @@ def _get(run_id: str) -> dict[str, object]:
     event = {
         **_principal_context(),
         "httpMethod": "GET",
-        "resource": "/v1/runs/{run_id}",
+        "resource": "/runs/{run_id}",
         "pathParameters": {"run_id": run_id},
     }
     return control_plane_handler.lambda_handler(event, None)
@@ -101,7 +101,7 @@ def run() -> dict[str, object]:
     unauthorised = control_plane_handler.lambda_handler(
         {
             "httpMethod": "POST",
-            "resource": "/v1/reauthorizations",
+            "resource": "/reauthorizations",
             "body": "{}",
         },
         None,

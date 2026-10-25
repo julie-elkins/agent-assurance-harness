@@ -65,6 +65,20 @@ from .replay import (
     run_replay,
     run_replay_file,
 )
+from .run_manifest import (
+    REQUIRED_REVISION_KEYS,
+    RUN_MANIFEST_STATUS_BLOCKED,
+    RUN_MANIFEST_STATUS_REAUTHORIZED,
+    RUN_MANIFEST_STATUS_REAUTHORIZATION_REQUIRED,
+    RUN_MANIFEST_VERSION,
+    ReauthorizationDecision,
+    Repeatability,
+    ResumeCheckpoint,
+    RunBudget,
+    RunManifest,
+    RunManifestValidationError,
+    evaluate_reauthorization,
+)
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
 from .benchmark import SyntheticBenchmarkReport, run_synthetic_benchmark
@@ -646,6 +660,18 @@ __all__ = [
     "run_replay_file",
     "run_adapter_replay",
     "run_replay",
+    "REQUIRED_REVISION_KEYS",
+    "RUN_MANIFEST_STATUS_BLOCKED",
+    "RUN_MANIFEST_STATUS_REAUTHORIZED",
+    "RUN_MANIFEST_STATUS_REAUTHORIZATION_REQUIRED",
+    "RUN_MANIFEST_VERSION",
+    "ReauthorizationDecision",
+    "Repeatability",
+    "ResumeCheckpoint",
+    "RunBudget",
+    "RunManifest",
+    "RunManifestValidationError",
+    "evaluate_reauthorization",
     "load_otlp_file",
     "otlp_to_replay",
     "RegressionFinding",

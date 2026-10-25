@@ -229,6 +229,15 @@ missing, and what the result does not prove.
 - Use `logging` to stderr if logging is added; stdout is reserved for JSON CLI output.
 - Record non-obvious decisions in the build record under `~/.codex/plans/`.
 
+### Canonical run manifest
+
+The v1 run manifest is the provider-neutral integration contract for evidence-validity
+checks. Keep its revision keys stable: `model`, `harness`, `prompt`, `tools`, `policy`,
+`data`, `repository`, `environment`, and `grader`. A changed revision must produce
+`reauthorization_required`; it must never be treated as a current passing result.
+The manifest, examples, and reports are metadata-only. Do not add prompts, tool
+arguments, provider output, credentials, or private paths.
+
 ## Output channels
 
 The CLI may write only:

@@ -83,7 +83,7 @@ def _run_consumer(
             "--agent-id",
             "consumer-agent",
             "--adapter-command-json",
-            json.dumps(["python", adapter]),
+            json.dumps([sys.executable, adapter]),
             "--adapter-working-directory",
             str(CONSUMER),
             "--output",

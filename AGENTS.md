@@ -238,6 +238,13 @@ checks. Keep its revision keys stable: `model`, `harness`, `prompt`, `tools`, `p
 The manifest, examples, and reports are metadata-only. Do not add prompts, tool
 arguments, provider output, credentials, or private paths.
 
+The `tools/evidence_provenance_gate.py` check is the separate producer-evidence
+boundary. It must bind the producer record to the canonical manifest digest and must
+return `evidence_missing` or `blocked` when evidence is unobserved, invalid, or bound
+to another manifest. “Provenance” means metadata about where a result came from; this
+gate must never read or export the underlying trace, transcript, grader result, model
+response, prompt, or tool payload.
+
 ## Output channels
 
 The CLI may write only:

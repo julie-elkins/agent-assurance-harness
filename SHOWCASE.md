@@ -125,6 +125,39 @@ details, or private work.
 See [`docs/EVIDENCE_VALIDITY_EXPLORER.md`](docs/EVIDENCE_VALIDITY_EXPLORER.md) for
 the input boundary and deliberate limits.
 
+## Evidence provenance negative control
+
+The provenance gate adds a second, narrower question: did a producer actually record
+an evidence artifact for the exact run manifest? Provenance means metadata about where
+the result came from. The gate checks only digests, identifiers, counts, and status; it
+does not read or publish traces, transcripts, prompts, tool payloads, or provider output.
+
+Run the positive synthetic fixture:
+
+```bash
+uv run python tools/evidence_provenance_gate.py \
+  --manifest examples/run-manifest/manifest.json \
+  --provenance examples/run-manifest/evidence-provenance.json \
+  --markdown \
+  --fail-on-missing
+```
+
+It returns `EVIDENCE_OBSERVED` with exit code `0`. Then run the deliberate negative
+control:
+
+```bash
+uv run python tools/evidence_provenance_gate.py \
+  --manifest examples/run-manifest/manifest.json \
+  --provenance examples/run-manifest/evidence-provenance-missing.json \
+  --markdown \
+  --fail-on-missing
+```
+
+It returns `EVIDENCE_MISSING` with exit code `1`. That failure is intentional: a
+successful-looking manifest cannot support reuse when no producer evidence was observed.
+See [`docs/EVIDENCE_PROVENANCE.md`](docs/EVIDENCE_PROVENANCE.md) for the contract and
+limits.
+
 ## Instructor calibration
 
 - Ready for human sign-off: `PASS`

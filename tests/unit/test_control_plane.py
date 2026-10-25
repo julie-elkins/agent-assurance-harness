@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -96,7 +97,7 @@ def test_handler_rejects_unauthenticated_request_before_storage():
     response = control_plane_handler.lambda_handler(
         {
             "httpMethod": "POST",
-            "resource": "/v1/reauthorizations",
+            "resource": "/reauthorizations",
             "body": "{}",
         },
         None,
@@ -117,7 +118,7 @@ def test_handler_returns_structured_refusal_for_invalid_manifest(monkeypatch):
     response = control_plane_handler.lambda_handler(
         {
             "httpMethod": "POST",
-            "resource": "/v1/reauthorizations",
+            "resource": "/reauthorizations",
             "body": json.dumps(payload),
             "requestContext": {
                 "identity": {
@@ -130,3 +131,32 @@ def test_handler_returns_structured_refusal_for_invalid_manifest(monkeypatch):
 
     assert response["statusCode"] == 400
     assert "metadata_submission_invalid" in response["body"]
+
+
+def test_handler_serializes_dynamodb_numeric_metadata(monkeypatch):
+    class DecimalStore:
+        def latest(self, run_id: str) -> dict[str, object]:
+            return {
+                "run_id": run_id,
+                "status": "reauthorized",
+                "expires_at_epoch": Decimal("1792940400"),
+            }
+
+    monkeypatch.setattr(control_plane_handler, "_STORE", DecimalStore())
+    response = control_plane_handler.lambda_handler(
+        {
+            "httpMethod": "GET",
+            "resource": "/runs/{run_id}",
+            "pathParameters": {"run_id": "run-synthetic-001"},
+            "requestContext": {
+                "identity": {
+                    "userArn": "arn:aws:iam::123456789012:user/tester",
+                }
+            },
+        },
+        None,
+    )
+
+    assert response["statusCode"] == 200
+    body = json.loads(response["body"])
+    assert body["expires_at_epoch"] == 1792940400

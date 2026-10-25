@@ -14,6 +14,7 @@ import base64
 import json
 import logging
 import os
+from decimal import Decimal
 from typing import Any
 
 from .control_plane import (
@@ -34,6 +35,14 @@ LOGGER.setLevel(logging.INFO)
 _STORE: DynamoAuditStore | None = None
 
 
+def _json_default(value: object) -> object:
+    """Convert DynamoDB numeric metadata to JSON-safe integers."""
+
+    if isinstance(value, Decimal) and value == value.to_integral_value():
+        return int(value)
+    raise TypeError(f"Object of type {type(value).__name__} is not JSON serializable")
+
+
 def _json_response(status_code: int, body: dict[str, object]) -> dict[str, object]:
     return {
         "statusCode": status_code,
@@ -41,7 +50,7 @@ def _json_response(status_code: int, body: dict[str, object]) -> dict[str, objec
             "Content-Type": "application/json",
             "Cache-Control": "no-store",
         },
-        "body": json.dumps(body, sort_keys=True),
+        "body": json.dumps(body, sort_keys=True, default=_json_default),
     }
 
 
@@ -130,7 +139,7 @@ def lambda_handler(event: dict[str, object], context: Any) -> dict[str, object]:
     )
     try:
         store = _store()
-        if method == "POST" and event.get("resource") == "/v1/reauthorizations":
+        if method == "POST" and event.get("resource") == "/reauthorizations":
             payload = _request_body(event)
             response = submit(
                 payload,
@@ -138,7 +147,7 @@ def lambda_handler(event: dict[str, object], context: Any) -> dict[str, object]:
                 store=store,
             )
             return _json_response(200, response)
-        if method == "GET" and event.get("resource") == "/v1/runs/{run_id}":
+        if method == "GET" and event.get("resource") == "/runs/{run_id}":
             if not isinstance(run_id, str):
                 return _refusal(
                     400,

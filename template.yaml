@@ -38,13 +38,13 @@ Resources:
           Type: Api
           Properties:
             RestApiId: !Ref AssuranceApi
-            Path: /v1/reauthorizations
+            Path: /reauthorizations
             Method: post
         GetRun:
           Type: Api
           Properties:
             RestApiId: !Ref AssuranceApi
-            Path: /v1/runs/{run_id}
+            Path: /runs/{run_id}
             Method: get
 
   AssuranceAuditTable:

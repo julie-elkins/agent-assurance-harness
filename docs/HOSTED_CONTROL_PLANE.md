@@ -16,7 +16,7 @@ time-to-live (TTL). TTL is the database mechanism that removes records after the
 configured retention window.
 
 It does not accept or store prompts, tool arguments, provider output, credentials,
-private paths, or CERTI material. OpenAI and Anthropic adapters remain client-side:
+private paths, or other private material. OpenAI and Anthropic adapters remain client-side:
 they produce the shared metadata contract, while the hosted service evaluates it.
 
 ## Local verification

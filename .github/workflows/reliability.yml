@@ -44,6 +44,20 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --locked --extra dev
 
+      - name: Install AWS SAM CLI
+        uses: aws-actions/setup-sam@f84ec7d548307efafe33230528756de3c5841a17 # v2
+
+      - name: Validate hosted control-plane template
+        run: sam validate --lint --template-file template.yaml
+
+      - name: Build hosted control-plane artifact
+        run: sam build --template-file template.yaml --build-dir /tmp/agent-assurance-sam-build
+
+      - name: Run hosted control-plane synthetic smoke test
+        run: >-
+          uv run python tools/hosted_control_plane_smoke_test.py
+          --output /tmp/agent-assurance-hosted-control-plane-smoke.json
+
       - name: Check repository security boundaries
         run: uv run python tools/check_repository_boundaries.py
 

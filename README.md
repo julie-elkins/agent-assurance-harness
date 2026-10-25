@@ -118,6 +118,11 @@ This is a deployable design and a locally tested service boundary, not a product
 deployment or proof of hosted AWS availability. Security and delivery-path review are
 required before deployment.
 
+The deployment-readiness procedure is documented in
+[`docs/HOSTED_CONTROL_PLANE_DEPLOYMENT.md`](docs/HOSTED_CONTROL_PLANE_DEPLOYMENT.md).
+It keeps account selection, ownership, retention, rollback, and live smoke testing
+outside the public repository's synthetic CI path.
+
 Run the passing synthetic example:
 
 ```bash

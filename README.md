@@ -26,6 +26,30 @@ offline synthetic assurance demo and documents the optional metadata-only demons
 against a local checkout of the public
 [Claude Architect Lab](https://github.com/julie-elkins/claude-architect-lab).
 
+## Current build
+
+The public repository currently has five connected layers:
+
+1. An offline synthetic assurance gate — automated checks that exercise agent failure
+   modes without contacting a model provider.
+2. A provider-neutral run manifest — one portable record binding a result to its model,
+   harness, revisions, budget, stop condition, and evidence scope.
+3. A local OpenAI and Anthropic bridge — opt-in adapters that keep provider credentials
+   and responses on the local machine.
+4. A metadata-only hosted control plane — a deployable AWS boundary for revision-aware
+   decisions, not a provider credential broker.
+5. The Evidence Validity Explorer — a static visual demo showing a current result beside
+   a changed-revision negative control.
+
+The current hardening step is the [evidence provenance gate](docs/EVIDENCE_PROVENANCE.md).
+Evidence provenance means metadata about where a result came from; this gate refuses
+missing or mismatched producer evidence without storing traces, transcripts, prompts,
+tool payloads, credentials, or unpublished internal material.
+
+This repository is intentionally not a hosted provider dashboard, a model router, or a
+private evaluation surface. Those would add data, credential, and operational scope
+before the public contract has earned it.
+
 ## Part 2 of the three-part learning path
 
 This repository is the hands-on middle step between learning how to build an agent
@@ -103,6 +127,34 @@ The reusable GitHub Action accepts the same contract through optional
 `run-manifest` and `current-revisions` inputs. When both are supplied, a changed
 revision blocks the action with `reauthorization_required`; omitting both preserves
 backward compatibility for existing consumers.
+
+### Evidence provenance gate
+
+The provenance gate checks whether a producer recorded an evidence artifact for the
+exact manifest digest. It is metadata-only: it does not inspect or export the underlying
+trace, transcript, grader result, model response, prompt, or tool payload.
+
+```bash
+uv run python tools/evidence_provenance_gate.py \
+  --manifest examples/run-manifest/manifest.json \
+  --provenance examples/run-manifest/evidence-provenance.json \
+  --markdown \
+  --fail-on-missing
+```
+
+The synthetic positive fixture returns `EVIDENCE_OBSERVED` and exit code `0`. The
+deliberate negative control returns `EVIDENCE_MISSING` and exit code `1`:
+
+```bash
+uv run python tools/evidence_provenance_gate.py \
+  --manifest examples/run-manifest/manifest.json \
+  --provenance examples/run-manifest/evidence-provenance-missing.json \
+  --markdown \
+  --fail-on-missing
+```
+
+See [Evidence provenance gate](docs/EVIDENCE_PROVENANCE.md) for the contract and its
+limits.
 
 ### Hosted control plane
 

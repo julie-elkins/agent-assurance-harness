@@ -1,0 +1,10 @@
+{
+  "provenance_version": 1,
+  "provenance_id": "run-evidence-provenance-v1",
+  "manifest_digest": "sha256:9e24df1eff45ba7becb7099e31ef375ad62612f664d69b33617497cd9f4d598b",
+  "producer_id": "synthetic-evaluator",
+  "artifact_digest": null,
+  "artifact_count": 0,
+  "observed": false,
+  "redaction_policy": "metadata-only-v1"
+}

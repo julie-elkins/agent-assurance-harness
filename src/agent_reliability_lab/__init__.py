@@ -17,6 +17,18 @@ from .attestation import (
     AssuranceAttestation,
     build_regression_attestation,
 )
+from .evidence_provenance import (
+    EVIDENCE_PROVENANCE_BLOCKED,
+    EVIDENCE_PROVENANCE_ID,
+    EVIDENCE_PROVENANCE_MISSING,
+    EVIDENCE_PROVENANCE_OBSERVED,
+    EVIDENCE_PROVENANCE_VERSION,
+    EvidenceProvenance,
+    EvidenceProvenanceDecision,
+    build_evidence_provenance,
+    evaluate_evidence_provenance,
+    manifest_digest,
+)
 from .adapters import ScenarioAdapter, reference_adapters, trace_to_events
 from .environment import (
     FaultInjection,
@@ -395,6 +407,13 @@ __all__ = [
     "AgentAdapter",
     "AssuranceDimension",
     "AssuranceAttestation",
+    "EVIDENCE_PROVENANCE_BLOCKED",
+    "EVIDENCE_PROVENANCE_ID",
+    "EVIDENCE_PROVENANCE_MISSING",
+    "EVIDENCE_PROVENANCE_OBSERVED",
+    "EVIDENCE_PROVENANCE_VERSION",
+    "EvidenceProvenance",
+    "EvidenceProvenanceDecision",
     "DimensionSummary",
     "DEFAULT_ADAPTER_TIMEOUT_SECONDS",
     "DEFAULT_MAX_RESPONSE_BYTES",
@@ -470,6 +489,9 @@ __all__ = [
     "adapter_run_from_dict",
     "adapter_run_to_dict",
     "environment_for_scenario",
+    "evaluate_evidence_provenance",
+    "manifest_digest",
+    "build_evidence_provenance",
     "build_environment_from_pack",
     "build_regression_attestation",
     "decode_scenario_pack",

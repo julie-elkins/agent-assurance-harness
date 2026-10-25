@@ -104,6 +104,20 @@ The reusable GitHub Action accepts the same contract through optional
 revision blocks the action with `reauthorization_required`; omitting both preserves
 backward compatibility for existing consumers.
 
+### Hosted control plane
+
+The repository also contains an AWS-deployable, metadata-only control-plane boundary in
+[`template.yaml`](template.yaml) and
+[`docs/HOSTED_CONTROL_PLANE.md`](docs/HOSTED_CONTROL_PLANE.md). It reuses the local
+evaluator behind an IAM-authenticated API and stores only revision digests, identifiers,
+decision state, and bounded audit metadata. Provider adapters stay outside the service,
+so the hosted boundary does not hold OpenAI or Anthropic credentials or receive raw
+prompts, tool payloads, or model output.
+
+This is a deployable design and a locally tested service boundary, not a production
+deployment or proof of hosted AWS availability. Security and delivery-path review are
+required before deployment.
+
 Run the passing synthetic example:
 
 ```bash

@@ -21,7 +21,13 @@ separate producer record binds to the manifest's canonical digest and records:
 - evidence artifact digest, if one was observed;
 - artifact count;
 - observed or missing state; and
-- redaction policy identifier.
+- redaction policy identifier;
+- receipt metadata such as artifact type, producer version, capture scope, and retention
+  status;
+- grader-validity metadata such as grader type, calibration state, sample count, and
+  independent-breaker identifier; and
+- synthetic deployment context such as scenario source, trajectory horizon, tool-risk
+  tier, and coverage profile.
 
 Keeping the record separate preserves the v1 manifest contract for existing consumers
 and makes the missing-artifact negative control explicit.
@@ -37,6 +43,18 @@ and makes the missing-artifact negative control explicit.
 This is not a cryptographic signature, a semantic quality judgment, or proof that a
 provider response was correct. Those require separately approved evidence and evaluation
 layers.
+
+## What remains out of scope
+
+The current record is a validated metadata receipt, not a signed attestation. A signed
+attestation is a cryptographically verifiable statement that a trusted producer created
+the record. Adding one requires an identity, key storage, rotation, revocation, and
+append-only retention design, so it is a future phase rather than a hidden claim of the
+current public build.
+
+The deployment-context values in the public fixtures are synthetic. They demonstrate the
+shape of the contract without importing incident data, private traces, provider output,
+or internal evaluation material.
 
 ## Run the public synthetic demo
 

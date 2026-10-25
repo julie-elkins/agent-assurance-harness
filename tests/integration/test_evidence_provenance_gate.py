@@ -40,6 +40,8 @@ def test_gate_accepts_observed_metadata_only_evidence():
     data = json.loads(result.stdout)
     assert data["status"] == EVIDENCE_PROVENANCE_OBSERVED
     assert data["supports_evidence"] is True
+    assert data["validity_metadata"]["grader_calibration_status"] == "calibrated"
+    assert data["validity_metadata"]["scenario_source"] == "synthetic"
     assert "provider" not in result.stdout
     assert "credentials" not in result.stdout
 
@@ -58,6 +60,7 @@ def test_gate_blocks_missing_evidence_negative_control():
     assert data["status"] == EVIDENCE_PROVENANCE_MISSING
     assert data["supports_evidence"] is False
     assert data["reasons"] == ["evidence_artifact_not_observed"]
+    assert data["validity_metadata"]["retention_status"] == "not_observed"
 
 
 def test_gate_blocks_mismatched_manifest_digest(tmp_path):
@@ -78,6 +81,25 @@ def test_gate_blocks_mismatched_manifest_digest(tmp_path):
     data = json.loads(result.stdout)
     assert data["status"] == EVIDENCE_PROVENANCE_BLOCKED
     assert data["reasons"] == ["manifest_digest_mismatch"]
+
+
+def test_gate_blocks_invalid_validity_metadata(tmp_path):
+    provenance = tmp_path / "provenance.json"
+    data = json.loads(OBSERVED.read_text(encoding="utf-8"))
+    data["validity_metadata"]["sample_count"] = 0
+    provenance.write_text(json.dumps(data), encoding="utf-8")
+
+    result = _run(
+        "--manifest",
+        str(MANIFEST),
+        "--provenance",
+        str(provenance),
+    )
+
+    assert result.returncode == 1
+    data = json.loads(result.stdout)
+    assert data["status"] == EVIDENCE_PROVENANCE_BLOCKED
+    assert data["reasons"][0] == "provenance_record_invalid"
 
 
 def test_gate_refuses_invalid_provenance_without_writing_output(tmp_path):

@@ -26,13 +26,17 @@ uv run python tools/evidence_validity_explorer.py \
   --manifest examples/run-manifest/manifest.json \
   --current-revisions examples/run-manifest/current-revisions.json \
   --changed-revisions examples/run-manifest/changed-revisions.json \
+  --provenance examples/run-manifest/evidence-provenance.json \
+  --missing-provenance examples/run-manifest/evidence-provenance-missing.json \
   --output /tmp/agent-evidence-validity-explorer.html
 ```
 
 Open `/tmp/agent-evidence-validity-explorer.html` in a browser. For a shareable
-demonstration, use the page's current and changed panels or take one screenshot that
-includes both decisions. The page is self-contained and has no external JavaScript,
-CSS, image, authentication, or telemetry dependency.
+demonstration, use the four-step assurance story or take one screenshot that includes
+the observed, changed, reauthorization-required, and missing-evidence states. The page
+also shows the safe receipt, grader-validity, and synthetic deployment metadata. It is
+self-contained and has no external JavaScript, CSS, image, authentication, or telemetry
+dependency.
 
 ## What a reviewer can see
 
@@ -41,6 +45,8 @@ CSS, image, authentication, or telemetry dependency.
 - the exact current, recorded, and changed revision identifiers;
 - repeat count, bounded request budget, and evidence expiration;
 - the required action after a revision change; and
+- the four-step story from observed evidence to blocked reuse; and
+- receipt, grader-validity, and synthetic deployment-context identifiers;
 - the boundary between what the manifest decision proves and what it does not prove.
 
 The page uses color only as a secondary signal. The status text remains explicit so
@@ -53,4 +59,5 @@ This is not a hosted observability dashboard, model-quality leaderboard, or prod
 approval system. It shows one bounded metadata decision and its synthetic negative
 control. A `reauthorized` result means the evidence still matches the declared
 revision snapshot; it does not mean that a human approved the next action or that the
-underlying agent is safe in every environment.
+underlying agent is safe in every environment. It does not create signed attestations;
+that identity and key-management boundary is future work.

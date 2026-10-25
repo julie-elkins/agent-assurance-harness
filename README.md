@@ -261,15 +261,20 @@ uv run python tools/evidence_validity_explorer.py \
   --manifest examples/run-manifest/manifest.json \
   --current-revisions examples/run-manifest/current-revisions.json \
   --changed-revisions examples/run-manifest/changed-revisions.json \
+  --provenance examples/run-manifest/evidence-provenance.json \
+  --missing-provenance examples/run-manifest/evidence-provenance-missing.json \
   --output /tmp/agent-evidence-validity-explorer.html
 ```
 
 The page shows the current `reauthorized` result beside the changed-revision
-`reauthorization_required` result and names the required rerun action. It asks whether
-the evidence still supports its declared decision; it does not claim that a green
-result proves model quality or production safety. It reuses the canonical evaluator;
-it is not a second gate. The page is local, synthetic, metadata-only, and intended as
-a reviewer and public-demo surface.
+`reauthorization_required` result, then shows the missing-evidence negative control.
+The four-step story makes the sequence visible: evidence observed, revision changed,
+reuse requires review, and missing evidence blocks reuse. It also surfaces bounded
+receipt, grader-validity, and synthetic deployment metadata. It asks whether the
+evidence still supports its declared decision; it does not claim that a green result
+proves model quality or production safety. It reuses the canonical evaluator; it is not
+a second gate. The page is local, synthetic, metadata-only, and intended as a reviewer
+and public-demo surface.
 
 Run the held-out robustness matrix after the original pilot:
 

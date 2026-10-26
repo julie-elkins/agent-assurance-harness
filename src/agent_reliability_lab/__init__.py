@@ -103,6 +103,11 @@ from .change_impact import (
     build_change_impact_plan,
     classify_paths,
 )
+from .evidence_registry import (
+    EVIDENCE_REGISTRY_VERSION,
+    EvidenceRegistration,
+    load_evidence_registry,
+)
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
 from .benchmark import SyntheticBenchmarkReport, run_synthetic_benchmark
@@ -746,6 +751,9 @@ __all__ = [
     "EvidenceImpact",
     "build_change_impact_plan",
     "classify_paths",
+    "EVIDENCE_REGISTRY_VERSION",
+    "EvidenceRegistration",
+    "load_evidence_registry",
     "load_otlp_file",
     "otlp_to_replay",
     "RegressionFinding",

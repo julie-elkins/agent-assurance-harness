@@ -182,6 +182,11 @@ uv run python tools/agent_impact_plan.py \
 The design record explains the audience, alternatives, verification, and limits for
 newer engineers in [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
 
+The optional [evidence registry](schemas/evidence-registry-v1.json) maps an affected
+evidence result to named checks and an owner. It stores check IDs, not shell commands,
+so the plan can guide a trusted workflow without becoming an unreviewed execution
+surface.
+
 The reusable GitHub Action accepts the same contract through optional
 `run-manifest` and `current-revisions` inputs. When both are supplied, a changed
 revision blocks the action with `reauthorization_required`; omitting both preserves

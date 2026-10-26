@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/julie-elkins/agent-assurance-harness/blob/main/schemas/evidence-registry-v1.json",
+  "title": "Agent evidence registry v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["evidence_registry_version", "entries"],
+  "properties": {
+    "evidence_registry_version": { "const": 1 },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "decision_target",
+          "dependency_scope",
+          "check_ids",
+          "owner_id"
+        ],
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "decision_target": { "type": "string", "minLength": 1 },
+          "dependency_scope": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "model",
+                "harness",
+                "prompt",
+                "tools",
+                "policy",
+                "data",
+                "repository",
+                "environment",
+                "grader"
+              ]
+            }
+          },
+          "check_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            }
+          },
+          "owner_id": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

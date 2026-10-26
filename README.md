@@ -402,6 +402,18 @@ miss to be `review_required`, and the changed-revision report to require
 reauthorization. It uploads five metadata-only JSON artifacts for reviewer inspection;
 it never authorises deployment.
 
+### Import external evaluator results
+
+The external evaluator adapter accepts strict metadata-only results shaped like Inspect,
+Petri, or a local evaluator. It validates the source result, harness revision, and
+manifest revision before reusing the existing Monitorability Workbench calculations.
+It does not install SDKs, call external systems, or import prompts, transcripts, tool
+payloads, model output, credentials, or private traces.
+
+See [docs/EXTERNAL_EVALUATOR_IMPORT.md](docs/EXTERNAL_EVALUATOR_IMPORT.md) for the
+Inspect-shaped and Petri-shaped examples. A changed current revision becomes
+`review_required`; a mismatched source binding becomes `blocked`.
+
 Run the held-out robustness matrix after the original pilot:
 
 ```bash

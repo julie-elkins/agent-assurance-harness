@@ -156,3 +156,31 @@ commands immediately but preserves reviewability and avoids arbitrary execution.
 **What this does not prove:** A registered check ID does not prove that the check ran
 or passed. The trusted workflow must record the resulting evidence and reauthorization
 separately.
+
+## Bind provider-shaped runs through metadata-only receipts
+
+**Decision:** Normalize accepted and refused OpenAI- and Anthropic-shaped adapter
+results into one provider evidence receipt and require the evidence ID to resolve to
+the registry.
+
+**Instead of:** Publishing provider response formats, exporting translated traces, or
+letting an unowned provider run become reusable evidence.
+
+**Why:** Provider-specific adapters are useful at the boundary, but engineers need a
+portable record that says which provider-shaped run produced the evidence, what
+decision it belongs to, and which trusted checks apply after change. The receipt
+connects those facts without copying provider content into the public repository.
+
+**Verification:** The synthetic CLI runs both mocked providers, produces one shared
+receipt shape, validates the output schema, refuses unknown evidence IDs, and turns
+over-budget provider results into bounded refusal receipts. Serialized receipts are
+checked for raw provider text and tool-result identifiers.
+
+**Costs if wrong:** The public receipt cannot support detailed provider debugging.
+That debugging remains inside the local adapter boundary, which keeps the portable
+artifact safe but makes diagnosis a two-artifact workflow.
+
+**What this does not prove:** An accepted receipt proves that the adapter returned a
+contract-valid synthetic run and that the registry binding was present. It does not
+prove live provider quality, semantic truth, a signed attestation, or that the
+registered rerun checks passed.

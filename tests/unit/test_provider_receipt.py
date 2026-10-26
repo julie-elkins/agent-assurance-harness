@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from agent_reliability_lab.environment import environment_for_scenario
+from agent_reliability_lab.change_impact import revisions_digest
 from agent_reliability_lab.evidence_registry import load_evidence_registry
 from agent_reliability_lab.provider_receipt import (
     RECEIPT_ACCEPTED,
@@ -22,6 +23,11 @@ REGISTRY = load_evidence_registry(
     ROOT / "examples" / "change-impact" / "evidence-registry.json"
 )
 REGISTRATION = REGISTRY["run-synthetic-001"]
+REVISION_DIGEST = revisions_digest(
+    json.loads(
+        (ROOT / "examples" / "change-impact" / "baseline-revisions.json").read_text()
+    )
+)
 
 
 def _request():
@@ -51,6 +57,7 @@ def test_both_providers_produce_the_same_receipt_contract():
             "anthropic": "anthropic-synthetic",
         },
         harness_revision="harness-r1",
+        revision_digest=REVISION_DIGEST,
         registration=REGISTRATION,
     )
 
@@ -77,6 +84,7 @@ def test_receipt_is_metadata_only():
             provider_id="openai",
             model_id="openai-synthetic",
             harness_revision="harness-r1",
+            revision_digest=REVISION_DIGEST,
             registration=REGISTRATION,
         ).to_dict()
     )
@@ -99,6 +107,7 @@ def test_unknown_evidence_id_is_refused_before_provider_receipt():
             provider_id="openai",
             model_id="openai-synthetic",
             harness_revision="harness-r1",
+            revision_digest=REVISION_DIGEST,
             registration=REGISTRATION,
         )
     except ValueError as error:
@@ -125,6 +134,7 @@ def test_provider_refusal_becomes_bounded_refusal_receipt():
         provider_id="openai",
         model_id="openai-synthetic",
         harness_revision="harness-r1",
+        revision_digest=REVISION_DIGEST,
         registration=REGISTRATION,
     )
 

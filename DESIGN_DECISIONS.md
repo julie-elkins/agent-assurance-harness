@@ -184,3 +184,29 @@ artifact safe but makes diagnosis a two-artifact workflow.
 contract-valid synthetic run and that the registry binding was present. It does not
 prove live provider quality, semantic truth, a signed attestation, or that the
 registered rerun checks passed.
+
+## Validate receipts before change-impact decisions
+
+**Decision:** Require the change-impact planner to validate an optional provider
+receipt's evidence ID, registry-entry digest, baseline revision digest, acceptance
+status, and harness revision before using it in an impact decision.
+
+**Instead of:** Treating a receipt as trustworthy because it names a familiar
+provider, model, or scenario.
+
+**Why:** A receipt is useful only if it is bound to the evidence scope and revision
+that the planner is evaluating. Digest checks make stale or misowned receipts block
+explicitly without exposing provider content.
+
+**Verification:** The end-to-end synthetic path generates OpenAI and Anthropic
+receipts against baseline revisions, feeds them to the impact planner, and reports
+accepted provider IDs plus `rerun_required` after a policy revision. Missing,
+rejected, registry-mismatched, or revision-mismatched receipts return `blocked`.
+
+**Costs if wrong:** A receipt generated after a change cannot be reused for the
+baseline decision; it must be regenerated and reviewed. This adds an explicit step
+but prevents a newer result from being misrepresented as evidence for an older state.
+
+**What this does not prove:** Receipt validation does not prove that the registered
+checks passed or that a provider's live output was high quality. It only proves the
+metadata binding required before the next assurance decision.

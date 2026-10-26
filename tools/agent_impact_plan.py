@@ -13,6 +13,10 @@ from agent_reliability_lab.change_impact import (
     build_change_impact_plan,
 )
 from agent_reliability_lab.evidence_registry import load_evidence_registry
+from agent_reliability_lab.provider_receipt import (
+    ProviderEvidenceReceipt,
+    load_provider_evidence_receipt_report,
+)
 from agent_reliability_lab.run_manifest import (
     RunManifestValidationError,
     load_current_revisions,
@@ -44,6 +48,13 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Optional metadata-only evidence registry for selective rerun checks.",
     )
+    parser.add_argument(
+        "--receipt",
+        type=Path,
+        action="append",
+        default=[],
+        help="Optional provider evidence receipt report; repeat for more reports.",
+    )
     parser.add_argument("--changed-path", action="append", default=[])
     parser.add_argument("--git-diff-base")
     parser.add_argument("--git-diff-head", default="HEAD")
@@ -62,12 +73,20 @@ def main(argv: list[str] | None = None) -> int:
         paths = list(args.changed_path)
         if args.git_diff_base:
             paths.extend(_git_paths(args.repo, args.git_diff_base, args.git_diff_head))
+        receipts: dict[str, list[ProviderEvidenceReceipt]] | None = None
+        if args.receipt:
+            receipts = {}
+            for receipt_path in args.receipt:
+                report = load_provider_evidence_receipt_report(str(receipt_path))
+                for receipt in report.receipts:
+                    receipts.setdefault(receipt.evidence_id, []).append(receipt)
         plan = build_change_impact_plan(
             [load_manifest(str(path)) for path in args.manifest],
             load_current_revisions(str(args.baseline_revisions)),
             load_current_revisions(str(args.current_revisions)),
             paths,
             load_evidence_registry(args.registry) if args.registry else None,
+            receipts,
         )
         data = plan.to_dict()
         serialized = (

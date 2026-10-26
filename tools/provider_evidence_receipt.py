@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 from agent_reliability_lab.evidence_registry import load_evidence_registry
+from agent_reliability_lab.change_impact import revisions_digest
 from agent_reliability_lab.provider_receipt import (
     RECEIPT_ACCEPTED,
     build_provider_evidence_report,
@@ -15,6 +16,7 @@ from agent_reliability_lab.provider_receipt import (
 from agent_reliability_lab.providers import mock_provider_adapters
 from agent_reliability_lab.protocol import ScenarioRequest
 from agent_reliability_lab.environment import environment_for_scenario
+from agent_reliability_lab.run_manifest import load_current_revisions
 from agent_reliability_lab.scenarios import scenarios
 
 
@@ -44,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--scenario-id", default="tool-misuse")
     parser.add_argument("--evidence-id", required=True)
     parser.add_argument("--registry", type=Path, required=True)
+    parser.add_argument("--revisions", type=Path, required=True)
     parser.add_argument("--model-openai", default="openai-synthetic")
     parser.add_argument("--model-anthropic", default="anthropic-synthetic")
     parser.add_argument("--harness-revision", default="harness-r1")
@@ -60,6 +63,7 @@ def main(argv: list[str] | None = None) -> int:
                 "evidence_id is not registered; add it before emitting a receipt"
             )
         request = _request_for(args.scenario_id)
+        revision_values = load_current_revisions(str(args.revisions))
         environment = environment_for_scenario(args.scenario_id)
         adapters = mock_provider_adapters(args.provider)
         runs = tuple(
@@ -77,6 +81,7 @@ def main(argv: list[str] | None = None) -> int:
                 "anthropic": args.model_anthropic,
             },
             harness_revision=args.harness_revision,
+            revision_digest=revisions_digest(revision_values),
             registration=registration,
         )
         data = report.to_dict()

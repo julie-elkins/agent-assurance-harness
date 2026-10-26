@@ -191,7 +191,9 @@ The [provider evidence receipt](docs/PROVIDER_EVIDENCE_RECEIPT.md) connects the
 existing OpenAI- and Anthropic-shaped adapters to that registry. It records which
 provider-shaped run produced the metadata, which evidence ID it supports, what
 checks would be rerun after a relevant change, and bounded usage/status metadata.
-It does not export provider content.
+It does not export provider content. The change-impact planner can now validate the
+receipt's registry binding and baseline revision digest before reporting whether the
+evidence remains usable.
 
 The reusable GitHub Action accepts the same contract through optional
 `run-manifest` and `current-revisions` inputs. When both are supplied, a changed

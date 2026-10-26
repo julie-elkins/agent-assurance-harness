@@ -61,6 +61,7 @@ class ProviderEvidenceReceipt:
     agent_id: str
     scenario_id: str
     harness_revision: str
+    revision_digest: str
     status: str
     registry_entry_digest: str
     dependency_scope: tuple[str, ...]
@@ -87,6 +88,7 @@ class ProviderEvidenceReceipt:
             "agent_id": self.agent_id,
             "scenario_id": self.scenario_id,
             "harness_revision": self.harness_revision,
+            "revision_digest": self.revision_digest,
             "status": self.status,
             "registry_entry_digest": self.registry_entry_digest,
             "dependency_scope": list(self.dependency_scope),
@@ -158,6 +160,138 @@ class ProviderEvidenceReceiptReport:
         )
         return "\n".join(lines)
 
+    @classmethod
+    def from_dict(cls, value: object) -> "ProviderEvidenceReceiptReport":
+        if not isinstance(value, dict):
+            raise ValueError("provider receipt report must be an object")
+        if value.get("provider_receipt_version") != PROVIDER_RECEIPT_VERSION:
+            raise ValueError("provider_receipt_version is not supported")
+        receipts = value.get("receipts")
+        if not isinstance(receipts, list) or not receipts:
+            raise ValueError("provider receipt report must contain receipts")
+        return cls(
+            receipts=tuple(
+                ProviderEvidenceReceipt.from_dict(item) for item in receipts
+            )
+        )
+
+
+def _digest_string(value: object, field: str) -> str:
+    result = _identifier(value, field)
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", result):
+        raise ValueError(f"{field} must match sha256:<64 lowercase hex characters>")
+    return result
+
+
+def _receipt_from_dict(value: object) -> ProviderEvidenceReceipt:
+    if not isinstance(value, dict):
+        raise ValueError("provider receipt must be an object")
+    required = {
+        "provider_receipt_version",
+        "receipt_id",
+        "evidence_id",
+        "decision_target",
+        "provider_id",
+        "model_id",
+        "agent_id",
+        "scenario_id",
+        "harness_revision",
+        "revision_digest",
+        "status",
+        "registry_entry_digest",
+        "dependency_scope",
+        "rerun_check_ids",
+        "owner_id",
+        "event_count",
+        "event_type_counts",
+        "tool_call_count",
+        "evidence_id_count",
+        "transport_status",
+        "semantic_outcome",
+        "usage",
+        "refusal_code",
+        "receipt_digest",
+    }
+    if set(value) != required:
+        raise ValueError("provider receipt contains unsupported or missing fields")
+    if value["provider_receipt_version"] != PROVIDER_RECEIPT_VERSION:
+        raise ValueError("provider_receipt_version is not supported")
+    provider_id = _identifier(value["provider_id"], "provider_id")
+    if provider_id not in _PROVIDERS:
+        raise ValueError("provider_id must be openai or anthropic")
+    status = _identifier(value["status"], "status")
+    if status not in {RECEIPT_ACCEPTED, RECEIPT_REFUSED, RECEIPT_BLOCKED}:
+        raise ValueError("provider receipt status is unsupported")
+    dependency_scope = value["dependency_scope"]
+    rerun_check_ids = value["rerun_check_ids"]
+    event_type_counts = value["event_type_counts"]
+    if (
+        not isinstance(dependency_scope, list)
+        or not isinstance(rerun_check_ids, list)
+        or not isinstance(event_type_counts, dict)
+    ):
+        raise ValueError("provider receipt metadata has an invalid shape")
+    return ProviderEvidenceReceipt(
+        receipt_id=_identifier(value["receipt_id"], "receipt_id"),
+        evidence_id=_identifier(value["evidence_id"], "evidence_id"),
+        decision_target=_identifier(value["decision_target"], "decision_target"),
+        provider_id=provider_id,
+        model_id=_identifier(value["model_id"], "model_id"),
+        agent_id=_identifier(value["agent_id"], "agent_id"),
+        scenario_id=_identifier(value["scenario_id"], "scenario_id"),
+        harness_revision=_identifier(
+            value["harness_revision"], "harness_revision"
+        ),
+        revision_digest=_digest_string(value["revision_digest"], "revision_digest"),
+        status=status,
+        registry_entry_digest=_digest_string(
+            value["registry_entry_digest"], "registry_entry_digest"
+        ),
+        dependency_scope=tuple(
+            _identifier(item, "dependency_scope item") for item in dependency_scope
+        ),
+        rerun_check_ids=tuple(
+            _identifier(item, "rerun_check_ids item") for item in rerun_check_ids
+        ),
+        owner_id=_identifier(value["owner_id"], "owner_id"),
+        event_count=int(value["event_count"]),
+        event_type_counts={
+            _identifier(key, "event_type_counts key"): int(count)
+            for key, count in event_type_counts.items()
+        },
+        tool_call_count=int(value["tool_call_count"]),
+        evidence_id_count=int(value["evidence_id_count"]),
+        transport_status=(
+            _identifier(value["transport_status"], "transport_status")
+            if value["transport_status"] is not None
+            else None
+        ),
+        semantic_outcome=(
+            _identifier(value["semantic_outcome"], "semantic_outcome")
+            if value["semantic_outcome"] is not None
+            else None
+        ),
+        usage=value["usage"],
+        refusal_code=(
+            _identifier(value["refusal_code"], "refusal_code")
+            if value["refusal_code"] is not None
+            else None
+        ),
+        receipt_digest=_digest_string(value["receipt_digest"], "receipt_digest"),
+    )
+
+
+ProviderEvidenceReceipt.from_dict = staticmethod(_receipt_from_dict)
+
+
+def load_provider_evidence_receipt_report(
+    path: str,
+) -> ProviderEvidenceReceiptReport:
+    """Load a metadata-only receipt report from JSON."""
+
+    with open(path, encoding="utf-8") as handle:
+        return ProviderEvidenceReceiptReport.from_dict(json.load(handle))
+
 
 def build_provider_evidence_receipt(
     run: AdapterRun,
@@ -166,6 +300,7 @@ def build_provider_evidence_receipt(
     provider_id: str,
     model_id: str,
     harness_revision: str,
+    revision_digest: str,
     registration: EvidenceRegistration,
 ) -> ProviderEvidenceReceipt:
     """Build one receipt without exporting trace content."""
@@ -176,6 +311,7 @@ def build_provider_evidence_receipt(
     evidence_id = _identifier(evidence_id, "evidence_id")
     model_id = _identifier(model_id, "model_id")
     harness_revision = _identifier(harness_revision, "harness_revision")
+    revision_digest = _digest_string(revision_digest, "revision_digest")
     if registration.evidence_id != evidence_id:
         raise ValueError("registration evidence_id must match evidence_id")
     if registration.decision_target == "":
@@ -223,6 +359,7 @@ def build_provider_evidence_receipt(
         "agent_id": agent_id,
         "scenario_id": scenario_id,
         "harness_revision": harness_revision,
+        "revision_digest": revision_digest,
         "status": status,
         "registry_entry_digest": _registry_digest(registration),
         "event_count": event_count,
@@ -245,6 +382,7 @@ def build_provider_evidence_receipt(
         agent_id=agent_id,
         scenario_id=scenario_id,
         harness_revision=harness_revision,
+        revision_digest=revision_digest,
         status=status,
         registry_entry_digest=_registry_digest(registration),
         dependency_scope=registration.dependency_scope,
@@ -268,6 +406,7 @@ def build_provider_evidence_report(
     evidence_id: str,
     model_ids: Mapping[str, str],
     harness_revision: str,
+    revision_digest: str,
     registration: EvidenceRegistration,
 ) -> ProviderEvidenceReceiptReport:
     """Build receipts for multiple provider-shaped runs."""
@@ -279,6 +418,7 @@ def build_provider_evidence_report(
             provider_id=provider_id,
             model_id=model_ids[provider_id],
             harness_revision=harness_revision,
+            revision_digest=revision_digest,
             registration=registration,
         )
         for provider_id, run in runs
@@ -295,4 +435,5 @@ __all__ = [
     "ProviderEvidenceReceiptReport",
     "build_provider_evidence_receipt",
     "build_provider_evidence_report",
+    "load_provider_evidence_receipt_report",
 ]

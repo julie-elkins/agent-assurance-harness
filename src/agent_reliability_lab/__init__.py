@@ -102,6 +102,7 @@ from .change_impact import (
     EvidenceImpact,
     build_change_impact_plan,
     classify_paths,
+    revisions_digest,
 )
 from .evidence_registry import (
     EVIDENCE_REGISTRY_VERSION,
@@ -117,6 +118,7 @@ from .provider_receipt import (
     ProviderEvidenceReceiptReport,
     build_provider_evidence_receipt,
     build_provider_evidence_report,
+    load_provider_evidence_receipt_report,
 )
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
@@ -753,6 +755,7 @@ __all__ = [
     "RunManifest",
     "RunManifestValidationError",
     "evaluate_reauthorization",
+    "revisions_digest",
     "CHANGE_IMPACT_VERSION",
     "IMPACT_BLOCKED",
     "IMPACT_READY",
@@ -772,6 +775,7 @@ __all__ = [
     "ProviderEvidenceReceiptReport",
     "build_provider_evidence_receipt",
     "build_provider_evidence_report",
+    "load_provider_evidence_receipt_report",
     "load_otlp_file",
     "otlp_to_replay",
     "RegressionFinding",

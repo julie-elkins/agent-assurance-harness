@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from typing import Iterable, Mapping, Sequence
 
 from .evidence_registry import EvidenceRegistration
+from .provider_receipt import ProviderEvidenceReceipt
 from .run_manifest import (
     REQUIRED_REVISION_KEYS,
     RUN_MANIFEST_STATUS_BLOCKED,
@@ -35,6 +36,12 @@ def _digest(value: object) -> str:
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=True
     ).encode("utf-8")
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def revisions_digest(revisions: Mapping[str, str]) -> str:
+    """Return the canonical digest used to bind receipts to revisions."""
+
+    return _digest(dict(sorted(revisions.items())))
 
 
 def _path_dependencies(path: str) -> tuple[str, ...]:
@@ -124,6 +131,8 @@ class EvidenceImpact:
     changed_paths: tuple[str, ...]
     rerun_checks: tuple[str, ...]
     owner_id: str | None
+    receipt_status: str | None
+    receipt_providers: tuple[str, ...]
     reasons: tuple[str, ...]
     required_action: str
 
@@ -141,6 +150,8 @@ class EvidenceImpact:
             "changed_paths": list(self.changed_paths),
             "rerun_checks": list(self.rerun_checks),
             "owner_id": self.owner_id,
+            "receipt_status": self.receipt_status,
+            "receipt_providers": list(self.receipt_providers),
             "reasons": list(self.reasons),
             "required_action": self.required_action,
         }
@@ -206,6 +217,9 @@ class ChangeImpactPlan:
                     f"  - Rerun checks: "
                     f"{', '.join(item.rerun_checks) or 'register or review manually'}",
                     f"  - Owner: {item.owner_id or 'unassigned'}",
+                    f"  - Provider receipts: "
+                    f"{item.receipt_status or 'not supplied'}"
+                    f" ({', '.join(item.receipt_providers) or 'none'})",
                     f"  - Action: {item.required_action}",
                 ]
             )
@@ -228,6 +242,7 @@ def build_change_impact_plan(
     current_revisions: Mapping[str, str],
     changed_paths: Iterable[str] = (),
     registry: Mapping[str, EvidenceRegistration] | None = None,
+    receipts: Mapping[str, Sequence[ProviderEvidenceReceipt]] | None = None,
 ) -> ChangeImpactPlan:
     """Build a conservative impact plan from manifests and safe change metadata."""
 
@@ -248,11 +263,22 @@ def build_change_impact_plan(
         for key in REQUIRED_REVISION_KEYS
         if key in revision_changes or key in path_changes
     )
+    baseline_digest = revisions_digest(baseline)
+    current_digest = revisions_digest(current)
 
     evidence: list[EvidenceImpact] = []
     for manifest in manifests:
         decision = evaluate_reauthorization(manifest, current)
         registration = registry.get(manifest.run_id) if registry is not None else None
+        receipt_items = (
+            tuple(receipts.get(manifest.run_id, ()))
+            if receipts is not None
+            else ()
+        )
+        receipt_providers = tuple(
+            sorted({receipt.provider_id for receipt in receipt_items})
+        )
+        receipt_status: str | None = None
         evidence_scope = (
             set(registration.dependency_scope)
             if registration is not None
@@ -269,18 +295,59 @@ def build_change_impact_plan(
             if set(dependencies) & set(impacted_dependencies)
         )
         impacted = bool(impacted_dependencies)
-        if decision.status == RUN_MANIFEST_STATUS_BLOCKED:
+        receipt_errors: list[str] = []
+        if receipts is not None:
+            if registration is None:
+                receipt_errors.append("evidence_registry_missing")
+            elif not receipt_items:
+                receipt_errors.append("provider_receipt_missing")
+            else:
+                if any(
+                    receipt.status != "accepted" for receipt in receipt_items
+                ):
+                    receipt_errors.append("provider_receipt_not_accepted")
+                if any(
+                    receipt.evidence_id != manifest.run_id
+                    for receipt in receipt_items
+                ):
+                    receipt_errors.append("provider_receipt_evidence_mismatch")
+                registry_digest = _digest(registration.to_dict())
+                if any(
+                    receipt.registry_entry_digest != registry_digest
+                    for receipt in receipt_items
+                ):
+                    receipt_errors.append("provider_receipt_registry_mismatch")
+                if any(
+                    receipt.revision_digest != baseline_digest
+                    for receipt in receipt_items
+                ):
+                    receipt_errors.append("provider_receipt_revision_mismatch")
+                if any(
+                    receipt.harness_revision != baseline["harness"]
+                    for receipt in receipt_items
+                ):
+                    receipt_errors.append("provider_receipt_harness_mismatch")
+        if receipt_errors:
+            status = IMPACT_BLOCKED
+            reasons = tuple(dict.fromkeys(receipt_errors))
+            action = "Regenerate or repair the provider receipt before continuing."
+            rerun_checks = registration.check_ids if registration else ()
+            owner_id = registration.owner_id if registration else None
+            receipt_status = "blocked"
+        elif decision.status == RUN_MANIFEST_STATUS_BLOCKED:
             status = IMPACT_BLOCKED
             reasons = ("existing_evidence_blocked",) + decision.reasons
             action = "Repair or replace blocked evidence before using this decision."
             rerun_checks = registration.check_ids if registration else ()
             owner_id = registration.owner_id if registration else None
+            receipt_status = "accepted" if receipt_items else None
         elif impacted and registry is not None and registration is None:
             status = IMPACT_BLOCKED
             reasons = ("evidence_registry_missing",)
             action = "Register rerun checks and dependency scope before continuing."
             rerun_checks = ()
             owner_id = None
+            receipt_status = None
         elif impacted:
             status = IMPACT_RERUN_REQUIRED
             reasons = tuple(
@@ -289,6 +356,7 @@ def build_change_impact_plan(
             )
             rerun_checks = registration.check_ids if registration else ()
             owner_id = registration.owner_id if registration else None
+            receipt_status = "accepted" if receipt_items else None
             action = (
                 "Run the listed checks and record reauthorization."
                 if rerun_checks
@@ -300,6 +368,7 @@ def build_change_impact_plan(
             action = "Existing evidence remains usable for this change set."
             rerun_checks = ()
             owner_id = registration.owner_id if registration else None
+            receipt_status = "accepted" if receipt_items else None
         evidence.append(
             EvidenceImpact(
                 evidence_id=manifest.run_id,
@@ -314,6 +383,8 @@ def build_change_impact_plan(
                 changed_paths=manifest_paths if impacted else (),
                 rerun_checks=rerun_checks,
                 owner_id=owner_id,
+                receipt_status=receipt_status,
+                receipt_providers=receipt_providers,
                 reasons=reasons,
                 required_action=action,
             )
@@ -331,8 +402,8 @@ def build_change_impact_plan(
         changed_paths=normalized_paths,
         path_classifications=classifications,
         changed_dependencies=changed_dependencies,
-        baseline_revisions_digest=_digest(baseline),
-        current_revisions_digest=_digest(current),
+        baseline_revisions_digest=baseline_digest,
+        current_revisions_digest=current_digest,
         evidence=tuple(evidence),
         status=status,
     )
@@ -347,4 +418,5 @@ __all__ = [
     "EvidenceImpact",
     "build_change_impact_plan",
     "classify_paths",
+    "revisions_digest",
 ]

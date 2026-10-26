@@ -10,6 +10,8 @@ uv run python tools/provider_evidence_receipt.py \
   --scenario-id tool-misuse \
   --evidence-id run-synthetic-001 \
   --registry examples/change-impact/evidence-registry.json \
+  --revisions examples/change-impact/baseline-revisions.json \
+  --output /tmp/provider-evidence-receipt.json \
   --markdown \
   --fail-on-refusal
 ```

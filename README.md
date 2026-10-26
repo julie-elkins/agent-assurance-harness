@@ -328,7 +328,6 @@ outside its declared scope.
 To make the run-manifest decision easy to inspect or screenshot, render the local
 before-and-after explorer:
 
-```bash
 Generate the synthetic provider receipt before rendering the page:
 
 ```bash
@@ -366,6 +365,36 @@ deployment metadata. It asks whether the evidence still supports its declared de
 it does not claim that a green result proves model quality or production safety. It
 reuses the canonical evaluator; it is not a second gate. The page is local, synthetic,
 metadata-only, and intended as a reviewer and public-demo surface.
+
+### Monitorability and Evaluator Validity Workbench
+
+The Monitorability Workbench measures the safety measurement system itself. It separates
+monitor detection from evaluator agreement and requires calibration, held-out, benign,
+and evaluation-awareness cases before producing a safety-case artifact.
+
+Monitorability means whether a monitor detects concerning behaviour. Evaluator validity
+means whether a grader or judge agrees with the declared synthetic ground truth. The
+workbench emits rates, approximate uncertainty intervals, revision validity, and a
+deliberate negative control; it does not call a model or publish traces.
+
+Run the synthetic path:
+
+```bash
+uv run python tools/monitorability_workbench.py \
+  --cases examples/monitorability/cases.json \
+  --manifest examples/run-manifest/manifest.json \
+  --current-revisions examples/run-manifest/current-revisions.json \
+  --decision-target release-agent-v1 \
+  --output /tmp/monitorability-report.json \
+  --safety-case-output /tmp/monitorability-safety-case.json \
+  --negative-control-output /tmp/monitorability-negative-control.json \
+  --fail-on-review
+```
+
+Then pass those metadata-only artifacts to the Evidence Validity Explorer with
+`--monitorability-report`, `--monitorability-negative-control`, and `--safety-case`.
+See [docs/MONITORABILITY_WORKBENCH.md](docs/MONITORABILITY_WORKBENCH.md) for the
+complete command and design limits.
 
 Run the held-out robustness matrix after the original pilot:
 

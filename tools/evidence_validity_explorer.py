@@ -60,6 +60,9 @@ class ExplorerData:
     provider_receipts: tuple[ProviderEvidenceReceipt, ...] = ()
     impact_plan: ChangeImpactPlan | None = None
     stale_impact_plan: ChangeImpactPlan | None = None
+    monitorability_report: Mapping[str, object] | None = None
+    monitorability_negative_control: Mapping[str, object] | None = None
+    safety_case: Mapping[str, object] | None = None
 
     @classmethod
     def from_inputs(
@@ -71,6 +74,9 @@ class ExplorerData:
         missing_provenance: Mapping[str, object] | None = None,
         registry: Mapping[str, EvidenceRegistration] | None = None,
         provider_receipts: Sequence[ProviderEvidenceReceipt] | None = None,
+        monitorability_report: Mapping[str, object] | None = None,
+        monitorability_negative_control: Mapping[str, object] | None = None,
+        safety_case: Mapping[str, object] | None = None,
     ) -> "ExplorerData":
         if (current_provenance is None) != (missing_provenance is None):
             raise ValueError(
@@ -133,6 +139,9 @@ class ExplorerData:
             provider_receipts=receipts,
             impact_plan=impact_plan,
             stale_impact_plan=stale_impact_plan,
+            monitorability_report=monitorability_report,
+            monitorability_negative_control=monitorability_negative_control,
+            safety_case=safety_case,
         )
 
 
@@ -199,6 +208,13 @@ def render_explorer(
             receipts=data.provider_receipts,
             impact_plan=data.impact_plan,
             stale_impact_plan=data.stale_impact_plan,
+        )
+    monitorability_story = ""
+    if data.monitorability_report is not None:
+        monitorability_story = _render_monitorability_story(
+            report=data.monitorability_report,
+            negative_control=data.monitorability_negative_control,
+            safety_case=data.safety_case,
         )
     source_fingerprint = _escape(
         hashlib.sha256(
@@ -396,6 +412,20 @@ def render_explorer(
       padding: 13px 15px;
     }}
     .negative-control strong {{ display: block; }}
+    .monitorability-metrics {{
+      display: grid;
+      gap: 10px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      margin-top: 16px;
+    }}
+    .monitorability-metric {{
+      background: var(--background);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+    }}
+    .monitorability-metric strong {{ display: block; font-size: 1.15rem; }}
+    .monitorability-metric span {{ color: var(--muted); font-size: 0.78rem; }}
     .scenario-header {{
       align-items: start;
       display: flex;
@@ -461,12 +491,14 @@ def render_explorer(
       .summary {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .scenario-grid, .limits {{ grid-template-columns: 1fr; }}
       .receipt-grid {{ grid-template-columns: 1fr; }}
+      .monitorability-metrics {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .story-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .story-step::after {{ content: ""; }}
       .panel-heading p {{ margin-top: 6px; }}
     }}
     @media (max-width: 480px) {{
       .story-grid {{ grid-template-columns: 1fr; }}
+      .monitorability-metrics {{ grid-template-columns: 1fr; }}
     }}
     @media print {{
       body {{ background: #fff; }}
@@ -503,6 +535,8 @@ def render_explorer(
     {validity_metadata}
 
     {provider_story}
+
+    {monitorability_story}
 
     <section class="panel" aria-labelledby="decision-heading">
       <div class="panel-heading">
@@ -625,6 +659,21 @@ def main(argv: list[str] | None = None) -> int:
         dest="receipts",
         help="Metadata-only provider receipt report; may be supplied more than once.",
     )
+    parser.add_argument(
+        "--monitorability-report",
+        type=Path,
+        help="Metadata-only monitorability report for the reviewer page.",
+    )
+    parser.add_argument(
+        "--monitorability-negative-control",
+        type=Path,
+        help="Optional metadata-only negative-control monitorability report.",
+    )
+    parser.add_argument(
+        "--safety-case",
+        type=Path,
+        help="Optional metadata-only safety-case artifact.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
 
@@ -651,6 +700,21 @@ def main(argv: list[str] | None = None) -> int:
             provider_receipts=(
                 _load_receipts(args.receipts)
                 if args.receipts is not None
+                else None
+            ),
+            monitorability_report=(
+                _load_object(args.monitorability_report)
+                if args.monitorability_report is not None
+                else None
+            ),
+            monitorability_negative_control=(
+                _load_object(args.monitorability_negative_control)
+                if args.monitorability_negative_control is not None
+                else None
+            ),
+            safety_case=(
+                _load_object(args.safety_case)
+                if args.safety_case is not None
                 else None
             ),
         )
@@ -785,6 +849,98 @@ def _render_provider_receipt_story(
       It proves only that the bounded metadata contract was accepted or refused.</p>
     </section>
     """
+
+
+def _render_monitorability_story(
+    *,
+    report: Mapping[str, object],
+    negative_control: Mapping[str, object] | None,
+    safety_case: Mapping[str, object] | None,
+) -> str:
+    evaluator_metrics = _mapping(report.get("evaluator_metrics"))
+    split_metrics = _mapping(report.get("split_metrics"))
+    held_out = _mapping(split_metrics.get("held_out"))
+    benign = _mapping(split_metrics.get("benign"))
+    monitor_awareness = _mapping(report.get("monitor_evaluation_awareness"))
+    safety_case_status = (
+        _escape(_mapping(safety_case).get("status"))
+        if safety_case is not None
+        else "not supplied"
+    )
+    negative_html = ""
+    if negative_control is not None:
+        negative = _mapping(negative_control)
+        negative_reasons = _render_tokens(
+            tuple(str(value) for value in _sequence(negative.get("reasons"))),
+            empty="None",
+        )
+        negative_html = f"""
+        <div class="negative-control">
+          <strong>Held-out miss negative control:
+          {_escape(negative.get("status"))}</strong>
+          The workbench deliberately removes one expected detection. Reasons:
+          {negative_reasons}
+        </div>
+        """
+    return f"""
+    <section class="panel" aria-labelledby="monitorability-heading">
+      <div class="panel-heading">
+        <h2 id="monitorability-heading">Can the safety measurement system be trusted?</h2>
+        <p>Monitorability · evaluator validity · bounded safety case</p>
+      </div>
+      <div class="scenario-header">
+        <div>
+          <p class="scenario-title">{_escape(report.get("monitor_id"))}</p>
+          <p class="scenario-caption">Report:
+          <code>{_escape(report.get("report_id"))}</code></p>
+        </div>
+        <span class="status {_status_class(str(report.get("status")))}">
+          {_escape(report.get("status"))}</span>
+      </div>
+      <div class="monitorability-metrics">
+        {_monitorability_metric("Held-out recall", _rate_value(held_out, "recall"))}
+        {_monitorability_metric("Benign false positives", _rate_value(benign, "false_positive_rate"))}
+        {_monitorability_metric("Evaluator accuracy", _rate_value(evaluator_metrics, "accuracy"))}
+        {_monitorability_metric("Awareness gap", _scalar_value(monitor_awareness, "absolute_gap"))}
+      </div>
+      <p class="story-caption">The metrics measure the monitor and evaluator against
+      synthetic labels. Intervals express uncertainty; they are not production safety
+      guarantees.</p>
+      <div class="action">
+        <strong>Safety case status</strong>
+        {_escape(safety_case_status)} · Human review remains required.
+      </div>
+      {negative_html}
+    </section>
+    """
+
+
+def _monitorability_metric(label: str, value: object) -> str:
+    return (
+        '<div class="monitorability-metric">'
+        f"<strong>{_escape(value)}</strong>"
+        f"<span>{_escape(label)}</span>"
+        "</div>"
+    )
+
+
+def _rate_value(value: Mapping[str, object], key: str) -> object:
+    metric = _mapping(value.get(key))
+    rate = metric.get("rate")
+    return "not established" if rate is None else f"{float(rate):.0%}"
+
+
+def _scalar_value(value: Mapping[str, object], key: str) -> object:
+    scalar = value.get(key)
+    return "not established" if scalar is None else f"{float(scalar):.0%}"
+
+
+def _mapping(value: object) -> Mapping[str, object]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _sequence(value: object) -> Sequence[object]:
+    return value if isinstance(value, (list, tuple)) else ()
 
 
 def _render_provenance_story(

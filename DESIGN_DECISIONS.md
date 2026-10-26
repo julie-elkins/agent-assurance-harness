@@ -241,3 +241,34 @@ without introducing a hosted service or public provider data.
 **What this does not prove:** The screenshot does not prove live OpenAI or Anthropic
 quality, production safety, or that the named checks passed. It demonstrates the
 portable metadata contract and the decision boundary around reuse.
+
+## Measure the measurement system before trusting its safety case
+
+**Decision:** Add a local-first Monitorability and Evaluator Validity Workbench to the
+existing harness. It measures monitor recall, benign false-positive rate, evaluator
+agreement, held-out performance, evaluation-awareness gaps, uncertainty intervals, and
+run-manifest reauthorization before packaging a metadata-only safety case.
+
+**Instead of:** Adding another replay engine, provider dashboard, or uncalibrated LLM
+judge that produces a safety score without testing whether the measurement system can
+detect known and held-out hazards.
+
+**Why:** A safety claim is only as useful as the monitor and evaluator supporting it.
+Separating the monitor's detection from the evaluator's agreement makes false passes,
+benign over-blocking, held-out misses, and evaluation-aware behaviour visible. Reusing
+the existing manifest and explorer keeps the new work connected to the evidence and
+reauthorization controls already in this repository.
+
+**Verification:** The synthetic fixture contains calibration, held-out, benign-control,
+and paired evaluation-awareness cases. Tests verify metric separation, uncertainty
+metadata, the held-out miss negative control, revision-triggered review, safety-case
+human review, CLI refusal, and explorer rendering.
+
+**Costs if wrong:** Thresholds and synthetic labels can create false confidence if a
+reader treats them as production limits. The report therefore labels thresholds as
+modelling assumptions, includes limitations, and always requires human review. The
+workbench does not claim live-provider quality.
+
+**What this does not prove:** Passing the workbench does not prove agent safety,
+semantic truth, monitor generalisation beyond the declared scenario pack, or deployment
+approval. Signed attestations and cryptographic producer identity remain future work.

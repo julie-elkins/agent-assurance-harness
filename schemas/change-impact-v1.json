@@ -1,0 +1,97 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/julie-elkins/agent-assurance-harness/blob/main/schemas/change-impact-v1.json",
+  "title": "Agent change-impact plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "change_impact_version",
+    "status",
+    "failed",
+    "changed_paths",
+    "path_classifications",
+    "changed_dependencies",
+    "baseline_revisions_digest",
+    "current_revisions_digest",
+    "evidence",
+    "required_action"
+  ],
+  "properties": {
+    "change_impact_version": { "const": 1 },
+    "status": {
+      "enum": ["evidence_still_valid", "rerun_required", "blocked"]
+    },
+    "failed": { "type": "boolean" },
+    "changed_paths": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "path_classifications": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string", "minLength": 1 },
+        "uniqueItems": true
+      }
+    },
+    "changed_dependencies": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "baseline_revisions_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "current_revisions_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "decision_target",
+          "status",
+          "supports_decision",
+          "changed_dependencies",
+          "changed_paths",
+          "reasons",
+          "required_action"
+        ],
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "decision_target": { "type": "string", "minLength": 1 },
+          "status": {
+            "enum": [
+              "evidence_still_valid",
+              "rerun_required",
+              "blocked"
+            ]
+          },
+          "supports_decision": { "type": "boolean" },
+          "changed_dependencies": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "changed_paths": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "reasons": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "required_action": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "required_action": { "type": "string", "minLength": 1 }
+  }
+}

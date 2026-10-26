@@ -18,14 +18,23 @@ import hashlib
 import html
 import json
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Mapping, Sequence
 
+from agent_reliability_lab.change_impact import (
+    ChangeImpactPlan,
+    build_change_impact_plan,
+)
+from agent_reliability_lab.evidence_registry import EvidenceRegistration
 from agent_reliability_lab.evidence_provenance import (
     EvidenceProvenanceDecision,
     EvidenceValidityMetadata,
     evaluate_evidence_provenance,
+)
+from agent_reliability_lab.provider_receipt import (
+    ProviderEvidenceReceipt,
+    load_provider_evidence_receipt_report,
 )
 from agent_reliability_lab.run_manifest import (
     REQUIRED_REVISION_KEYS,
@@ -48,6 +57,9 @@ class ExplorerData:
     changed_decision: ReauthorizationDecision
     current_provenance_decision: EvidenceProvenanceDecision | None = None
     missing_provenance_decision: EvidenceProvenanceDecision | None = None
+    provider_receipts: tuple[ProviderEvidenceReceipt, ...] = ()
+    impact_plan: ChangeImpactPlan | None = None
+    stale_impact_plan: ChangeImpactPlan | None = None
 
     @classmethod
     def from_inputs(
@@ -57,10 +69,16 @@ class ExplorerData:
         changed_revisions: Mapping[str, str],
         current_provenance: Mapping[str, object] | None = None,
         missing_provenance: Mapping[str, object] | None = None,
+        registry: Mapping[str, EvidenceRegistration] | None = None,
+        provider_receipts: Sequence[ProviderEvidenceReceipt] | None = None,
     ) -> "ExplorerData":
         if (current_provenance is None) != (missing_provenance is None):
             raise ValueError(
                 "current_provenance and missing_provenance must be supplied together."
+            )
+        if (registry is None) != (provider_receipts is None):
+            raise ValueError(
+                "registry and provider_receipts must be supplied together."
             )
         current = dict(current_revisions)
         changed = dict(changed_revisions)
@@ -76,6 +94,34 @@ class ExplorerData:
             if missing_provenance is not None
             else None
         )
+        receipts = tuple(provider_receipts or ())
+        impact_plan = None
+        stale_impact_plan = None
+        if registry is not None:
+            receipt_map = {manifest.run_id: receipts}
+            impact_plan = build_change_impact_plan(
+                [manifest],
+                current,
+                changed,
+                registry=registry,
+                receipts=receipt_map,
+            )
+            stale_receipts = tuple(
+                replace(
+                    receipt,
+                    revision_digest=(
+                        "sha256:" + ("b" * 64)
+                    ),
+                )
+                for receipt in receipts
+            )
+            stale_impact_plan = build_change_impact_plan(
+                [manifest],
+                current,
+                current,
+                registry=registry,
+                receipts={manifest.run_id: stale_receipts},
+            )
         return cls(
             manifest=manifest,
             current_revisions=current,
@@ -84,6 +130,9 @@ class ExplorerData:
             changed_decision=changed_decision,
             current_provenance_decision=current_provenance_decision,
             missing_provenance_decision=missing_provenance_decision,
+            provider_receipts=receipts,
+            impact_plan=impact_plan,
+            stale_impact_plan=stale_impact_plan,
         )
 
 
@@ -143,6 +192,13 @@ def render_explorer(
     ):
         validity_metadata = _render_validity_metadata(
             data.current_provenance_decision.validity_metadata
+        )
+    provider_story = ""
+    if data.impact_plan is not None and data.stale_impact_plan is not None:
+        provider_story = _render_provider_receipt_story(
+            receipts=data.provider_receipts,
+            impact_plan=data.impact_plan,
+            stale_impact_plan=data.stale_impact_plan,
         )
     source_fingerprint = _escape(
         hashlib.sha256(
@@ -309,6 +365,37 @@ def render_explorer(
     .story-status {{ margin-top: 10px; }}
     .story-action {{ color: var(--muted); font-size: 0.82rem; margin-top: 10px; }}
     .story-caption {{ color: var(--muted); font-size: 0.86rem; margin-top: 16px; }}
+    .receipt-grid {{
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }}
+    .receipt-card {{
+      background: var(--background);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 15px;
+    }}
+    .receipt-provider {{
+      align-items: center;
+      display: flex;
+      gap: 9px;
+      justify-content: space-between;
+    }}
+    .receipt-provider strong {{ font-size: 1rem; }}
+    .receipt-detail {{ color: var(--muted); font-size: 0.84rem; margin-top: 8px; }}
+    .receipt-detail code {{ overflow-wrap: anywhere; }}
+    .receipt-table {{ margin-top: 17px; }}
+    .receipt-table table {{ min-width: 650px; }}
+    .negative-control {{
+      background: var(--red-soft);
+      border: 1px solid #efc4c8;
+      border-radius: 11px;
+      color: #6f2930;
+      margin-top: 16px;
+      padding: 13px 15px;
+    }}
+    .negative-control strong {{ display: block; }}
     .scenario-header {{
       align-items: start;
       display: flex;
@@ -373,6 +460,7 @@ def render_explorer(
       .hero-status {{ margin-top: 18px; }}
       .summary {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .scenario-grid, .limits {{ grid-template-columns: 1fr; }}
+      .receipt-grid {{ grid-template-columns: 1fr; }}
       .story-grid {{ grid-template-columns: repeat(2, minmax(0, 1fr)); }}
       .story-step::after {{ content: ""; }}
       .panel-heading p {{ margin-top: 6px; }}
@@ -413,6 +501,8 @@ def render_explorer(
     {provenance_story}
 
     {validity_metadata}
+
+    {provider_story}
 
     <section class="panel" aria-labelledby="decision-heading">
       <div class="panel-heading">
@@ -523,6 +613,18 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         help="Synthetic missing-evidence negative control for the story view.",
     )
+    parser.add_argument(
+        "--registry",
+        type=Path,
+        help="Evidence registry used to render the provider rerun plan.",
+    )
+    parser.add_argument(
+        "--receipt",
+        type=Path,
+        action="append",
+        dest="receipts",
+        help="Metadata-only provider receipt report; may be supplied more than once.",
+    )
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
 
@@ -539,6 +641,16 @@ def main(argv: list[str] | None = None) -> int:
             missing_provenance=(
                 _load_object(args.missing_provenance)
                 if args.missing_provenance is not None
+                else None
+            ),
+            registry=(
+                _load_registry(args.registry)
+                if args.registry is not None
+                else None
+            ),
+            provider_receipts=(
+                _load_receipts(args.receipts)
+                if args.receipts is not None
                 else None
             ),
         )
@@ -574,6 +686,105 @@ def _load_object(path: Path | None) -> dict[str, object] | None:
     if not isinstance(value, dict):
         raise ValueError(f"{path} must contain a JSON object.")
     return value
+
+
+def _load_registry(
+    path: Path,
+) -> dict[str, EvidenceRegistration]:
+    from agent_reliability_lab.evidence_registry import load_evidence_registry
+
+    return load_evidence_registry(path)
+
+
+def _load_receipts(
+    paths: Sequence[Path],
+) -> tuple[ProviderEvidenceReceipt, ...]:
+    receipts: list[ProviderEvidenceReceipt] = []
+    for path in paths:
+        receipts.extend(load_provider_evidence_receipt_report(str(path)).receipts)
+    if not receipts:
+        raise ValueError("at least one provider receipt is required")
+    return tuple(receipts)
+
+
+def _render_provider_receipt_story(
+    *,
+    receipts: Sequence[ProviderEvidenceReceipt],
+    impact_plan: ChangeImpactPlan,
+    stale_impact_plan: ChangeImpactPlan,
+) -> str:
+    evidence = impact_plan.evidence[0]
+    stale_evidence = stale_impact_plan.evidence[0]
+    provider_cards = "".join(
+        f"""
+        <article class="receipt-card">
+          <div class="receipt-provider">
+            <strong>{_escape(receipt.provider_id)}</strong>
+            <span class="status status--reauthorized">{_escape(receipt.status)}</span>
+          </div>
+          <p class="receipt-detail">Model: <code>{_escape(receipt.model_id)}</code></p>
+          <p class="receipt-detail">Receipt: <code>{_escape(receipt.receipt_id)}</code></p>
+          <p class="receipt-detail">Events: {_escape(receipt.event_count)} ·
+          Tool calls: {_escape(receipt.tool_call_count)}</p>
+        </article>
+        """
+        for receipt in receipts
+    )
+    check_tokens = _render_tokens(evidence.rerun_checks, empty="No named checks")
+    changed_tokens = _render_tokens(
+        evidence.changed_dependencies,
+        empty="No registered dependency changed",
+    )
+    stale_reasons = _render_tokens(stale_evidence.reasons, empty="None")
+    return f"""
+    <section class="panel" aria-labelledby="provider-story-heading">
+      <div class="panel-heading">
+        <h2 id="provider-story-heading">Provider receipts become a rerun plan</h2>
+        <p>OpenAI-shaped and Anthropic-shaped synthetic adapters · one contract</p>
+      </div>
+      <p class="story-caption" style="margin-top: 0">
+        The adapters contribute bounded receipts—not provider traces. The impact planner
+        then binds those receipts to the registered evidence scope and names what must
+        be rerun when a dependency changes.
+      </p>
+      <div class="receipt-grid" style="margin-top: 16px">
+        {provider_cards}
+      </div>
+      <div class="receipt-table">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Decision</th>
+              <th scope="col">Status</th>
+              <th scope="col">Changed dependencies</th>
+              <th scope="col">Owner</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row"><code>{_escape(evidence.evidence_id)}</code></th>
+              <td><span class="status {_status_class(evidence.status)}">
+                {_escape(evidence.status)}</span></td>
+              <td>{changed_tokens}</td>
+              <td>{_escape(evidence.owner_id or "unassigned")}</td>
+              <td>{_escape(evidence.required_action)}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h3 style="margin-top: 20px">Named checks to rerun</h3>
+      {check_tokens}
+      <div class="negative-control">
+        <strong>Stale receipt negative control: {_escape(stale_evidence.status)}</strong>
+        A receipt bound to the wrong revision digest is blocked before it can support
+        reuse. Reason codes:
+        {stale_reasons}
+      </div>
+      <p class="story-caption">The receipt status is not a model-quality score.
+      It proves only that the bounded metadata contract was accepted or refused.</p>
+    </section>
+    """
 
 
 def _render_provenance_story(

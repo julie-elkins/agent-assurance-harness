@@ -1,0 +1,20 @@
+{
+  "evidence_registry_version": 1,
+  "entries": [
+    {
+      "evidence_id": "run-synthetic-001",
+      "decision_target": "release-agent-v1",
+      "dependency_scope": [
+        "policy",
+        "tools",
+        "grader"
+      ],
+      "check_ids": [
+        "authorization-negative-controls",
+        "tool-safety-regression",
+        "evidence-completeness-gate"
+      ],
+      "owner_id": "assurance-team"
+    }
+  ]
+}

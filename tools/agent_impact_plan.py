@@ -12,6 +12,7 @@ from agent_reliability_lab.change_impact import (
     IMPACT_READY,
     build_change_impact_plan,
 )
+from agent_reliability_lab.evidence_registry import load_evidence_registry
 from agent_reliability_lab.run_manifest import (
     RunManifestValidationError,
     load_current_revisions,
@@ -38,6 +39,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--baseline-revisions", type=Path, required=True)
     parser.add_argument("--current-revisions", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, action="append", required=True)
+    parser.add_argument(
+        "--registry",
+        type=Path,
+        help="Optional metadata-only evidence registry for selective rerun checks.",
+    )
     parser.add_argument("--changed-path", action="append", default=[])
     parser.add_argument("--git-diff-base")
     parser.add_argument("--git-diff-head", default="HEAD")
@@ -61,6 +67,7 @@ def main(argv: list[str] | None = None) -> int:
             load_current_revisions(str(args.baseline_revisions)),
             load_current_revisions(str(args.current_revisions)),
             paths,
+            load_evidence_registry(args.registry) if args.registry else None,
         )
         data = plan.to_dict()
         serialized = (

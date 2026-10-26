@@ -131,3 +131,28 @@ reuse invalid evidence.
 **What this does not prove:** The plan does not prove model quality, semantic truth,
 production safety, or that every affected test has been listed. It is a change-impact
 gate and rerun planner, not an automatic release approval.
+
+## Use a named evidence registry instead of executable rerun commands
+
+**Decision:** Extend the change-impact plan with a registry that declares each
+evidence scope, its dependency categories, named rerun check IDs, and an owner.
+
+**Instead of:** Storing shell commands in public metadata and executing whatever a
+registry author supplies.
+
+**Why:** Engineers need an actionable answer after a change, but a public registry
+must not become an unreviewed command-execution surface. Check IDs keep the plan
+portable and let a trusted local or CI workflow map them to approved commands.
+
+**Verification:** Strict registry loading rejects unsupported fields, duplicate
+entries, unknown dependencies, whitespace-bearing identifiers, and check values that
+do not match the lowercase identifier format. An affected evidence item without a
+registry entry becomes `blocked`.
+
+**Costs if wrong:** The first release stops at a named rerun plan, so teams must
+connect check IDs to their own trusted workflow. That is slower than executing
+commands immediately but preserves reviewability and avoids arbitrary execution.
+
+**What this does not prove:** A registered check ID does not prove that the check ran
+or passed. The trusted workflow must record the resulting evidence and reauthorization
+separately.

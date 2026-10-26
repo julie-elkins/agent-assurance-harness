@@ -9,8 +9,9 @@ turns that risk into a reviewable plan:
 1. compare declared baseline and current revisions;
 2. classify optional repository paths into the same dependency vocabulary;
 3. evaluate each existing run manifest;
-4. report the smallest affected evidence set;
-5. fail when evidence is blocked or requires reauthorization.
+4. use the evidence registry to identify named checks and an owner;
+5. report the smallest affected evidence set;
+6. fail when evidence is blocked or requires reauthorization.
 
 The engine is deliberately conservative. A conservative classification may require a
 rerun that turns out not to be necessary; a permissive classification can let stale
@@ -26,6 +27,17 @@ release decision.
 The first release accepts safe revision identifiers and repository paths. It does
 not parse raw traces, prompts, tool arguments, provider responses, or credentials.
 
+## Evidence registry
+
+The evidence registry is the bridge from “this evidence is affected” to “these
+trusted checks should be rerun.” Each entry declares a dependency scope, named check
+IDs, and an owner. Check IDs are labels only; this repository never executes
+registry-provided commands.
+
+An affected manifest without a registry entry is `blocked`, because the engine
+cannot honestly claim to know what should be rerun. An evidence entry whose scope
+does not include the changed dependency remains usable.
+
 ## Run the synthetic example
 
 ```bash
@@ -33,6 +45,7 @@ uv run python tools/agent_impact_plan.py \
   --baseline-revisions examples/change-impact/baseline-revisions.json \
   --current-revisions examples/change-impact/current-revisions.json \
   --manifest examples/run-manifest/manifest.json \
+  --registry examples/change-impact/evidence-registry.json \
   --changed-path policies/release-policy.json \
   --markdown \
   --fail-on-rerun

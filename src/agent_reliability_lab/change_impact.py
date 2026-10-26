@@ -12,6 +12,7 @@ import json
 from dataclasses import dataclass
 from typing import Iterable, Mapping, Sequence
 
+from .evidence_registry import EvidenceRegistration
 from .run_manifest import (
     REQUIRED_REVISION_KEYS,
     RUN_MANIFEST_STATUS_BLOCKED,
@@ -121,6 +122,8 @@ class EvidenceImpact:
     status: str
     changed_dependencies: tuple[str, ...]
     changed_paths: tuple[str, ...]
+    rerun_checks: tuple[str, ...]
+    owner_id: str | None
     reasons: tuple[str, ...]
     required_action: str
 
@@ -136,6 +139,8 @@ class EvidenceImpact:
             "supports_decision": self.status == IMPACT_READY,
             "changed_dependencies": list(self.changed_dependencies),
             "changed_paths": list(self.changed_paths),
+            "rerun_checks": list(self.rerun_checks),
+            "owner_id": self.owner_id,
             "reasons": list(self.reasons),
             "required_action": self.required_action,
         }
@@ -198,6 +203,9 @@ class ChangeImpactPlan:
                     f"({item.decision_target})",
                     f"  - Changed dependencies: "
                     f"{', '.join(item.changed_dependencies) or 'none'}",
+                    f"  - Rerun checks: "
+                    f"{', '.join(item.rerun_checks) or 'register or review manually'}",
+                    f"  - Owner: {item.owner_id or 'unassigned'}",
                     f"  - Action: {item.required_action}",
                 ]
             )
@@ -219,6 +227,7 @@ def build_change_impact_plan(
     baseline_revisions: Mapping[str, str],
     current_revisions: Mapping[str, str],
     changed_paths: Iterable[str] = (),
+    registry: Mapping[str, EvidenceRegistration] | None = None,
 ) -> ChangeImpactPlan:
     """Build a conservative impact plan from manifests and safe change metadata."""
 
@@ -243,28 +252,54 @@ def build_change_impact_plan(
     evidence: list[EvidenceImpact] = []
     for manifest in manifests:
         decision = evaluate_reauthorization(manifest, current)
+        registration = registry.get(manifest.run_id) if registry is not None else None
+        evidence_scope = (
+            set(registration.dependency_scope)
+            if registration is not None
+            else set(REQUIRED_REVISION_KEYS)
+        )
+        impacted_dependencies = tuple(
+            dependency
+            for dependency in changed_dependencies
+            if dependency in evidence_scope
+        )
         manifest_paths = tuple(
             path
             for path, dependencies in classifications.items()
-            if set(dependencies) & set(changed_dependencies)
+            if set(dependencies) & set(impacted_dependencies)
         )
-        impacted = bool(set(manifest.revisions) & set(changed_dependencies))
+        impacted = bool(impacted_dependencies)
         if decision.status == RUN_MANIFEST_STATUS_BLOCKED:
             status = IMPACT_BLOCKED
             reasons = ("existing_evidence_blocked",) + decision.reasons
             action = "Repair or replace blocked evidence before using this decision."
+            rerun_checks = registration.check_ids if registration else ()
+            owner_id = registration.owner_id if registration else None
+        elif impacted and registry is not None and registration is None:
+            status = IMPACT_BLOCKED
+            reasons = ("evidence_registry_missing",)
+            action = "Register rerun checks and dependency scope before continuing."
+            rerun_checks = ()
+            owner_id = None
         elif impacted:
             status = IMPACT_RERUN_REQUIRED
             reasons = tuple(
                 f"changed_dependency:{dependency}"
-                for dependency in changed_dependencies
-                if dependency in changed_dependencies
+                for dependency in impacted_dependencies
             )
-            action = "Rerun the affected evidence scope and record reauthorization."
+            rerun_checks = registration.check_ids if registration else ()
+            owner_id = registration.owner_id if registration else None
+            action = (
+                "Run the listed checks and record reauthorization."
+                if rerun_checks
+                else "Rerun the affected evidence scope and record reauthorization."
+            )
         else:
             status = IMPACT_READY
             reasons = ()
             action = "Existing evidence remains usable for this change set."
+            rerun_checks = ()
+            owner_id = registration.owner_id if registration else None
         evidence.append(
             EvidenceImpact(
                 evidence_id=manifest.run_id,
@@ -272,12 +307,13 @@ def build_change_impact_plan(
                 status=status,
                 changed_dependencies=tuple(
                     dependency
-                    for dependency in changed_dependencies
-                    if dependency in set(manifest.revisions)
+                    for dependency in impacted_dependencies
                 )
                 if impacted
                 else (),
                 changed_paths=manifest_paths if impacted else (),
+                rerun_checks=rerun_checks,
+                owner_id=owner_id,
                 reasons=reasons,
                 required_action=action,
             )

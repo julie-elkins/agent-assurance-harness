@@ -29,6 +29,7 @@ jobs:
           --baseline-revisions examples/change-impact/baseline-revisions.json
           --current-revisions examples/change-impact/current-revisions.json
           --manifest examples/run-manifest/manifest.json
+          --registry examples/change-impact/evidence-registry.json
           --changed-path policies/release-policy.json
           --markdown
           --fail-on-rerun

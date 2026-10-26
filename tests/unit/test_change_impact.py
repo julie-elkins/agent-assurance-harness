@@ -8,6 +8,9 @@ from agent_reliability_lab.change_impact import (
     build_change_impact_plan,
     classify_paths,
 )
+from agent_reliability_lab.evidence_registry import (
+    EvidenceRegistration,
+)
 from agent_reliability_lab.run_manifest import (
     REQUIRED_REVISION_KEYS,
     RunManifest,
@@ -95,3 +98,61 @@ def test_existing_blocked_evidence_stays_blocked():
 
     assert plan.status == IMPACT_BLOCKED
     assert plan.evidence[0].status == IMPACT_BLOCKED
+
+
+def test_registry_scopes_rerun_to_registered_dependencies():
+    registry = {
+        "run-synthetic-001": EvidenceRegistration(
+            evidence_id="run-synthetic-001",
+            decision_target="release-agent-v1",
+            dependency_scope=("policy",),
+            check_ids=("authorization-negative-controls",),
+            owner_id="assurance-team",
+        )
+    }
+    plan = build_change_impact_plan(
+        [_manifest()],
+        _revisions(),
+        _revisions(tools="tools-r2"),
+        registry=registry,
+    )
+
+    assert plan.status == IMPACT_READY
+    assert plan.evidence[0].rerun_checks == ()
+
+
+def test_registry_adds_named_checks_for_affected_evidence():
+    registry = {
+        "run-synthetic-001": EvidenceRegistration(
+            evidence_id="run-synthetic-001",
+            decision_target="release-agent-v1",
+            dependency_scope=("policy", "tools"),
+            check_ids=("authorization-negative-controls", "tool-safety-regression"),
+            owner_id="assurance-team",
+        )
+    }
+    plan = build_change_impact_plan(
+        [_manifest()],
+        _revisions(),
+        _revisions(policy="policy-r2"),
+        registry=registry,
+    )
+
+    assert plan.status == IMPACT_RERUN_REQUIRED
+    assert plan.evidence[0].rerun_checks == (
+        "authorization-negative-controls",
+        "tool-safety-regression",
+    )
+    assert plan.evidence[0].owner_id == "assurance-team"
+
+
+def test_affected_evidence_without_registry_entry_is_blocked():
+    plan = build_change_impact_plan(
+        [_manifest()],
+        _revisions(),
+        _revisions(policy="policy-r2"),
+        registry={},
+    )
+
+    assert plan.status == IMPACT_BLOCKED
+    assert plan.evidence[0].reasons == ("evidence_registry_missing",)

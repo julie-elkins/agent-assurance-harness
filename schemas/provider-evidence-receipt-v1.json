@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/julie-elkins/agent-assurance-harness/blob/main/schemas/provider-evidence-receipt-v1.json",
+  "title": "Provider evidence receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "provider_receipt_version",
+    "passed",
+    "receipts",
+    "diagnostics"
+  ],
+  "properties": {
+    "provider_receipt_version": { "const": 1 },
+    "passed": { "type": "boolean" },
+    "receipts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "provider_receipt_version",
+          "receipt_id",
+          "evidence_id",
+          "decision_target",
+          "provider_id",
+          "model_id",
+          "agent_id",
+          "scenario_id",
+          "harness_revision",
+          "status",
+          "registry_entry_digest",
+          "dependency_scope",
+          "rerun_check_ids",
+          "owner_id",
+          "event_count",
+          "event_type_counts",
+          "tool_call_count",
+          "evidence_id_count",
+          "transport_status",
+          "semantic_outcome",
+          "usage",
+          "refusal_code",
+          "receipt_digest"
+        ],
+        "properties": {
+          "provider_receipt_version": { "const": 1 },
+          "receipt_id": { "type": "string", "minLength": 1 },
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "decision_target": { "type": "string", "minLength": 1 },
+          "provider_id": { "enum": ["openai", "anthropic"] },
+          "model_id": { "type": "string", "minLength": 1 },
+          "agent_id": { "type": "string", "minLength": 1 },
+          "scenario_id": { "type": "string", "minLength": 1 },
+          "harness_revision": { "type": "string", "minLength": 1 },
+          "status": { "enum": ["accepted", "refused", "blocked"] },
+          "registry_entry_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
+          "dependency_scope": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "rerun_check_ids": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "pattern": "^[a-z0-9][a-z0-9._-]*$"
+            }
+          },
+          "owner_id": { "type": "string", "minLength": 1 },
+          "event_count": { "type": "integer", "minimum": 0 },
+          "event_type_counts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "tool_call_count": { "type": "integer", "minimum": 0 },
+          "evidence_id_count": { "type": "integer", "minimum": 0 },
+          "transport_status": { "type": ["string", "null"] },
+          "semantic_outcome": { "type": ["string", "null"] },
+          "usage": {
+            "type": ["object", "null"],
+            "additionalProperties": false,
+            "required": ["usage", "limits", "within_limits"],
+            "properties": {
+              "usage": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "requests",
+                  "output_tokens",
+                  "elapsed_seconds",
+                  "estimated_cost_usd"
+                ],
+                "properties": {
+                  "requests": { "type": "integer", "minimum": 0 },
+                  "output_tokens": { "type": "integer", "minimum": 0 },
+                  "elapsed_seconds": { "type": "number", "minimum": 0 },
+                  "estimated_cost_usd": { "type": "number", "minimum": 0 }
+                }
+              },
+              "limits": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "max_requests",
+                  "max_output_tokens",
+                  "max_elapsed_seconds",
+                  "max_estimated_cost_usd"
+                ],
+                "properties": {
+                  "max_requests": { "type": "integer", "minimum": 1 },
+                  "max_output_tokens": { "type": "integer", "minimum": 1 },
+                  "max_elapsed_seconds": { "type": "number", "exclusiveMinimum": 0 },
+                  "max_estimated_cost_usd": { "type": "number", "exclusiveMinimum": 0 }
+                }
+              },
+              "within_limits": { "type": "boolean" }
+            }
+          },
+          "refusal_code": { "type": ["string", "null"] },
+          "receipt_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["network", "data_boundary", "what_it_does_not_show"],
+      "properties": {
+        "network": { "const": "disabled" },
+        "data_boundary": { "const": "metadata_only" },
+        "what_it_does_not_show": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

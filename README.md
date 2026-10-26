@@ -187,6 +187,12 @@ evidence result to named checks and an owner. It stores check IDs, not shell com
 so the plan can guide a trusted workflow without becoming an unreviewed execution
 surface.
 
+The [provider evidence receipt](docs/PROVIDER_EVIDENCE_RECEIPT.md) connects the
+existing OpenAI- and Anthropic-shaped adapters to that registry. It records which
+provider-shaped run produced the metadata, which evidence ID it supports, what
+checks would be rerun after a relevant change, and bounded usage/status metadata.
+It does not export provider content.
+
 The reusable GitHub Action accepts the same contract through optional
 `run-manifest` and `current-revisions` inputs. When both are supplied, a changed
 revision blocks the action with `reauthorization_required`; omitting both preserves

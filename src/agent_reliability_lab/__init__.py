@@ -108,6 +108,16 @@ from .evidence_registry import (
     EvidenceRegistration,
     load_evidence_registry,
 )
+from .provider_receipt import (
+    PROVIDER_RECEIPT_VERSION,
+    RECEIPT_ACCEPTED,
+    RECEIPT_BLOCKED,
+    RECEIPT_REFUSED,
+    ProviderEvidenceReceipt,
+    ProviderEvidenceReceiptReport,
+    build_provider_evidence_receipt,
+    build_provider_evidence_report,
+)
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
 from .benchmark import SyntheticBenchmarkReport, run_synthetic_benchmark
@@ -754,6 +764,14 @@ __all__ = [
     "EVIDENCE_REGISTRY_VERSION",
     "EvidenceRegistration",
     "load_evidence_registry",
+    "PROVIDER_RECEIPT_VERSION",
+    "RECEIPT_ACCEPTED",
+    "RECEIPT_BLOCKED",
+    "RECEIPT_REFUSED",
+    "ProviderEvidenceReceipt",
+    "ProviderEvidenceReceiptReport",
+    "build_provider_evidence_receipt",
+    "build_provider_evidence_report",
     "load_otlp_file",
     "otlp_to_replay",
     "RegressionFinding",

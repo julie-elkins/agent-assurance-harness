@@ -329,24 +329,43 @@ To make the run-manifest decision easy to inspect or screenshot, render the loca
 before-and-after explorer:
 
 ```bash
+Generate the synthetic provider receipt before rendering the page:
+
+```bash
+uv run python tools/provider_evidence_receipt.py \
+  --provider all \
+  --evidence-id run-synthetic-001 \
+  --registry examples/change-impact/evidence-registry.json \
+  --revisions examples/run-manifest/current-revisions.json \
+  --output /tmp/agent-provider-evidence-receipt.json \
+  --fail-on-refusal
+```
+
+Then render the explorer:
+
+```bash
 uv run python tools/evidence_validity_explorer.py \
   --manifest examples/run-manifest/manifest.json \
   --current-revisions examples/run-manifest/current-revisions.json \
-  --changed-revisions examples/run-manifest/changed-revisions.json \
+  --changed-revisions examples/change-impact/current-revisions.json \
   --provenance examples/run-manifest/evidence-provenance.json \
   --missing-provenance examples/run-manifest/evidence-provenance-missing.json \
+  --registry examples/change-impact/evidence-registry.json \
+  --receipt /tmp/agent-provider-evidence-receipt.json \
   --output /tmp/agent-evidence-validity-explorer.html
 ```
 
 The page shows the current `reauthorized` result beside the changed-revision
 `reauthorization_required` result, then shows the missing-evidence negative control.
 The four-step story makes the sequence visible: evidence observed, revision changed,
-reuse requires review, and missing evidence blocks reuse. It also surfaces bounded
-receipt, grader-validity, and synthetic deployment metadata. It asks whether the
-evidence still supports its declared decision; it does not claim that a green result
-proves model quality or production safety. It reuses the canonical evaluator; it is not
-a second gate. The page is local, synthetic, metadata-only, and intended as a reviewer
-and public-demo surface.
+reuse requires review, and missing evidence blocks reuse. The provider lane adds the
+portable OpenAI-shaped and Anthropic-shaped receipts, the named rerun checks, the owner,
+the `rerun_required` result after a policy revision, and a stale-receipt negative control
+that becomes `blocked`. It also surfaces bounded receipt, grader-validity, and synthetic
+deployment metadata. It asks whether the evidence still supports its declared decision;
+it does not claim that a green result proves model quality or production safety. It
+reuses the canonical evaluator; it is not a second gate. The page is local, synthetic,
+metadata-only, and intended as a reviewer and public-demo surface.
 
 Run the held-out robustness matrix after the original pilot:
 

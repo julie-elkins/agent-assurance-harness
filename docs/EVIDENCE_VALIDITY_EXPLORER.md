@@ -22,21 +22,40 @@ payloads, provider output, or private paths.
 From the repository root:
 
 ```bash
+Generate the synthetic provider receipt first:
+
+```bash
+uv run python tools/provider_evidence_receipt.py \
+  --provider all \
+  --evidence-id run-synthetic-001 \
+  --registry examples/change-impact/evidence-registry.json \
+  --revisions examples/run-manifest/current-revisions.json \
+  --output /tmp/agent-provider-evidence-receipt.json \
+  --fail-on-refusal
+```
+
+Then render the explorer:
+
+```bash
 uv run python tools/evidence_validity_explorer.py \
   --manifest examples/run-manifest/manifest.json \
   --current-revisions examples/run-manifest/current-revisions.json \
-  --changed-revisions examples/run-manifest/changed-revisions.json \
+  --changed-revisions examples/change-impact/current-revisions.json \
   --provenance examples/run-manifest/evidence-provenance.json \
   --missing-provenance examples/run-manifest/evidence-provenance-missing.json \
+  --registry examples/change-impact/evidence-registry.json \
+  --receipt /tmp/agent-provider-evidence-receipt.json \
   --output /tmp/agent-evidence-validity-explorer.html
 ```
 
 Open `/tmp/agent-evidence-validity-explorer.html` in a browser. For a shareable
-demonstration, use the four-step assurance story or take one screenshot that includes
-the observed, changed, reauthorization-required, and missing-evidence states. The page
-also shows the safe receipt, grader-validity, and synthetic deployment metadata. It is
-self-contained and has no external JavaScript, CSS, image, authentication, or telemetry
-dependency.
+demonstration, use the four-step assurance story and provider receipt lane or take one
+screenshot that includes the observed, changed, reauthorization-required, and
+missing-evidence states. The provider lane also shows accepted OpenAI and Anthropic
+receipts, the named checks and owner, the policy-change `rerun_required` decision, and a
+stale-receipt negative control that is blocked before reuse. The page also shows the
+safe receipt, grader-validity, and synthetic deployment metadata. It is self-contained
+and has no external JavaScript, CSS, image, authentication, or telemetry dependency.
 
 ## What a reviewer can see
 
@@ -46,6 +65,8 @@ dependency.
 - repeat count, bounded request budget, and evidence expiration;
 - the required action after a revision change; and
 - the four-step story from observed evidence to blocked reuse; and
+- the accepted provider receipts, named rerun checks, owner, and impact decision;
+- the deliberately stale receipt that is blocked by a revision mismatch; and
 - receipt, grader-validity, and synthetic deployment-context identifiers;
 - the boundary between what the manifest decision proves and what it does not prove.
 

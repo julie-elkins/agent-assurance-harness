@@ -210,3 +210,34 @@ but prevents a newer result from being misrepresented as evidence for an older s
 **What this does not prove:** Receipt validation does not prove that the registered
 checks passed or that a provider's live output was high quality. It only proves the
 metadata binding required before the next assurance decision.
+
+## Make the public explorer show the complete receipt-to-rerun path
+
+**Decision:** Extend the local Evidence Validity Explorer with an optional provider
+receipt lane that shows accepted OpenAI- and Anthropic-shaped receipts, the impact
+planner's `rerun_required` decision after a revision change, named rerun checks and
+owner, plus a deliberately stale receipt that is blocked.
+
+**Instead of:** Publishing another provider dashboard or showing a provider response
+transcript that would be difficult to compare, unsafe to publish, and disconnected
+from the canonical change-impact decision.
+
+**Why:** A reviewer should be able to see the whole control in one screenshot:
+portable metadata is accepted, a dependency changes, the planner names the work, and
+stale evidence cannot be reused. The explorer remains a presentation layer over the
+same evaluator and impact planner, so the visual demo cannot silently invent a second
+decision rule.
+
+**Verification:** The integration test generates both mocked provider receipts, renders
+the page with a policy revision, checks for `rerun_required`, named checks, and owner,
+and verifies the revision-mismatch negative control is `blocked`. The rendered page
+contains identifiers and statuses only.
+
+**Costs if wrong:** The page becomes denser and may require a larger screenshot, while
+the static demo still covers one synthetic evidence item rather than a fleet. That
+tradeoff is accepted because the added context makes the core contribution legible
+without introducing a hosted service or public provider data.
+
+**What this does not prove:** The screenshot does not prove live OpenAI or Anthropic
+quality, production safety, or that the named checks passed. It demonstrates the
+portable metadata contract and the decision boundary around reuse.

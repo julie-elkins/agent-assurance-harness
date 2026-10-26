@@ -35,6 +35,12 @@ The portfolio assurance report joins the independent public assurance lanes into
 metadata-only reviewer handoff. It blocks when a lane is missing or unavailable and
 keeps human review, release approval, and instructor sign-off outside automation.
 
+The bounded synthetic memory-policy lane is a required safety path within that handoff.
+It tests whether optional history can be trimmed while authorization, retry, source,
+and long-running evidence remain available. Required evidence loss is blocking; relative
+cost and latency are reported separately and never compensate for a safety failure.
+The lane is offline and metadata-only, so it does not prove live provider cache savings.
+
 When a caller supplies a checked-out public Claude course, the portfolio report may add
 an opt-in local lane. That lane preserves evidence tiers and safe claim locations only;
 the course text, quotes, source bytes, and local checkout path stay in-process.

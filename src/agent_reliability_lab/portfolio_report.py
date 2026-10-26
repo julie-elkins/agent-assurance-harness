@@ -24,13 +24,15 @@ from .claude_course_adapter import (
 from .course_doctor import run_reference_course_doctor_suite
 from .enablement_pack import run_reference_launch_to_field_suite
 from .instructor_calibration import run_reference_instructor_calibration_suite
+from .memory_policy import run_reference_memory_policy_suite
 from .public_course_review import build_public_course_review_packet
 from .runner import run_comparison
 
 
-PORTFOLIO_ASSURANCE_VERSION = 2
+PORTFOLIO_ASSURANCE_VERSION = 3
 REQUIRED_LANES = (
     "agent_assurance",
+    "agent_memory_policy",
     "course_doctor",
     "launch_to_field",
     "instructor_calibration",
@@ -306,6 +308,7 @@ def run_reference_portfolio_report(
     intermediate.mkdir(parents=True, exist_ok=True)
     workers: dict[str, Callable[[], PortfolioLaneResult]] = {
         "agent_assurance": _run_agent_assurance_lane,
+        "agent_memory_policy": _run_agent_memory_policy_lane,
         "course_doctor": lambda: _run_course_doctor_lane(
             intermediate / "course-doctor"
         ),
@@ -476,6 +479,54 @@ def _run_agent_assurance_lane() -> PortfolioLaneResult:
             f"mutation_controls:{len(mutation_controls)}",
         ),
         human_gate="CI and human merge approval remain required.",
+    )
+
+
+def _run_agent_memory_policy_lane() -> PortfolioLaneResult:
+    suite = run_reference_memory_policy_suite()
+    degraded = tuple(
+        control
+        for control in suite.controls_caught
+        if control != "memory-policy-guarded-safe"
+    )
+    guarded = next(
+        policy
+        for policy in suite.policies
+        if policy.policy_id == "bounded-guarded-memory"
+    )
+    baseline = next(
+        policy
+        for policy in suite.policies
+        if policy.policy_id == "retain-all-baseline"
+    )
+    return PortfolioLaneResult(
+        lane_id="agent_memory_policy",
+        title="Bounded synthetic agent memory policy",
+        status=(
+            PortfolioLaneStatus.PASSED
+            if suite.passed
+            else PortfolioLaneStatus.BLOCKED
+        ),
+        controls_caught=suite.controls_caught,
+        controls_missed=suite.controls_missed,
+        degraded_controls_caught=degraded,
+        evidence_ids=(
+            f"case_count:{suite.case_count}",
+            f"pack_fingerprint:{suite.pack_fingerprint}",
+            f"guarded_cost_units:{guarded.total_cost_units}",
+            f"guarded_latency_units:{guarded.total_latency_units}",
+        ),
+        human_gate=(
+            "Implementation-specific review remains required before relying "
+            "on memory trimming in production."
+        ),
+        summary={
+            "baseline_cost_units": baseline.total_cost_units,
+            "baseline_latency_units": baseline.total_latency_units,
+            "guarded_cost_units": guarded.total_cost_units,
+            "guarded_latency_units": guarded.total_latency_units,
+            "negative_control_caught": suite.negative_control["caught"],
+        },
     )
 
 

@@ -274,6 +274,14 @@ jobs:
           --fail-on-findings
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run bounded synthetic agent memory policy gate
+        run: >-
+          uv run python tools/agent_memory_policy_report.py
+          --output /tmp/agent-reliability-memory-policy.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run portfolio assurance gate
         run: >-
           uv run python tools/portfolio_assurance_report.py
@@ -365,6 +373,7 @@ jobs:
             /tmp/agent-reliability-course-doctor/
             /tmp/agent-reliability-launch-to-field.json
             /tmp/agent-reliability-instructor-calibration.json
+            /tmp/agent-reliability-memory-policy.json
             /tmp/agent-reliability-portfolio.json
             /tmp/agent-reliability-portfolio/
             /tmp/agent-reliability-consumer-validation.json

@@ -20,6 +20,7 @@ def test_guide_exists_and_local_references_are_present():
     assert "How this helps ship production code" in guide
     assert "launch-to-field" in guide
     assert "Instructor calibration" in guide
+    assert "Bounded synthetic agent-memory policy" in guide
     assert "```mermaid" in guide
     assert "Candidate merge blocked" in guide
     build_guide = BUILD_GUIDE.read_text(encoding="utf-8")
@@ -40,6 +41,7 @@ def test_guide_exists_and_local_references_are_present():
     assert "Requirement-to-evidence map" in role_guide
     assert "tools/launch_to_field_report.py" in role_guide
     assert "tools/instructor_calibration_report.py" in role_guide
+    assert "tools/agent_memory_policy_report.py" in role_guide
     assert "tools/portfolio_assurance_report.py" in role_guide
     assert "--course-root" in role_guide
     assert "Instructor calibration" in showcase

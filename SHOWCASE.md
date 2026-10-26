@@ -3,7 +3,7 @@
 This is the fastest way for an outside reviewer to see what the project does and why
 the controls matter.
 
-The showcase has six related lanes:
+The showcase has seven related lanes:
 
 1. An offline synthetic lane for repeatable CI (continuous integration, the automated
    checks that run before a change can merge).
@@ -17,10 +17,12 @@ The showcase has six related lanes:
    reviewer handoff.
 6. A developer-workflow lane for proving that a plausible green coding-agent result
    still needs the required verification evidence.
+7. A bounded synthetic memory-policy lane for proving that efficiency-oriented context
+   trimming does not discard evidence required for safe continuation.
 
-The first lane is the required proof. The second lane is the practical demonstration.
-Keeping them separate prevents a changing course repository or a network outage from
-turning the required gate into an external-state test.
+The offline synthetic lanes are the required proof. The public-course lane is the
+practical demonstration. Keeping them separate prevents a changing course repository
+or a network outage from turning the required gate into an external-state test.
 
 ## One-command offline showcase
 
@@ -32,8 +34,9 @@ uv run python tools/showcase_demo.py --markdown
 ```
 
 The command runs the guarded synthetic agent, evaluator false-pass controls, mutation
-controls, one Course Doctor review packet, the launch-to-field enablement pack, and
-the instructor-calibration rubric. A mutation control is a deliberately changed
+controls, one Course Doctor review packet, the launch-to-field enablement pack, the
+instructor-calibration rubric, and the bounded synthetic memory-policy lane. A mutation
+control is a deliberately changed
 synthetic result used to prove that the evaluator catches a known failure.
 
 The output contains identifiers, statuses, counts, and hashes only. It does not contain
@@ -78,6 +81,38 @@ metadata; the Markdown output uses plain-language labels and shortened detail.
 
 The ready pack still requires human approval before publication. Its degraded controls
 demonstrate stale, wrong-source, unsupported-claim, and incomplete-pack behavior.
+
+## Bounded synthetic agent memory policy
+
+Run the lane directly when reviewing the safety boundary:
+
+```bash
+uv run python tools/agent_memory_policy_report.py \
+  --output /tmp/agent-reliability-memory-policy.json \
+  --markdown \
+  --fail-on-findings
+```
+
+Expected summary:
+
+```text
+# Bounded Synthetic Agent Memory Policy
+
+Decision: `PASS`
+
+Cases checked: `4`
+
+| Policy | Result | Cost units | Latency units |
+| --- | --- | ---: | ---: |
+| `retain-all-baseline` | `PASS` | `510` | `113` |
+| `bounded-guarded-memory` | `PASS` | `470` | `101` |
+| `naive-forget-old-negative-control` | `BLOCKED` | `440` | `92` |
+```
+
+The blocked policy is expected: it forgets required evidence and continues instead of
+refusing. The guarded policy's lower relative cost and latency are observations, not
+proof of live provider savings or permission to trade away authorization, retry, source,
+or long-running evidence.
 
 ## Portfolio dashboard
 
@@ -245,6 +280,7 @@ Decision: `ready_for_human_review`
 | Lane | Status | Degraded controls | Human gate |
 | --- | --- | ---: | --- |
 | `agent_assurance` | `passed` | `4` | CI and human merge approval remain required. |
+| `agent_memory_policy` | `passed` | `2` | Implementation-specific review remains required before relying on memory trimming in production. |
 | `course_doctor` | `passed` | `4` | Human adjudication remains required before content changes. |
 | `launch_to_field` | `passed` | `4` | Human approval remains required before publication. |
 | `instructor_calibration` | `passed` | `4` | Qualified observer sign-off remains required. |

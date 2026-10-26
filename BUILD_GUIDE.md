@@ -108,6 +108,7 @@ The current progression is intentionally operational:
 | 45 | Python static security analysis | Whether CodeQL inspects the Python source for code-level security weaknesses |
 | 46 | Review ownership readiness | Whether sensitive paths have review routing without overstating solo-maintainer independence |
 | 47 | Public supply-chain evidence | Whether OpenSSF Scorecard publishes a repeatable supply-chain assessment |
+| 48 | Bounded synthetic agent-memory policy | Whether optional history can be trimmed without losing required evidence, crossing workflow boundaries, or hiding cost and latency observations |
 
 The phases are not claims that these are the only production failures. They are a growing
 set of concrete controls with explicit limits.
@@ -806,11 +807,12 @@ certification decision.
 
 ### Portfolio assurance orchestration
 
-Phase 37 adds the reviewer-facing join across the public assurance portfolio. Five
-independent lanes run in parallel: core agent assurance, Course Doctor, launch-to-field
-enablement, instructor calibration, and production delivery evidence. Each worker emits a
-typed metadata contract and an inspectable intermediate JSON file. The join blocks if a
-lane is missing, unavailable, or has missed controls.
+Phase 37 adds the reviewer-facing join across the public assurance portfolio. Six
+independent lanes run in parallel: core agent assurance, bounded synthetic memory policy,
+Course Doctor, launch-to-field enablement, instructor calibration, and production
+delivery evidence. Each worker emits a typed metadata contract and an inspectable
+intermediate JSON file. The join blocks if a lane is missing, unavailable, or has missed
+controls.
 
 ```bash
 uv run python tools/portfolio_assurance_report.py \
@@ -823,6 +825,37 @@ uv run python tools/portfolio_assurance_report.py \
 The deliberate `portfolio-missing-instructor-lane` control removes one independent lane
 and verifies that the join returns `blocked`. A ready result is a reviewer handoff, not
 proof of employment, production adoption, or automatic approval of content or releases.
+
+### Bounded synthetic agent-memory policy
+
+Phase 48 adds a safety-first memory-selection lane to the same provider-neutral
+assurance boundary. A memory policy is a rule that decides which prior context remains
+available to a continuing task. The synthetic pack covers authorization evidence,
+retry/source evidence, long-running critical evidence, optional history trimming, and
+cross-workflow isolation.
+
+The lane evaluates three deterministic profiles:
+
+1. a retain-all baseline, which makes the higher relative usage visible;
+2. a bounded guarded policy, which retains required evidence and recent context; and
+3. a deliberately unsafe policy, which forgets older required evidence and continues.
+
+The third profile is the negative control: the evaluator must catch both the missing
+evidence and the unsafe continuation. Evidence completeness, task outcome, refusal,
+relative cost, and relative latency are separate fields, so efficiency cannot mask a
+safety failure. The pack and report contain identifiers, states, counts, hashes,
+reason codes, and relative units only.
+
+```bash
+uv run python tools/agent_memory_policy_report.py \
+  --output /tmp/agent-reliability-memory-policy.json \
+  --markdown \
+  --fail-on-findings
+```
+
+This proves the checked synthetic contract only. It does not reproduce a live provider
+cache, train a memory policy, establish production savings, or prove production
+performance.
 
 ### Optional public-course portfolio lane
 
@@ -845,7 +878,7 @@ uv run python tools/portfolio_assurance_report.py \
 
 The optional lane may return `review_required` when a claim is not proven by the
 strongest available check. That is a useful reviewer handoff, not a failure to hide.
-CI continues to run the five-lane synthetic path without a public checkout or network
+CI continues to run the six-lane synthetic path without a public checkout or network
 dependency.
 
 ### Public-course review packet

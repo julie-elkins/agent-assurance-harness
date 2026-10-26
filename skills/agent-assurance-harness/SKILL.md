@@ -79,6 +79,11 @@ negative control and make the delivery gate fail when it is not caught.
   result, record transport status, semantic outcome, retry count, workflow identity,
   and bounded usage separately. A transport-success signal must not satisfy a task
   outcome contract by itself.
+- When a memory or cache policy trims prior context, keep required-evidence retention,
+  workflow isolation, task outcome, refusal, relative cost, and relative latency as
+  separate checks. A policy that forgets authorization, retry, source, or long-running
+  evidence must block even when it produces a plausible result. Keep the lane synthetic,
+  offline, identifier-only, and explicit about not proving live provider savings.
 - When a workflow proposes or changes its own harness, keep the builder separate from
   an independent breaker (an evaluator deliberately trying to expose a false pass).
   Add a degraded case that the breaker must catch and report evaluator validity
@@ -167,24 +172,28 @@ negative control and make the delivery gate fail when it is not caught.
     independent lanes in parallel, write inspectable metadata-only intermediates, and
     block the join when any required lane is missing or unavailable. Include a negative
     control proving that an incomplete join cannot be presented as ready.
-21. For an optional public-course lane, keep the course checkout and fetched source
+21. For a bounded memory-policy lane, add a versioned synthetic pack, a guarded positive
+    profile, and a deliberately unsafe negative control. Prove that required evidence
+    loss blocks, workflow boundaries hold, and cost/latency observations remain separate
+    from the safety decision.
+22. For an optional public-course lane, keep the course checkout and fetched source
     bytes behind an explicit local root boundary. Preserve the verifier's evidence
     tiers and unresolved states, include a bounded finding-location summary, and test
     that claim text, quotes, source bytes, local paths, and raw exceptions cannot enter
     the portfolio report.
-22. For a public-course review packet, map each concrete evidence state to a stable
+23. For a public-course review packet, map each concrete evidence state to a stable
     priority and recommended action, bound the number of findings, start every item
     as `open`, and keep human disposition separate from content editing or publication.
-23. For public-course adjudication, fingerprint the safe packet, require one bounded
+24. For public-course adjudication, fingerprint the safe packet, require one bounded
     disposition per known finding, test digest and omission failures, and keep the
     adjudication record separate from content approval or publishing.
-24. For a public-course change plan, verify packet and adjudication identity, block open
+25. For a public-course change plan, verify packet and adjudication identity, block open
     or deferred findings, emit a required post-change re-check, and test that no content
     or write capability crosses the boundary.
-25. For post-change verification, compare before and after metadata, require revision
+26. For post-change verification, compare before and after metadata, require revision
     change, test target recovery and new-blocking regressions, and keep the result
     separate from full-course approval or publication.
-26. For public repository hardening, pin every external action, enforce the pins in a
+27. For public repository hardening, pin every external action, enforce the pins in a
     repository boundary check, add dependency-review and CodeQL gates, configure
     Dependabot for Python and Actions, publish Scorecard evidence, and document which
     GitHub settings still require administrator action.

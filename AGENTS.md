@@ -132,6 +132,12 @@ missing, and what the result does not prove.
 - The instructor-calibration workflow must use a fixed identifier-only observer rubric,
   require feedback metadata, distinguish coaching from incomplete observation, and
   state that readiness is a human sign-off recommendation rather than certification.
+- The bounded synthetic memory-policy lane must use versioned synthetic packs, retain
+  evidence required for safe continuation, reject cross-workflow memory, and keep
+  evidence completeness, task outcome, refusal, cost, and latency separate. A policy
+  that discards required evidence must block even when it reports a plausible task
+  result. Reports may contain only identifiers, states, counts, hashes, reason codes,
+  and relative usage units; no memory text, prompts, or raw tool results.
 - The portfolio-assurance workflow may join only typed metadata-only lane results. Its
   independent lanes may run in parallel, but the join must block missing or unavailable
   lanes and preserve a human review boundary for content, release, and instructor

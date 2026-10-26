@@ -50,6 +50,28 @@ This repository is intentionally not a hosted provider dashboard, a model router
 private evaluation surface. Those would add data, credential, and operational scope
 before the public contract has earned it.
 
+### Bounded synthetic agent-memory policy
+
+The harness now includes a required safety lane for bounded memory selection. It tests
+whether older optional history can be trimmed while authorization, retry, source, and
+long-running evidence remain available. Evidence loss blocks the lane even when the
+policy reports a plausible task result; relative cost and latency are observations, not
+compensation for unsafe forgetting.
+
+Run it directly:
+
+```bash
+uv run python tools/agent_memory_policy_report.py \
+  --output /tmp/agent-reliability-memory-policy.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The lane is synthetic, offline, and metadata-only. It does not call a provider, inspect
+raw prompts or tool results, or claim live cache savings. The retain-all baseline,
+bounded guarded policy, and deliberately unsafe negative control make the safety
+decision and the efficiency measurements visible separately.
+
 ## Part 2 of the three-part learning path
 
 This repository is the hands-on middle step between learning how to build an agent
@@ -614,8 +636,8 @@ states, counts, and recommendations only.
 ## Portfolio assurance report
 
 The portfolio assurance report is the shortest command for a reviewer who wants to see
-how the project connects agent reliability, technical-content assurance, enablement,
-instructor development, and the delivery path. It runs five independent lanes in
+how the project connects agent reliability, memory-policy safety, technical-content
+assurance, enablement, instructor development, and the delivery path. It runs six independent lanes in
 parallel, writes metadata-only intermediate reports, and blocks the final handoff when a
 lane is missing or unavailable.
 

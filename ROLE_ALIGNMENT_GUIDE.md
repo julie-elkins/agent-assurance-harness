@@ -39,9 +39,9 @@ uv run python tools/portfolio_assurance_report.py \
   --fail-on-findings
 ```
 
-This joins agent assurance, Course Doctor, launch-to-field enablement, instructor
-calibration, and production delivery evidence. It is a reviewer handoff, not proof of
-live production impact or employment history.
+This joins agent assurance, bounded synthetic memory policy, Course Doctor,
+launch-to-field enablement, instructor calibration, and production delivery evidence.
+It is a reviewer handoff, not proof of live production impact or employment history.
 
 To demonstrate the same portfolio against the public Claude course, add:
 
@@ -66,6 +66,7 @@ it is not a claim that every course row is incorrect.
 | Production-quality code | `src/`, `tests/`, CI, release checks | The project has a maintained implementation and a repeatable delivery path. |
 | AI agents and tool use | `src/agent_reliability_lab/`, synthetic adapters, MCP server | Agent behavior is evaluated through explicit evidence rather than answer quality alone. |
 | Responsible AI controls | Evidence contracts, abstention, authorization, privacy boundaries | Unsafe or unsupported behavior becomes a blocked result instead of a polished answer. |
+| Safe agent memory management | `tools/agent_memory_policy_report.py` and synthetic memory-policy packs | Optional context can be trimmed for measured efficiency while required evidence loss and cross-workflow memory are blocked. |
 | Technical courses and labs | `claude-architect-lab` and the Course Doctor workflow | Technical content can be structured, checked, and routed for human approval. |
 | Content-freshness automation | Course Doctor, source fingerprints, stale and wrong-source controls | A changing source can block outdated material before publication. |
 | Launch-ready enablement | `tools/launch_to_field_report.py` and `enablement_pack.py` | One workflow produces the metadata contract for a demo, lab, quick reference, and feedback loop. |
@@ -103,11 +104,12 @@ about that boundary because overstating synthetic evidence weakens the portfolio
 The report makes the complete path visible from one command:
 
 1. Agent behavior is checked against evidence and negative controls.
-2. Course findings become review packets with reconciled counts.
-3. A demo, lab, and quick reference are evaluated as one enablement pack.
-4. Instructor observations become coaching or human-sign-off recommendations.
-5. Delivery-path artifacts remain visible without claiming deployment success.
-6. A missing lane blocks the joined handoff rather than disappearing from the summary.
+2. Memory selection is checked for required-evidence retention and workflow isolation.
+3. Course findings become review packets with reconciled counts.
+4. A demo, lab, and quick reference are evaluated as one enablement pack.
+5. Instructor observations become coaching or human-sign-off recommendations.
+6. Delivery-path artifacts remain visible without claiming deployment success.
+7. A missing lane blocks the joined handoff rather than disappearing from the summary.
 
 The reusable patterns behind this path live in the
 [`agent-systems-design-guide`](https://github.com/julie-elkins/agent-systems-design-guide).

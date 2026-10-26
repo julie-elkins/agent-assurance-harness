@@ -109,6 +109,32 @@ successful while silently accepting an unapproved source. The harness carries on
 source identifier and numeric age; it does not export record contents or claim that the
 source itself is trustworthy.
 
+## Bounded synthetic agent-memory policy
+
+The memory-policy lane tests a narrower production risk: a cache or memory policy may
+trim older context to reduce request cost and latency, but it must not trim evidence
+needed to authorize an action, recover a retry, continue a long-running task, or keep
+workflows isolated. A negative control deliberately forgets old required evidence and
+then continues; the evaluator must block it.
+
+Run the lane directly:
+
+```bash
+uv run python tools/agent_memory_policy_report.py \
+  --output /tmp/agent-reliability-memory-policy.json \
+  --markdown \
+  --fail-on-findings
+```
+
+The report keeps evidence status, semantic task outcome, refusal state, relative cost,
+and relative latency as separate fields. That separation matters because lower cost
+does not make missing authorization or source evidence safe. The fixtures contain only
+synthetic identifiers and the report contains no memory text, prompts, or tool results.
+
+The lane compares a retain-all baseline with a bounded guarded policy, then proves that
+the deliberately unsafe policy is caught. It does not establish live provider cache
+behavior, learned memory-policy quality, production performance, or production savings.
+
 Run the public hygiene checks before treating a change as release-ready:
 
 ```bash
@@ -217,9 +243,10 @@ human sign-off, not automatic instructor certification.
 
 ## Portfolio assurance report
 
-The portfolio assurance report is the combined reviewer path. It joins five independent
-metadata contracts: core agent assurance, Course Doctor content review, launch-to-field
-enablement, instructor calibration, and production delivery evidence. A lane is an
+The portfolio assurance report is the combined reviewer path. It joins six independent
+metadata contracts: core agent assurance, bounded synthetic memory policy, Course Doctor
+content review, launch-to-field enablement, instructor calibration, and production
+delivery evidence. A lane is an
 independent workflow that can complete or fail without hiding the state of the other
 lanes.
 

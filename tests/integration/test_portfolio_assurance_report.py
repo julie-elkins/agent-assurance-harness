@@ -28,12 +28,16 @@ def test_portfolio_report_passes_and_writes_json(tmp_path):
     )
 
     report = json.loads(result.stdout)
-    assert report["portfolio_assurance_version"] == 2
+    assert report["portfolio_assurance_version"] == 3
     assert report["passed"] is True
     assert report["decision"] == "ready_for_human_review"
     assert report["controls_missed"] == []
     assert report["negative_control"]["caught"] is True
-    assert len(report["lanes"]) == 5
+    assert len(report["lanes"]) == 6
+    assert any(
+        lane["lane_id"] == "agent_memory_policy"
+        for lane in report["lanes"]
+    )
     assert json.loads(output.read_text(encoding="utf-8")) == report
 
 

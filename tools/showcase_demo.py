@@ -24,6 +24,9 @@ from agent_reliability_lab.enablement_pack import (
 from agent_reliability_lab.instructor_calibration import (
     run_reference_instructor_calibration_suite,
 )
+from agent_reliability_lab.memory_policy import (
+    run_reference_memory_policy_suite,
+)
 from agent_reliability_lab.runner import run_comparison
 
 
@@ -47,6 +50,7 @@ def main(argv: list[str] | None = None) -> int:
     comparison = run_comparison(include_mutations=True)
     enablement_report = run_reference_launch_to_field_suite()
     calibration_report = run_reference_instructor_calibration_suite()
+    memory_policy_report = run_reference_memory_policy_suite()
     with tempfile.TemporaryDirectory(prefix="agent-assurance-showcase-") as path:
         requests = load_local_course_manifest(
             DEMO_ROOT / "manifest.json",
@@ -74,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     example_finding = example_packet.findings[0]
     example_locator = example_finding.locators[0]
     summary = {
-        "showcase_version": 3,
+        "showcase_version": 4,
         "offline": True,
         "synthetic_assurance": {
             "scenario_count": comparison.scenario_count,
@@ -134,6 +138,7 @@ def main(argv: list[str] | None = None) -> int:
                 if case_id == "instructor-ready"
             ),
         },
+        "memory_policy": memory_policy_report.to_dict(),
         "synthetic_finding_example": {
             "course_id": example_packet.course_id,
             "what_needs_attention": describe_finding_reason(
@@ -172,11 +177,13 @@ def _passed(summary: dict[str, object]) -> bool:
     course = summary["course_doctor"]
     enablement = summary["launch_to_field"]
     calibration = summary["instructor_calibration"]
+    memory_policy = summary["memory_policy"]
     if (
         not isinstance(synthetic, dict)
         or not isinstance(course, dict)
         or not isinstance(enablement, dict)
         or not isinstance(calibration, dict)
+        or not isinstance(memory_policy, dict)
     ):
         return False
     return (
@@ -190,6 +197,9 @@ def _passed(summary: dict[str, object]) -> bool:
         and calibration["passed"] is True
         and bool(calibration["controls_caught"])
         and calibration["controls_missed"] == []
+        and memory_policy["passed"] is True
+        and bool(memory_policy["controls_caught"])
+        and memory_policy["controls_missed"] == []
     )
 
 
@@ -200,12 +210,14 @@ def _markdown(summary: dict[str, object]) -> str:
     course = summary["course_doctor"]
     enablement = summary["launch_to_field"]
     calibration = summary["instructor_calibration"]
+    memory_policy = summary["memory_policy"]
     example = summary["synthetic_finding_example"]
     if (
         not isinstance(synthetic, dict)
         or not isinstance(course, dict)
         or not isinstance(enablement, dict)
         or not isinstance(calibration, dict)
+        or not isinstance(memory_policy, dict)
         or not isinstance(example, dict)
     ):
         raise ValueError("showcase summary has an invalid internal shape")
@@ -257,6 +269,17 @@ def _markdown(summary: dict[str, object]) -> str:
         "",
         "The result recommends coaching or human sign-off; it does not certify an "
         "instructor automatically.",
+        "",
+        "## Bounded synthetic agent memory policy",
+        "",
+        f"- Safety lane: `{'PASS' if memory_policy['passed'] else 'BLOCKED'}`",
+        f"- Cases checked: `{memory_policy['case_count']}`",
+        f"- Controls caught: `{len(memory_policy['controls_caught'])}`",
+        "- Required evidence is retained before optional history is trimmed; "
+        "cost and latency are reported separately.",
+        "",
+        "The lane is synthetic and offline. It does not prove live provider cache "
+        "savings or production performance.",
         "",
         "This demo is synthetic, offline, and metadata-only.",
         "",

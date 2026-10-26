@@ -50,6 +50,16 @@ This repository is intentionally not a hosted provider dashboard, a model router
 private evaluation surface. Those would add data, credential, and operational scope
 before the public contract has earned it.
 
+## Design reasoning and learning path
+
+The [design decisions](DESIGN_DECISIONS.md) explain why the harness stays synthetic,
+metadata-only, negative-control-driven, and separate from provider cache mechanics.
+Each decision links the alternative, consequence, verification, and limitation so a
+newer engineer can follow the reasoning rather than copy a pattern without its boundary.
+
+The reusable record format lives in the
+[Agent Systems Design Guide decision template](https://github.com/julie-elkins/agent-systems-design-guide/blob/main/DESIGN_DECISION_TEMPLATE.md).
+
 ### Bounded synthetic agent-memory policy
 
 The harness now includes a required safety lane for bounded memory selection. It tests
@@ -144,6 +154,33 @@ evidence still supports continued use after a relevant system change.
 
 The first version is local and offline. It emits metadata and digests only; it does not
 call Anthropic, OpenAI, or any other provider.
+
+### Agent change-impact and reauthorization
+
+The [change-impact engine](docs/AGENT_CHANGE_IMPACT.md) answers a follow-on question:
+when an agent changes, which existing evidence must be rerun before it can support the
+decision again? It compares safe baseline/current revision identifiers, optionally
+classifies repository paths, and evaluates one or more existing run manifests.
+
+This is a planning layer, not another provider adapter. A dependency change produces
+`rerun_required`; blocked evidence produces `blocked`; unchanged evidence remains
+`evidence_still_valid`. The conservative mapping is intentional: requiring one extra
+rerun is visible and reversible, while silently reusing stale evidence is not.
+
+Run the synthetic example:
+
+```bash
+uv run python tools/agent_impact_plan.py \
+  --baseline-revisions examples/change-impact/baseline-revisions.json \
+  --current-revisions examples/change-impact/current-revisions.json \
+  --manifest examples/run-manifest/manifest.json \
+  --changed-path policies/release-policy.json \
+  --markdown \
+  --fail-on-rerun
+```
+
+The design record explains the audience, alternatives, verification, and limits for
+newer engineers in [DESIGN_DECISIONS.md](DESIGN_DECISIONS.md).
 
 The reusable GitHub Action accepts the same contract through optional
 `run-manifest` and `current-revisions` inputs. When both are supplied, a changed

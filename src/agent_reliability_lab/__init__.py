@@ -93,6 +93,16 @@ from .run_manifest import (
     RunManifestValidationError,
     evaluate_reauthorization,
 )
+from .change_impact import (
+    CHANGE_IMPACT_VERSION,
+    IMPACT_BLOCKED,
+    IMPACT_READY,
+    IMPACT_RERUN_REQUIRED,
+    ChangeImpactPlan,
+    EvidenceImpact,
+    build_change_impact_plan,
+    classify_paths,
+)
 from .otlp import load_otlp_file, otlp_to_replay
 from .recorder import RecorderResult, TraceRecorder
 from .benchmark import SyntheticBenchmarkReport, run_synthetic_benchmark
@@ -728,6 +738,14 @@ __all__ = [
     "RunManifest",
     "RunManifestValidationError",
     "evaluate_reauthorization",
+    "CHANGE_IMPACT_VERSION",
+    "IMPACT_BLOCKED",
+    "IMPACT_READY",
+    "IMPACT_RERUN_REQUIRED",
+    "ChangeImpactPlan",
+    "EvidenceImpact",
+    "build_change_impact_plan",
+    "classify_paths",
     "load_otlp_file",
     "otlp_to_replay",
     "RegressionFinding",

@@ -299,3 +299,32 @@ measurement-system control inspectable without exposing content-bearing evidence
 **What this does not prove:** A passing CI gate does not prove live-provider safety,
 deployment readiness, or that the monitor generalises beyond the checked-in synthetic
 scenario pack. Human review remains required.
+
+## Import external evaluator results through one strict contract
+
+**Decision:** Add a metadata-only adapter for Inspect-shaped, Petri-shaped, and local
+evaluator results. The adapter converts bounded labels and flags into the existing
+Monitorability Workbench contract and validates source-result, harness, and manifest
+revision binding before scoring.
+
+**Instead of:** Installing external evaluator SDKs, fetching their traces, or creating
+provider-specific scoring logic in this repository.
+
+**Why:** The value of the workbench is interoperability without weakening the public
+data boundary. Reusing one internal contract makes source-system differences visible
+as provenance while keeping calibration, held-out performance, benign controls, and
+reauthorization comparable.
+
+**Verification:** Synthetic Inspect and Petri fixtures produce the same accepted report
+shape. Changed current revisions produce `review_required`; a mismatched source digest
+or harness revision produces `blocked` before scoring. Unsupported content-bearing
+fields are refused.
+
+**Costs if wrong:** The first adapter accepts only summary metadata, so teams must
+build a trusted local exporter from each evaluator. That is slower than accepting raw
+trace formats, but it avoids importing sensitive data and prevents source-specific
+semantics from becoming an unreviewed public contract.
+
+**What this does not prove:** Source-system identity does not prove external evaluator
+quality. The adapter does not establish live Inspect or Petri correctness, signed
+provenance, or deployment approval.

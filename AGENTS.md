@@ -218,6 +218,11 @@ missing, and what the result does not prove.
   It must upload only the resulting identifier, label, count, rate, digest, status, and
   limitation metadata. A passed monitorability gate supports human review; it never
   authorises deployment.
+- `tools/import_external_evaluator.py` is a strict metadata-only boundary. It may accept
+  only the declared external evaluator schema and the source systems `inspect`, `petri`,
+  and `local`; it must refuse prompts, transcripts, raw traces, tool payloads, model
+  output, credentials, and unsupported fields. A mismatched manifest or harness revision
+  must block before monitorability scoring.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.

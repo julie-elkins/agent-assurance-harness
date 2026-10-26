@@ -213,6 +213,11 @@ missing, and what the result does not prove.
   `tools/verify_assurance_evidence.py`, and upload the metadata-only files with
   `if: always()`. Keep the job name `Agent reliability gate` stable so repository owners
   can require that status check in branch protection.
+- `tools/monitorability_ci_gate.py` must run the positive monitorability report, the
+  held-out monitor-miss negative control, and a changed-revision reauthorization control.
+  It must upload only the resulting identifier, label, count, rate, digest, status, and
+  limitation metadata. A passed monitorability gate supports human review; it never
+  authorises deployment.
 - `SubprocessAdapter` must keep `shell=False`, the minimal child environment, process-group
   termination, stdout/stderr caps, and explicit working-directory validation. Unix resource
   limits are best-effort controls; this boundary is not a network sandbox.

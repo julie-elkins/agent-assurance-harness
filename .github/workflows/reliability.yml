@@ -64,6 +64,17 @@ jobs:
       - name: Audit Python dependencies
         run: uv run python tools/audit_dependencies.py
 
+      - name: Run monitorability CI gate
+        run: >-
+          uv run python tools/monitorability_ci_gate.py
+          --cases examples/monitorability/cases.json
+          --manifest examples/run-manifest/manifest.json
+          --current-revisions examples/run-manifest/current-revisions.json
+          --changed-revisions examples/change-impact/current-revisions.json
+          --output-dir /tmp/agent-reliability-monitorability
+          --markdown
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Verify clean release artifact
         run: >-
           uv run python tools/release_check.py
@@ -382,6 +393,7 @@ jobs:
             /tmp/agent-reliability-release-artifacts/*
             /tmp/agent-reliability-rollback.json
             /tmp/agent-reliability-ship-gate.json
+            /tmp/agent-reliability-monitorability/*
           if-no-files-found: error
           retention-days: 14
 

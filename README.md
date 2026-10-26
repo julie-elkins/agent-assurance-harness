@@ -396,6 +396,12 @@ Then pass those metadata-only artifacts to the Evidence Validity Explorer with
 See [docs/MONITORABILITY_WORKBENCH.md](docs/MONITORABILITY_WORKBENCH.md) for the
 complete command and design limits.
 
+The blocking reliability workflow runs `tools/monitorability_ci_gate.py` as well. It
+requires the positive report to be `ready_for_human_review`, the deliberate held-out
+miss to be `review_required`, and the changed-revision report to require
+reauthorization. It uploads five metadata-only JSON artifacts for reviewer inspection;
+it never authorises deployment.
+
 Run the held-out robustness matrix after the original pilot:
 
 ```bash

@@ -29,6 +29,7 @@
           "agent_id",
           "scenario_id",
           "harness_revision",
+          "revision_digest",
           "status",
           "registry_entry_digest",
           "dependency_scope",
@@ -54,6 +55,10 @@
           "agent_id": { "type": "string", "minLength": 1 },
           "scenario_id": { "type": "string", "minLength": 1 },
           "harness_revision": { "type": "string", "minLength": 1 },
+          "revision_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$"
+          },
           "status": { "enum": ["accepted", "refused", "blocked"] },
           "registry_entry_digest": {
             "type": "string",

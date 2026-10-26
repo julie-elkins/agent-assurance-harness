@@ -28,6 +28,7 @@ uv run python tools/provider_evidence_receipt.py \
   --scenario-id tool-misuse \
   --evidence-id run-synthetic-001 \
   --registry examples/change-impact/evidence-registry.json \
+  --revisions examples/change-impact/baseline-revisions.json \
   --markdown \
   --fail-on-refusal
 ```
@@ -45,3 +46,32 @@ format.
 
 The receipt is an artifact, not an approval. A trusted workflow must still run the
 registered checks and record a reauthorization decision.
+
+## Use the receipt in change-impact planning
+
+Generate a receipt against the baseline revisions, then compare it with the current
+revision map:
+
+```bash
+uv run python tools/provider_evidence_receipt.py \
+  --provider all \
+  --scenario-id tool-misuse \
+  --evidence-id run-synthetic-001 \
+  --registry examples/change-impact/evidence-registry.json \
+  --revisions examples/change-impact/baseline-revisions.json \
+  --output /tmp/provider-evidence-receipt.json \
+  --fail-on-refusal
+
+uv run python tools/agent_impact_plan.py \
+  --baseline-revisions examples/change-impact/baseline-revisions.json \
+  --current-revisions examples/change-impact/current-revisions.json \
+  --manifest examples/run-manifest/manifest.json \
+  --registry examples/change-impact/evidence-registry.json \
+  --receipt /tmp/provider-evidence-receipt.json \
+  --markdown \
+  --fail-on-rerun
+```
+
+The second command reports `rerun_required` because the current policy revision
+changed. It also reports which provider receipts were accepted before the change and
+which registered checks must run next.

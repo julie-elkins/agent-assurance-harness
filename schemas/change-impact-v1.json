@@ -62,6 +62,8 @@
           "changed_paths",
           "rerun_checks",
           "owner_id",
+          "receipt_status",
+          "receipt_providers",
           "reasons",
           "required_action"
         ],
@@ -97,6 +99,15 @@
           "owner_id": {
             "type": ["string", "null"],
             "minLength": 1
+          },
+          "receipt_status": {
+            "type": ["string", "null"],
+            "enum": ["accepted", "missing", "blocked", "not_checked", null]
+          },
+          "receipt_providers": {
+            "type": "array",
+            "items": { "enum": ["openai", "anthropic"] },
+            "uniqueItems": true
           },
           "reasons": {
             "type": "array",

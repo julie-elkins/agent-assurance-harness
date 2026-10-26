@@ -272,3 +272,30 @@ workbench does not claim live-provider quality.
 **What this does not prove:** Passing the workbench does not prove agent safety,
 semantic truth, monitor generalisation beyond the declared scenario pack, or deployment
 approval. Signed attestations and cryptographic producer identity remain future work.
+
+## Make monitorability a blocking CI contract
+
+**Decision:** Add `tools/monitorability_ci_gate.py` to the existing reliability
+workflow. It runs the positive synthetic report, proves the held-out monitor-miss
+negative control is detected, and proves that a changed revision requires review.
+
+**Instead of:** Running only the positive example in CI or embedding expected-failure
+shell commands directly in the workflow.
+
+**Why:** A positive report alone can pass while the negative control stops working or
+the reauthorization boundary is accidentally removed. The wrapper keeps all three
+states in one deterministic contract and writes bounded artifacts even when the gate
+blocks.
+
+**Verification:** The integration tests cover a passing gate and a blocked gate when
+the changed revision map is unchanged. The workflow runs after repository-boundary and
+dependency checks and uploads the positive, negative, changed-revision, safety-case,
+and summary JSON artifacts.
+
+**Costs if wrong:** The reliability workflow becomes slightly longer and adds five
+small artifacts per run. That cost is accepted because the artifacts make a failed
+measurement-system control inspectable without exposing content-bearing evidence.
+
+**What this does not prove:** A passing CI gate does not prove live-provider safety,
+deployment readiness, or that the monitor generalises beyond the checked-in synthetic
+scenario pack. Human review remains required.

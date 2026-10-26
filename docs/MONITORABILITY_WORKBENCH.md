@@ -52,6 +52,14 @@ The page shows whether the measurement system is ready for human review, not whe
 the agent is safe in general. A changed model, harness, policy, data, environment, or
 grader revision can require reauthorization before the result is reused.
 
+## CI gate
+
+The blocking reliability workflow runs the same contract through
+`tools/monitorability_ci_gate.py`. It requires the positive report to be
+`ready_for_human_review`, the deliberate held-out miss to be `review_required`, and
+the changed-revision report to require reauthorization. The workflow uploads the five
+metadata-only JSON artifacts for reviewer inspection.
+
 ## Deliberate limits
 
 The default thresholds are modelling assumptions for the synthetic demonstration. They

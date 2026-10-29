@@ -28,7 +28,7 @@ against a local checkout of the public
 
 ## Current build
 
-The public repository currently has five connected layers:
+The public repository currently has six connected layers:
 
 1. An offline synthetic assurance gate — automated checks that exercise agent failure
    modes without contacting a model provider.
@@ -40,6 +40,9 @@ The public repository currently has five connected layers:
    decisions, not a provider credential broker.
 5. The Evidence Validity Explorer — a static visual demo showing a current result beside
    a changed-revision negative control.
+6. A synthetic shadow-execution boundary — a pre-effect rehearsal that compares an
+   agent's intended side effect with an observed synthetic effect before any real tool
+   would be called.
 
 The current hardening step is the [evidence provenance gate](docs/EVIDENCE_PROVENANCE.md).
 Evidence provenance means metadata about where a result came from; this gate refuses
@@ -267,6 +270,29 @@ adapter bridge through the same manifest contract. It does not call either provi
 read either provider credential, or send prompts, tool arguments, or provider output to
 the hosted service. The client prints only bounded decision metadata; the live-provider
 bridge below is a separate local-only path.
+
+### Synthetic shadow execution
+
+The [shadow-execution boundary](docs/SHADOW_EXECUTION.md) rehearses a proposed
+side effect before a real tool would be called. A side effect is an external
+change such as a repository update, deployment, message, or record write.
+
+The public demo is deliberately synthetic and identifier-only. It blocks missing
+authority before simulation, allows a matched effect, and sends mismatched or
+ambiguous effects to human review:
+
+```bash
+uv run python tools/shadow_execution_demo.py \
+  --manifest examples/shadow-execution/manifest.json \
+  --markdown \
+  --fail-on-block
+```
+
+This is a decision boundary, not an operating-system sandbox. It does not execute
+commands, call providers, write to repositories, or prove that a real tool is
+reversible. The limitation is intentional: the first useful proof is that the
+intended effect, observed effect, authority check, and missing evidence are
+visible before adding a real write surface.
 
 ### Local live-provider bridge
 

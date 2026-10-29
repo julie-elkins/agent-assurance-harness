@@ -64,6 +64,15 @@ jobs:
       - name: Audit Python dependencies
         run: uv run python tools/audit_dependencies.py
 
+      - name: Run synthetic shadow-execution boundary
+        run: >-
+          uv run python tools/shadow_execution_demo.py
+          --manifest examples/shadow-execution/manifest.json
+          --output /tmp/agent-reliability-shadow-execution.json
+          --markdown
+          --fail-on-block
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run monitorability CI gate
         run: >-
           uv run python tools/monitorability_ci_gate.py

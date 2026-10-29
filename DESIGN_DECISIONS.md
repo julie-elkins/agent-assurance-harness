@@ -299,3 +299,34 @@ measurement-system control inspectable without exposing content-bearing evidence
 **What this does not prove:** A passing CI gate does not prove live-provider safety,
 deployment readiness, or that the monitor generalises beyond the checked-in synthetic
 scenario pack. Human review remains required.
+
+## Add a synthetic shadow-execution boundary
+
+**Decision:** Add a fixture-driven, metadata-only shadow-execution contract that
+compares an agent's identifier-only intended effect with a synthetic observed
+effect and returns `allow`, `block`, or `human_review`.
+
+**Instead of:** Executing real commands in a sandbox, adding a hosted gateway,
+or creating a second orchestration runtime before the action and evidence
+contract is reviewable.
+
+**Why:** The public harness can demonstrate the pre-effect decision boundary
+without adding a filesystem, GitHub, AWS, messaging, browser, or provider write
+surface. Checking authority before simulation and treating mismatches or
+ambiguous state as human review also addresses the crash-after-effect failure:
+an action can change state before its recorder proves what happened.
+
+**Verification:** The synthetic fixture covers a matched effect, missing
+authority, observed mismatch, approval-required action, and ambiguous state.
+Tests verify that missing authority blocks before simulation, matched effects
+are allowed without real writes, and every receipt states what it does not
+prove.
+
+**Costs if wrong:** The first version does not prove operating-system
+isolation, rollback, live-tool compatibility, or production safety. A future
+adapter will need a separate security and delivery-path review before it can
+connect a real tool.
+
+**What this does not prove:** A passing shadow report proves only that the
+declared synthetic controls returned their expected decisions. It does not
+prove that a live tool is safe, reversible, or free of hidden side effects.

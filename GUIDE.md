@@ -49,6 +49,7 @@ It can prove that:
 - safety and evidence regressions block a candidate harness change;
 - task-outcome changes remain visible instead of being hidden inside one trust score;
 - a negative control is actually caught by the gate; and
+- a proposed side effect can be rehearsed before a real tool would be called; and
 - a CI run produced evidence tied to a specific Git revision and scenario-pack set.
 
 It does not prove:
@@ -61,6 +62,31 @@ It does not prove:
 
 Those limits matter because a green synthetic gate is evidence about the checked contract,
 not a universal quality claim.
+
+## Shadow execution
+
+Shadow execution is a pre-effect rehearsal: the harness compares an agent's
+identifier-only intended effect with a synthetic observed effect before a real
+tool would be called. A side effect is an external change such as a repository
+update, deployment, message, or record write.
+
+Run the five-case demonstration:
+
+```bash
+uv run python tools/shadow_execution_demo.py \
+  --manifest examples/shadow-execution/manifest.json \
+  --markdown \
+  --fail-on-block
+```
+
+The demonstration allows one matched effect, blocks missing authority before
+simulation, and requires human review for mismatches, approval-required actions,
+and ambiguous state. The receipt records the decision, digests, authority-check
+ordering, and whether simulation ran. It never calls a provider or real tool.
+
+This is not an operating-system sandbox. It does not prove rollback, tool
+reversibility, or production safety; those require separate security and
+delivery-path controls.
 
 ## The five-minute path
 

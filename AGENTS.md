@@ -235,6 +235,10 @@ missing, and what the result does not prove.
   input, or credentials.
 - Keep the simulated environment's side effects synthetic; it has no external write
   surface.
+- Shadow execution is a pre-effect rehearsal, not a sandbox. It may compare only
+  identifier-only intended and observed effects, must check authority before
+  simulation, must require human review for mismatches or ambiguous state, and must
+  report that it attempted no real side effect.
 - Do not print raw payloads in logs or exception messages.
 - Treat an empty or duplicate scenario-pack input as a refusal, not as a clean result.
 - Use `logging` to stderr if logging is added; stdout is reserved for JSON CLI output.

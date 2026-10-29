@@ -239,6 +239,10 @@ missing, and what the result does not prove.
   identifier-only intended and observed effects, must check authority before
   simulation, must require human review for mismatches or ambiguous state, and must
   report that it attempted no real side effect.
+- Shadow reauthorization must reuse `evaluate_reauthorization`, bind the provider,
+  model, agent, tool scope, and policy revision to the run manifest, and keep
+  `blocked` and `human_review` ahead of `reauthorization_required` in final
+  decision precedence. Provider-shaped proposals remain synthetic fixtures only.
 - Do not print raw payloads in logs or exception messages.
 - Treat an empty or duplicate scenario-pack input as a refusal, not as a clean result.
 - Use `logging` to stderr if logging is added; stdout is reserved for JSON CLI output.

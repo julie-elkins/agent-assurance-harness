@@ -380,6 +380,16 @@ def load_shadow_cases(path: Path) -> tuple[ShadowCase, ...]:
     return tuple(cases)
 
 
+def shadow_case_from_dict(
+    value: object,
+    *,
+    context: str = "case",
+) -> ShadowCase:
+    """Parse one identifier-only shadow case for a composed fixture."""
+
+    return _parse_case(value, context)
+
+
 def _parse_case(value: object, context: str) -> ShadowCase:
     data = _object(value, context)
     _keys(data, {"case_id", "action", "simulation"}, context)

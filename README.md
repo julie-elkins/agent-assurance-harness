@@ -8,7 +8,9 @@ A provider-neutral harness for testing whether tool-using AI agents have the evi
 act, abstain, and report honestly, plus a bounded Course Doctor workflow for deciding
 when technical training content is ready for human approval.
 
-Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
+Start with the [Agent Evaluation Checklist](AGENT_EVALUATION_CHECKLIST.md) to review
+whether an evaluation can support a release decision. Then start with the
+[Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
 then read [Building the Agent Assurance Harness](BUILD_GUIDE.md) for the design rationale
 and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIVERY_STANDARD.md)
 defines the delivery controls to apply to future builds. This README remains the full
@@ -57,6 +59,9 @@ before the public contract has earned it.
 
 The [design decisions](DESIGN_DECISIONS.md) explain why the harness stays synthetic,
 metadata-only, negative-control-driven, and separate from provider cache mechanics.
+The [Agent Evaluation Checklist](AGENT_EVALUATION_CHECKLIST.md) applies those controls
+across requirements, test cases, deterministic and semantic checks, multi-turn and
+trajectory behavior, grader validity, uncertainty, release decisions, and monitoring.
 Each decision links the alternative, consequence, verification, and limitation so a
 newer engineer can follow the reasoning rather than copy a pattern without its boundary.
 

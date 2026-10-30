@@ -9,6 +9,7 @@ DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
 ASSURANCE_SKILL = REPOSITORY / "skills" / "agent-assurance-harness" / "SKILL.md"
 SHOWCASE = REPOSITORY / "SHOWCASE.md"
 ROLE_GUIDE = REPOSITORY / "ROLE_ALIGNMENT_GUIDE.md"
+EVALUATION_CHECKLIST = REPOSITORY / "AGENT_EVALUATION_CHECKLIST.md"
 
 
 def test_guide_exists_and_local_references_are_present():
@@ -57,6 +58,12 @@ def test_guide_exists_and_local_references_are_present():
     assert "DEVELOPER_WORKFLOW_ASSURANCE.md" in showcase
     assert "tools/developer_workflow_report.py" in README.read_text(encoding="utf-8")
     assert "Security hardening" in README.read_text(encoding="utf-8")
+    assert "Agent Evaluation Checklist" in README.read_text(encoding="utf-8")
+    checklist = EVALUATION_CHECKLIST.read_text(encoding="utf-8")
+    assert "# Agent evaluation checklist" in checklist
+    assert "multi-turn" in checklist
+    assert "Trajectory validity" in checklist
+    assert "If evidence is missing" in checklist
     assert "Security hardening around the harness" in guide
     assert "phases 43–47" in build_guide
     assert "immutable commit" in skill
@@ -64,6 +71,7 @@ def test_guide_exists_and_local_references_are_present():
 
     for relative_path in (
         "README.md",
+        "AGENT_EVALUATION_CHECKLIST.md",
         "BUILD_GUIDE.md",
         "SECURITY.md",
         "AGENTS.md",

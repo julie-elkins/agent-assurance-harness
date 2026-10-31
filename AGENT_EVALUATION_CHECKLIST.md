@@ -72,6 +72,7 @@ Semantic checks judge meaning and evidentiary support rather than exact text ide
 |  | Relevance |  | Rubric result and reviewed examples | The response addresses the declared user task. | Separate irrelevance from factual correctness. |
 |  | Unsupported claims |  | Claim-level finding or negative control | Fabricated or unsupported claims are caught. | Do not report a clean result. |
 |  | Grader validity |  | Human reference, agreement result, disagreement review | The automated judge has a documented calibration result and limitation. | Treat its score as exploratory only. |
+|  | Evaluator layers |  | Trace-linked evaluator report and human review record | Deterministic checks cover schemas, tool calls, authorization, required evidence, latency, and cost; semantic or agent-based grading is calibrated or abstains. | Keep the result `not_evaluated`; do not collapse missing evidence into a score. |
 
 ## 5. Behavioral, multi-turn, and trajectory evaluation
 
@@ -105,6 +106,7 @@ sequence of planning, tool calls, intermediate state, retries, and recovery deci
 |  | High-risk slices |  | Slice-level results by risk, tool, source, or task | A favorable average cannot hide a blocking high-risk failure. | Hold the affected slice. |
 |  | Repeated-run variation |  | Null-run or repeated-sampling report | Observed movement exceeds the declared evaluation noise or is labeled uncertain. | Withdraw the headline comparison. |
 |  | Metric tradeoffs |  | Accuracy, safety, latency, cost, and user-outcome comparison | A higher-priority regression cannot be hidden by a lower-priority gain. | Escalate the tradeoff to the decision owner. |
+|  | Controlled variant comparison |  | Baseline/candidate report with separate dimensions | Correctness, safety, tool-call correctness, latency, cost, and user outcomes are reported separately; blocking thresholds and the rerun policy were written before interpretation. | Mark the comparison inconclusive and do not select a variant from the headline score. |
 
 ## 8. Release and change management
 

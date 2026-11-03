@@ -35,6 +35,8 @@ Each row requires four things:
 | Status | Check | Owner | Evidence artifact | Threshold or decision rule | If evidence is missing |
 | --- | --- | --- | --- | --- | --- |
 |  | User task and decision |  | Task contract and workflow revision | The task and decision affected by the agent are explicit. | Hold the evaluation; do not choose a score without a declared target. |
+|  | Construct and decision validity |  | Evaluation design record and claim boundary | The evaluation measures the capability and decision it claims to measure, within a declared scope. | Narrow the claim or redesign the evaluation before release use. |
+|  | Agentic Benchmark Checklist (ABC) review |  | Benchmark design review and reward/task audit | Task setup, success conditions, failure conditions, environment assumptions, and reward or scoring rules have been checked for false-pass and false-fail paths. | Keep the benchmark or release result scoped until the design defect is corrected or explicitly accepted by the owner. |
 |  | Failure cost |  | Risk statement and high-risk slices | The most expensive plausible failure is named. | Escalate to the accountable product or risk owner. |
 |  | Allowed sources and actions |  | Source, tool, authorization, and confirmation contract | Permitted sources and actions are bounded. | Block release evidence until the boundary is defined. |
 |  | Terminal outcomes |  | Completion, refusal, escalation, and unavailable-state definitions | The workflow distinguishes success from refusal, failure, and not evaluated. | Add the missing state before interpreting results. |
@@ -44,9 +46,12 @@ Each row requires four things:
 | Status | Check | Owner | Evidence artifact | Threshold or decision rule | If evidence is missing |
 | --- | --- | --- | --- | --- | --- |
 |  | Representative coverage |  | Versioned case manifest and coverage summary | Normal, boundary, missing, conflicting, unauthorized, and failure cases are included. | Mark coverage incomplete and block any claim that the set is representative. |
+|  | Environment and tool fidelity |  | Versioned environment, tool, policy, and state manifest | The tested environment contains the tools, sources, permissions, and state needed for the declared decision, or the limitation is explicit. | Mark the result scoped to the tested environment and block broader claims. |
 |  | Expected outcomes |  | Reviewed expected answers, actions, refusals, or acceptable ranges | Each case has a declared reference and review provenance. | Do not treat an unreviewed expected result as ground truth. |
+|  | Reference provenance |  | Reference decision, reviewer record, or declared oracle | The reference outcome has a documented origin and is not silently derived from the evaluator being tested. | Treat the result as exploratory and require independent review. |
 |  | Negative controls |  | Deliberately degraded case and expected block | The evaluator catches at least one known false-pass condition. | Block the gate until the control is restored. |
 |  | Versioning and separation |  | Dataset, calibration, held-out, source, and revision identifiers | Calibration cases are separate from held-out measurement cases. | Report the result as not established. |
+|  | Case independence and overlap |  | Case relationship or duplication review | Cases are not counted as independent evidence when they share material context, labels, or failure mechanisms. | Report the effective evidence as narrower or redesign the case set. |
 |  | Failure-to-test loop |  | Reviewed failure category and new regression case | Important real failures become cases or have a documented reason not to. | Assign an owner and preserve the unresolved gap. |
 
 ## 3. Deterministic evaluation

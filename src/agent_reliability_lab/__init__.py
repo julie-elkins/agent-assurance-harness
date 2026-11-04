@@ -210,6 +210,13 @@ from .openai_tool_loop import (
     OpenAIToolLoopAdapter,
     openai_tool_loop_adapter,
 )
+from .pareto import (
+    CandidateDecision,
+    CandidateEvaluation,
+    ParetoComparison,
+    ParetoConstraints,
+    compare_candidates,
+)
 from .openai_schema import (
     OPENAI_SCHEMA_VERSION,
     openai_structured_output_schema,

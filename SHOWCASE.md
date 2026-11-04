@@ -42,6 +42,25 @@ synthetic result used to prove that the evaluator catches a known failure.
 The output contains identifiers, statuses, counts, and hashes only. It does not contain
 lesson text, prompts, credentials, provider output, or source paths.
 
+## Constrained candidate comparison
+
+The candidate comparison is a small decision surface for evaluation-driven
+optimization. It applies hard constraints for safety, evidence completeness,
+held-out performance, and repeated-run stability before comparing quality,
+cost, and latency. A Pareto frontier is the set of candidates where no
+eligible candidate is at least as good on every declared objective and better
+on one. The report leaves the final choice to a human reviewer.
+
+```bash
+uv run python tools/pareto_candidate_report.py
+```
+
+The synthetic fixture deliberately includes a cheap, high-quality candidate
+that fails the safety gate, a dominated candidate, and an unstable candidate.
+The expected frontier is `quality-first-safe` plus `balanced-safe`. This is a
+review handoff, not a release approval, optimizer, production benchmark, or
+live-provider result.
+
 Expected successful output:
 
 ```text

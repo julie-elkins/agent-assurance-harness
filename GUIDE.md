@@ -88,6 +88,23 @@ This is not an operating-system sandbox. It does not prove rollback, tool
 reversibility, or production safety; those require separate security and
 delivery-path controls.
 
+### Provider shadow reauthorization
+
+The provider integration runs the same synthetic action contract through
+OpenAI-shaped and Anthropic-shaped proposals, then reuses the run-manifest
+evaluator against matching and changed revision maps:
+
+```bash
+uv run python tools/shadow_reauthorization_demo.py \
+  --markdown \
+  --fail-on-findings
+```
+
+The matching map returns `reauthorized` for both lanes. The changed prompt and
+tool revisions return `reauthorization_required` for both lanes. This proves
+provider-neutral contract binding and revision invalidation; it does not prove
+live provider behaviour or real-tool safety.
+
 ## The five-minute path
 
 Install the locked development environment and run the local suite:

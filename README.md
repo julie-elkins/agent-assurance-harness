@@ -30,7 +30,7 @@ against a local checkout of the public
 
 ## Current build
 
-The public repository currently has six connected layers:
+The public repository currently has seven connected layers:
 
 1. An offline synthetic assurance gate — automated checks that exercise agent failure
    modes without contacting a model provider.
@@ -45,6 +45,8 @@ The public repository currently has six connected layers:
 6. A synthetic shadow-execution boundary — a pre-effect rehearsal that compares an
    agent's intended side effect with an observed synthetic effect before any real tool
    would be called.
+7. A provider shadow-reauthorization boundary — the same action contract evaluated
+   for OpenAI- and Anthropic-shaped proposals against current and changed revisions.
 
 The current hardening step is the [evidence provenance gate](docs/EVIDENCE_PROVENANCE.md).
 Evidence provenance means metadata about where a result came from; this gate refuses
@@ -298,6 +300,18 @@ commands, call providers, write to repositories, or prove that a real tool is
 reversible. The limitation is intentional: the first useful proof is that the
 intended effect, observed effect, authority check, and missing evidence are
 visible before adding a real write surface.
+
+The [provider shadow reauthorization integration](docs/SHADOW_REAUTHORIZATION.md)
+uses the same action contract for synthetic OpenAI- and Anthropic-shaped
+proposals. It compares a matching revision map with a changed prompt/tool map:
+the first remains `reauthorized`, while the second becomes
+`reauthorization_required`.
+
+```bash
+uv run python tools/shadow_reauthorization_demo.py \
+  --markdown \
+  --fail-on-findings
+```
 
 ### Local live-provider bridge
 

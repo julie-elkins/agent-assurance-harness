@@ -73,6 +73,17 @@ jobs:
           --fail-on-block
           >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Run provider shadow reauthorization boundary
+        run: >-
+          uv run python tools/shadow_reauthorization_demo.py
+          --fixture examples/shadow-reauthorization/fixture.json
+          --current-revisions examples/run-manifest/current-revisions.json
+          --changed-revisions examples/run-manifest/changed-revisions.json
+          --output /tmp/agent-reliability-shadow-reauthorization.json
+          --markdown
+          --fail-on-findings
+          >> "$GITHUB_STEP_SUMMARY"
+
       - name: Run monitorability CI gate
         run: >-
           uv run python tools/monitorability_ci_gate.py
@@ -403,6 +414,8 @@ jobs:
             /tmp/agent-reliability-rollback.json
             /tmp/agent-reliability-ship-gate.json
             /tmp/agent-reliability-monitorability/*
+            /tmp/agent-reliability-shadow-execution.json
+            /tmp/agent-reliability-shadow-reauthorization.json
           if-no-files-found: error
           retention-days: 14
 

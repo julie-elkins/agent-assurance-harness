@@ -1,0 +1,62 @@
+{
+  "manifest_version": 1,
+  "run_id": "shadow-base-run",
+  "decision_target": "shadow-action-reuse",
+  "actor_id": "synthetic-reviewer",
+  "agent_id": "agent-shadow-base",
+  "provider": "anthropic",
+  "model": "claude-synthetic",
+  "revisions": {
+    "data": "data-r1",
+    "environment": "sandbox-r1",
+    "grader": "grader-r1",
+    "harness": "harness-r1",
+    "model": "model-r1",
+    "policy": "policy-r1",
+    "prompt": "prompt-r1",
+    "repository": "repo-r1",
+    "tools": "tools-r1"
+  },
+  "tool_scope": [
+    "change_request",
+    "deployment",
+    "record_update"
+  ],
+  "budget": {
+    "observed": {
+      "requests": 2,
+      "output_tokens": 200,
+      "elapsed_seconds": 3.0,
+      "estimated_cost_usd": 0.02
+    },
+    "limits": {
+      "max_requests": 3,
+      "max_output_tokens": 500,
+      "max_elapsed_seconds": 10,
+      "max_estimated_cost_usd": 0.10
+    },
+    "stop_condition": "stop after 3 requests or 10 seconds"
+  },
+  "checkpoint": {
+    "checkpoint_id": "shadow-checkpoint-001",
+    "checkpoint_revision": "checkpoint-r1",
+    "resume_supported": true
+  },
+  "repeatability": {
+    "run_count": 2,
+    "successful_run_count": 2,
+    "variance": {
+      "task_success_rate": 0.0
+    }
+  },
+  "grader_version": "grader-r1",
+  "evidence": {
+    "scope": [
+      "shadow-action-reuse"
+    ],
+    "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "expires_at": "2026-12-01T00:00:00Z",
+    "observed_outcome": "success"
+  },
+  "created_at": "2026-10-29T12:00:00Z"
+}

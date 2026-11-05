@@ -330,3 +330,33 @@ connect a real tool.
 **What this does not prove:** A passing shadow report proves only that the
 declared synthetic controls returned their expected decisions. It does not
 prove that a live tool is safe, reversible, or free of hidden side effects.
+
+## Bind shadow receipts to provider proposals and reauthorization
+
+**Decision:** Run the same synthetic action contract for OpenAI- and
+Anthropic-shaped proposals, bind each proposal to a run manifest, and evaluate
+the shadow receipt against current and changed revision maps.
+
+**Instead of:** Creating separate provider action schemas, passing receipts
+directly to a provider-specific dashboard, or writing a second reauthorization
+rule for shadow actions.
+
+**Why:** The meaningful portability claim is that a policy or tool revision
+invalidates both provider-shaped results through the same contract. Reusing
+`evaluate_reauthorization` keeps evidence validity consistent with the existing
+manifest path, while binding tool scope and policy revision prevents an
+unrelated action from inheriting a valid-looking receipt.
+
+**Verification:** The synthetic integration runs both provider lanes with a
+matching revision map and a changed prompt/tool map. Both current decisions
+remain `reauthorized`; both changed decisions become
+`reauthorization_required`. Unit controls also verify missing authority,
+unlisted tools, and human-review precedence.
+
+**Costs if wrong:** The fixture proves contract compatibility but not
+provider-specific semantics. A trusted adapter is still required before a real
+provider proposal can enter this boundary.
+
+**What this does not prove:** The integration does not prove live provider
+behaviour, provider quality, real-tool safety, operating-system isolation,
+rollback, or production reauthorization.

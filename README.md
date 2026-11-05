@@ -23,6 +23,11 @@ patterns behind the launch-to-field workflow live in the public
 the MCP-specific patterns remain in the
 [MCP Server Design Guide](https://github.com/julie-elkins/mcp-server-design-guide).
 
+The [Update Radar](docs/UPDATE_RADAR.md) is the bounded maintenance path for
+official-source changes and explicitly queued social leads. It produces a
+metadata-only review queue; it does not scrape a private LinkedIn feed, edit
+course content, or authorize publication.
+
 For the shortest outside-reviewer path, use the [Showcase](SHOWCASE.md). It runs an
 offline synthetic assurance demo and documents the optional metadata-only demonstration
 against a local checkout of the public

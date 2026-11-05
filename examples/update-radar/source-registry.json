@@ -1,0 +1,78 @@
+{
+  "update_radar_version": 1,
+  "sources": [
+    {
+      "source_id": "anthropic-official-docs",
+      "authority": "anthropic-official",
+      "source_type": "official-documentation",
+      "trust_tier": "confirmed",
+      "refresh_strategy": "metadata_hash",
+      "url": "https://www.anthropic.com/docs",
+      "targets": [
+        "claude-evaluation-lab",
+        "agent-assurance-harness"
+      ]
+    },
+    {
+      "source_id": "anthropic-managed-agents-dreaming-cookbook",
+      "authority": "anthropic-official",
+      "source_type": "official-cookbook",
+      "trust_tier": "confirmed",
+      "refresh_strategy": "metadata_hash",
+      "url": "https://platform.claude.com/cookbook/managed-agents-cma-dreaming-with-a-dynamic-workflow",
+      "targets": [
+        "claude-evaluation-lab",
+        "agent-systems-design-guide"
+      ]
+    },
+    {
+      "source_id": "openai-codex-skills",
+      "authority": "openai-official",
+      "source_type": "official-documentation",
+      "trust_tier": "confirmed",
+      "refresh_strategy": "manual_official_review",
+      "url": "https://developers.openai.com/codex/skills/create-skill",
+      "targets": [
+        "claude-evaluation-lab"
+      ]
+    },
+    {
+      "source_id": "openai-codex-evals",
+      "authority": "openai-official",
+      "source_type": "official-documentation",
+      "trust_tier": "confirmed",
+      "refresh_strategy": "manual_official_review",
+      "url": "https://developers.openai.com/codex/use-cases/ai-app-evals",
+      "targets": [
+        "claude-evaluation-lab"
+      ]
+    },
+    {
+      "source_id": "langsmith-evaluation",
+      "authority": "langchain-official",
+      "source_type": "official-documentation",
+      "trust_tier": "confirmed",
+      "refresh_strategy": "manual_official_review",
+      "url": "https://docs.langchain.com/langsmith/evaluation",
+      "targets": [
+        "claude-evaluation-lab"
+      ]
+    },
+    {
+      "source_id": "opentelemetry-genai-conventions",
+      "authority": "opentelemetry-official",
+      "source_type": "official-standard",
+      "trust_tier": "confirmed",
+      "refresh_strategy": "manual_official_review",
+      "url": "https://github.com/open-telemetry/semantic-conventions-genai",
+      "targets": [
+        "claude-evaluation-lab",
+        "agent-systems-design-guide"
+      ]
+    }
+  ],
+  "notes": {
+    "linkedin": "LinkedIn posts are queued explicitly by a human and remain lead-tier evidence until verified against an authoritative source.",
+    "approval": "The radar proposes review work. It does not edit repositories, approve content, or open a publication path."
+  }
+}

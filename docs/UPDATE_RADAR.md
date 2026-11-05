@@ -33,6 +33,27 @@ through the official site.
 6. Record a human disposition before creating a content change.
 7. Rebuild, test, and review the changed repository as a normal pull request.
 
+## Manual-source review checklist
+
+Sources marked `manual_official_review` are intentionally not auto-approved
+from a page hash. For each one, record:
+
+- the source URL and retrieval date;
+- the current workflow or terminology that changed;
+- the affected course claim, lesson, guide, or implementation reference;
+- whether the change is `update_needed`, `no_change`, or
+  `not_evaluated`;
+- the evidence that supports the disposition; and
+- the human owner who approved or deferred the change.
+
+For provider-specific evaluation tools, also record the evaluator scope:
+final response, single step, trajectory, or thread/session. A tool name or
+green dashboard is not enough to establish evaluator validity.
+
+The current public course uses provider-neutral evidence contracts. Provider
+references such as Codex, Promptfoo, LangSmith, and OpenTelemetry are optional
+implementation mappings and must not silently become required dependencies.
+
 ## Commands
 
 ```bash

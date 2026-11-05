@@ -1881,7 +1881,10 @@ export telemetry. The bridge accepts a strict local subset of OTLP/JSON and reco
 GenAI `execute_tool` spans. It also accepts the documented `agent.reliability.*` events
 for claims, answers, abstentions, authorization, side effects, and output flags.
 The field mapping follows the [OTLP specification](https://opentelemetry.io/docs/specs/otlp/)
-and the [OpenTelemetry GenAI span conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md).
+and the [OpenTelemetry GenAI semantic conventions](https://github.com/open-telemetry/semantic-conventions-genai).
+The conventions are a developing provider-neutral vocabulary, so record the
+revision or retrieval date and preserve provider-specific extensions at the
+adapter boundary.
 
 ```bash
 uv run agent-reliability \

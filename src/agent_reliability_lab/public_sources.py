@@ -17,7 +17,7 @@ from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
-PUBLIC_SOURCE_REFRESH_VERSION = 1
+PUBLIC_SOURCE_REFRESH_VERSION = 2
 DEFAULT_TIMEOUT_SECONDS = 10.0
 DEFAULT_MAX_BYTES = 2_000_000
 OFFICIAL_DOCUMENTATION_HOSTS = frozenset(
@@ -52,6 +52,14 @@ PUBLIC_SOURCE_SPECS = (
         source_id="anthropic-official-docs",
         authority="anthropic-official",
         source_url="https://www.anthropic.com/docs",
+    ),
+    PublicSourceSpec(
+        source_id="anthropic-managed-agents-dreaming-cookbook",
+        authority="anthropic-official",
+        source_url=(
+            "https://platform.claude.com/cookbook/"
+            "managed-agents-cma-dreaming-with-a-dynamic-workflow"
+        ),
     ),
     PublicSourceSpec(
         source_id="openai-official-docs",

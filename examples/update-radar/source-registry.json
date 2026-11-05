@@ -48,6 +48,17 @@
       ]
     },
     {
+      "source_id": "promptfoo-evaluation",
+      "authority": "promptfoo-maintained",
+      "source_type": "maintained-reference-implementation",
+      "trust_tier": "candidate",
+      "refresh_strategy": "manual_official_review",
+      "url": "https://github.com/promptfoo/promptfoo",
+      "targets": [
+        "claude-evaluation-lab"
+      ]
+    },
+    {
       "source_id": "langsmith-evaluation",
       "authority": "langchain-official",
       "source_type": "official-documentation",

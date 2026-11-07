@@ -1,18 +1,53 @@
 # Agent Assurance Harness
 
-Evidence gates for shipping AI agent code to production.
+A runnable evaluation harness that shows whether an AI agent's required safety controls
+actually ran before code moves toward production.
 
-A production assurance harness for AI agents and technical-content systems.
+It tests tool-using AI agents and technical-content systems against explicit evidence
+contracts: observable facts that must exist before a result can act, abstain, or report
+success honestly. The public path is synthetic, offline, provider-neutral, and
+metadata-only.
 
-A provider-neutral harness for testing whether tool-using AI agents have the evidence to
-act, abstain, and report honestly, plus a bounded Course Doctor workflow for deciding
-when technical training content is ready for human approval.
+## Start here
 
-Start with the [Agent Evaluation Checklist](AGENT_EVALUATION_CHECKLIST.md) to review
-whether an evaluation can support a release decision. Then start with the
-[Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
-then read [Building the Agent Assurance Harness](BUILD_GUIDE.md) for the design rationale
-and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIVERY_STANDARD.md)
+If you have five minutes, run the offline showcase:
+
+```bash
+uv sync --extra dev
+uv run python tools/showcase_demo.py --markdown
+```
+
+![Agent assurance showcase: synthetic run, evidence contract, decision gate, and metadata-only review](docs/assets/assurance-showcase.svg)
+
+The visual summarizes the proof path: a synthetic run produces identifier-only evidence,
+the gate accepts the guarded path, blocks the unsafe negative control, and hands a
+metadata-only result to a reviewer.
+
+Look for four things:
+
+- the guarded synthetic agent passes;
+- deliberately unsafe evaluator and mutation controls are caught;
+- the bounded memory policy blocks a policy that forgets required evidence; and
+- the report contains statuses, identifiers, counts, and hashes—not prompts, traces,
+  credentials, or provider output.
+
+That is the core story: a green result is useful only when the required evidence was
+observed, and a plausible task result must still be blocked when a safety or evidence
+control is missing.
+
+## Who this is for
+
+- **AI engineers:** test agent behavior, authorization, abstention, and release paths.
+- **Evaluation engineers:** check whether an evaluator can catch a known false pass.
+- **Reviewers and hiring managers:** inspect runnable evidence, design reasoning, and
+  production limits.
+- **Learners and technical enablement teams:** follow the risk, run the control, observe
+  the tradeoff, and then inspect the implementation.
+
+The [Showcase](SHOWCASE.md) is the shortest reviewer path. The
+[Agent Assurance Harness Guide](GUIDE.md) explains how to operate the controls, and
+[Building the Agent Assurance Harness](BUILD_GUIDE.md) explains the design rationale and
+extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIVERY_STANDARD.md)
 defines the delivery controls to apply to future builds. This README remains the full
 command reference and feature history.
 

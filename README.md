@@ -17,6 +17,12 @@ uv sync --extra dev
 uv run python tools/showcase_demo.py --markdown
 ```
 
+![Agent assurance showcase: synthetic run, evidence contract, decision gate, and metadata-only review](docs/assets/assurance-showcase.svg)
+
+The visual summarizes the proof path: a synthetic run produces identifier-only evidence,
+the gate accepts the guarded path, blocks the unsafe negative control, and hands a
+metadata-only result to a reviewer.
+
 Look for four things:
 
 - the guarded synthetic agent passes;

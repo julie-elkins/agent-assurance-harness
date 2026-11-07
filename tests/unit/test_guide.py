@@ -49,6 +49,7 @@ def test_guide_exists_and_local_references_are_present():
     assert "## Start here" in readme
     assert "## Who this is for" in readme
     assert "tools/showcase_demo.py --markdown" in readme
+    assert "docs/assets/assurance-showcase.svg" in readme
     assert "tools/portfolio_assurance_report.py" in role_guide
     assert "--course-root" in role_guide
     assert "Instructor calibration" in showcase
@@ -90,6 +91,7 @@ def test_guide_exists_and_local_references_are_present():
         "tools/render_assurance_summary.py",
         "tools/golden_trace_report.py",
         "SHOWCASE.md",
+        "docs/assets/assurance-showcase.svg",
         "ROLE_ALIGNMENT_GUIDE.md",
         "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",

@@ -134,6 +134,14 @@ from .evidence_registry import (
     EvidenceRegistration,
     load_evidence_registry,
 )
+from .source_evidence import (
+    HUMAN_DISPOSITIONS,
+    LOOKUP_STATUSES,
+    SOURCE_EVIDENCE_RECEIPT_VERSION,
+    SUPPORT_STATUSES,
+    SourceEvidenceReceipt,
+    load_source_evidence_receipt,
+)
 from .provider_receipt import (
     PROVIDER_RECEIPT_VERSION,
     RECEIPT_ACCEPTED,
@@ -799,6 +807,12 @@ __all__ = [
     "EVIDENCE_REGISTRY_VERSION",
     "EvidenceRegistration",
     "load_evidence_registry",
+    "HUMAN_DISPOSITIONS",
+    "LOOKUP_STATUSES",
+    "SOURCE_EVIDENCE_RECEIPT_VERSION",
+    "SUPPORT_STATUSES",
+    "SourceEvidenceReceipt",
+    "load_source_evidence_receipt",
     "PROVIDER_RECEIPT_VERSION",
     "RECEIPT_ACCEPTED",
     "RECEIPT_BLOCKED",

@@ -35,6 +35,11 @@ That is the core story: a green result is useful only when the required evidence
 observed, and a plausible task result must still be blocked when a safety or evidence
 control is missing.
 
+For a private domain-review integration, see the
+[review workflow assurance guide](docs/REVIEW_WORKFLOW_ASSURANCE.md). It defines
+the metadata-only manifest boundary and returns `pass_for_human_review` or
+`blocked`; it never receives domain content or authorizes release.
+
 ## Who this is for
 
 - **AI engineers:** test agent behavior, authorization, abstention, and release paths.

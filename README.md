@@ -144,6 +144,16 @@ system and learning how to validate the evaluation itself.
 - **Part 3:** Continue to [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity)
   to test whether the measurement itself supports a decision.
 
+### Research companion: response-quality measurement
+
+The companion
+[response-quality study](https://github.com/julie-elkins/llm-eval-validity/tree/main/research/response-quality)
+records the frozen provider comparison and its claim boundaries. This harness
+contains the reusable implementation and teaching patterns—evidence contracts,
+layered evaluators, independent breakers, synthetic controls, and bounded
+efficiency metadata—but it is not the source of that study's live-provider
+results.
+
 ### Learner objective
 
 By the end of this part, you should be able to separate transport status from semantic

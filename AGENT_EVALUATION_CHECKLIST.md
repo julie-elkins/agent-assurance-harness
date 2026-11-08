@@ -49,6 +49,7 @@ Each row requires four things:
 |  | Environment and tool fidelity |  | Versioned environment, tool, policy, and state manifest | The tested environment contains the tools, sources, permissions, and state needed for the declared decision, or the limitation is explicit. | Mark the result scoped to the tested environment and block broader claims. |
 |  | Expected outcomes |  | Reviewed expected answers, actions, refusals, or acceptable ranges | Each case has a declared reference and review provenance. | Do not treat an unreviewed expected result as ground truth. |
 |  | Reference provenance |  | Reference decision, reviewer record, or declared oracle | The reference outcome has a documented origin and is not silently derived from the evaluator being tested. | Treat the result as exploratory and require independent review. |
+|  | Generated-task and curriculum validity |  | Task-generation record, difficulty signal, validity check, and held-out split | Proposed tasks are valid, non-duplicate, neither trivial nor impossible, and separated from the cases used to tune the generator or solver. | Treat the generated curriculum as exploratory and block generalization claims. |
 |  | Negative controls |  | Deliberately degraded case and expected block | The evaluator catches at least one known false-pass condition. | Block the gate until the control is restored. |
 |  | Versioning and separation |  | Dataset, calibration, held-out, source, and revision identifiers | Calibration cases are separate from held-out measurement cases. | Report the result as not established. |
 |  | Case independence and overlap |  | Case relationship or duplication review | Cases are not counted as independent evidence when they share material context, labels, or failure mechanisms. | Report the effective evidence as narrower or redesign the case set. |
@@ -77,6 +78,7 @@ Semantic checks judge meaning and evidentiary support rather than exact text ide
 |  | Relevance |  | Rubric result and reviewed examples | The response addresses the declared user task. | Separate irrelevance from factual correctness. |
 |  | Unsupported claims |  | Claim-level finding or negative control | Fabricated or unsupported claims are caught. | Do not report a clean result. |
 |  | Grader validity |  | Human reference, agreement result, disagreement review | The automated judge has a documented calibration result and limitation. | Treat its score as exploratory only. |
+|  | Verifier-of-verifier validity |  | Independent check of evaluator findings and false-positive/false-negative controls | A verifier's findings are challenged by an independent layer; fabricated or unsupported findings remain visible. | Do not use the verifier as a release gate until its own errors are measured. |
 |  | Evaluator layers |  | Trace-linked evaluator report and human review record | Deterministic checks cover schemas, tool calls, authorization, required evidence, latency, and cost; semantic or agent-based grading is calibrated or abstains. | Keep the result `not_evaluated`; do not collapse missing evidence into a score. |
 
 ## 5. Behavioral, multi-turn, and trajectory evaluation
@@ -110,6 +112,7 @@ sequence of planning, tool calls, intermediate state, retries, and recovery deci
 |  | Sample size and uncertainty |  | Counts, intervals, or variance summary | The result is large or stable enough for the decision being made. | Report inconclusive and identify the next sample or rerun. |
 |  | High-risk slices |  | Slice-level results by risk, tool, source, or task | A favorable average cannot hide a blocking high-risk failure. | Hold the affected slice. |
 |  | Repeated-run variation |  | Null-run or repeated-sampling report | Observed movement exceeds the declared evaluation noise or is labeled uncertain. | Withdraw the headline comparison. |
+|  | Resource-normalized efficiency |  | Quality, safety, latency, cost, energy, and privacy comparison | A candidate is not called better because it is cheaper or faster while a higher-priority quality or safety dimension regresses. | Keep the dimensions separate and escalate the tradeoff. |
 |  | Metric tradeoffs |  | Accuracy, safety, latency, cost, and user-outcome comparison | A higher-priority regression cannot be hidden by a lower-priority gain. | Escalate the tradeoff to the decision owner. |
 |  | Controlled variant comparison |  | Baseline/candidate report with separate dimensions | Correctness, safety, tool-call correctness, latency, cost, and user outcomes are reported separately; blocking thresholds and the rerun policy were written before interpretation. | Mark the comparison inconclusive and do not select a variant from the headline score. |
 

@@ -107,6 +107,9 @@ metadata-only, negative-control-driven, and separate from provider cache mechani
 The [Agent Evaluation Checklist](AGENT_EVALUATION_CHECKLIST.md) applies those controls
 across requirements, test cases, deterministic and semantic checks, multi-turn and
 trajectory behavior, grader validity, uncertainty, release decisions, and monitoring.
+Use the [evaluation-layer guide](https://github.com/julie-elkins/agent-systems-design-guide/blob/main/EVALUATION_LAYERS.md)
+first to identify whether the checklist is supporting a research result, an
+application or agent decision, a production release, or a monitoring response.
 Each decision links the alternative, consequence, verification, and limitation so a
 newer engineer can follow the reasoning rather than copy a pattern without its boundary.
 

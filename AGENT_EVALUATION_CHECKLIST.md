@@ -5,6 +5,13 @@ This checklist is the operational companion to the
 It helps a reviewer determine whether an evaluation result can support a declared
 decision.
 
+Before completing the rows, identify the evaluation layer described in
+[Choosing an evaluation layer](https://github.com/julie-elkins/agent-systems-design-guide/blob/main/EVALUATION_LAYERS.md).
+The layer determines whether the result is being used for research measurement,
+application or agent evaluation, production assurance, or monitoring. This
+checklist supplies operational evidence rows; it does not make those layers
+interchangeable.
+
 It is not production approval, a certification, a security sign-off, or a universal
 scoring formula. A completed row means that evidence was reviewed for the declared
 workflow and revision. It does not prove behavior outside that scope.
@@ -78,6 +85,7 @@ Semantic checks judge meaning and evidentiary support rather than exact text ide
 |  | Relevance |  | Rubric result and reviewed examples | The response addresses the declared user task. | Separate irrelevance from factual correctness. |
 |  | Unsupported claims |  | Claim-level finding or negative control | Fabricated or unsupported claims are caught. | Do not report a clean result. |
 |  | Grader validity |  | Human reference, agreement result, disagreement review | The automated judge has a documented calibration result and limitation. | Treat its score as exploratory only. |
+|  | Label operations and adjudication |  | Versioned rubric, reviewer sampling, calibration, disagreement, adjudication, and label provenance record | Human labels are traceable to the rubric, reviewer state, sampling rule, and disposition. | Keep the result exploratory or `review_required`; do not treat an unresolved label queue as ground truth. |
 |  | Verifier-of-verifier validity |  | Independent check of evaluator findings and false-positive/false-negative controls | A verifier's findings are challenged by an independent layer; fabricated or unsupported findings remain visible. | Do not use the verifier as a release gate until its own errors are measured. |
 |  | Evaluator layers |  | Trace-linked evaluator report and human review record | Deterministic checks cover schemas, tool calls, authorization, required evidence, latency, and cost; semantic or agent-based grading is calibrated or abstains. | Keep the result `not_evaluated`; do not collapse missing evidence into a score. |
 

@@ -37,6 +37,27 @@ Each row requires four things:
 3. a threshold or decision rule; and
 4. a defined action when evidence is missing.
 
+## Quick preflight checklist
+
+Use this short pass before completing the detailed rows. It makes the minimum
+decision and evidence boundary visible to a learner or reviewer; it does not
+replace the detailed evidence table.
+
+- [ ] The decision this evaluation must support is explicit.
+- [ ] The evaluation layer is identified: research, application or agent,
+      production assurance, or monitoring.
+- [ ] The claim boundary states what the result does not prove.
+- [ ] Cases, references, model or provider revisions, and evaluator revisions
+      are versioned.
+- [ ] A known negative control tests for a plausible false pass.
+- [ ] Required evidence is complete, and missing or unavailable checks remain
+      visible.
+- [ ] Human review or grader calibration is defined where automated scoring
+      cannot support the decision alone.
+- [ ] The result is bound to the exact system revision being reviewed.
+- [ ] Change impact, rerun, reauthorization, or rollback conditions are known.
+- [ ] A named owner can approve, hold, roll back, or escalate the decision.
+
 ## 1. Decision and requirements
 
 | Status | Check | Owner | Evidence artifact | Threshold or decision rule | If evidence is missing |

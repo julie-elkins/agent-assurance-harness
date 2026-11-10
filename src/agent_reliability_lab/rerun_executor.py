@@ -73,6 +73,7 @@ class RerunExecution:
 
     plan_status: str
     status: str
+    decision_targets: tuple[str, ...]
     baseline_revisions_digest: str
     current_revisions_digest: str
     max_checks: int
@@ -90,6 +91,7 @@ class RerunExecution:
             "rerun_executor_version": RERUN_EXECUTOR_VERSION,
             "plan_status": self.plan_status,
             "status": self.status,
+            "decision_targets": list(self.decision_targets),
             "revision_digests": {
                 "baseline": self.baseline_revisions_digest,
                 "current": self.current_revisions_digest,
@@ -130,6 +132,7 @@ class RerunExecution:
             "",
             f"- **Plan:** `{self.plan_status}`",
             f"- **Executor result:** `{self.status}`",
+            f"- **Decision targets:** {', '.join(self.decision_targets) or 'none'}",
             f"- **Baseline revision:** `{self.baseline_revisions_digest}`",
             f"- **Current revision:** `{self.current_revisions_digest}`",
             f"- **Evidence:** {', '.join(self.evidence_ids) or 'none'}",
@@ -399,6 +402,9 @@ def _execution(
     return RerunExecution(
         plan_status=plan.status,
         status=status,
+        decision_targets=tuple(
+            sorted({item.decision_target for item in plan.evidence})
+        ),
         baseline_revisions_digest=plan.baseline_revisions_digest,
         current_revisions_digest=plan.current_revisions_digest,
         max_checks=policy.max_checks,

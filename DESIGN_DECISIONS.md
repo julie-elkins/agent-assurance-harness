@@ -184,6 +184,32 @@ registry update, and the offline lane cannot measure live-provider behavior.
 production safety, or human reauthorization. It proves only that the selected
 synthetic controls completed inside this executor boundary.
 
+## Keep human reauthorization separate from rerun execution
+
+**Decision:** Store and validate a separate metadata-only human reauthorization
+record after the bounded rerun completes.
+
+**Instead of:** Letting a passing executor result implicitly authorize evidence
+reuse or adding a human decision field directly into the executor output.
+
+**Why:** Execution answers what checks ran; reauthorization answers who accepted
+the remaining risk, for which decision target, and until when. Separate artifacts
+make both boundaries inspectable and let a reviewer detect changed evidence,
+expired decisions, or an incomplete rerun.
+
+**Verification:** `tools/reauthorization_record.py` validates a versioned record
+against the exact rerun-result digest, evidence IDs, decision target, revision
+digests, selected checks, executor version, owner, timestamps, and expiration.
+It fails closed for incomplete, mismatched, malformed, future, or expired inputs.
+
+**Costs if wrong:** Teams must create a human decision artifact before reusing
+evidence, which adds a review step. That cost is accepted because removing the
+step would turn a synthetic test result into an unowned release decision.
+
+**What this does not prove:** `reauthorized` means the bound evidence may be
+reused within its declared scope and time. It does not approve deployment,
+prove production safety, or establish live model quality.
+
 ## Bind provider-shaped runs through metadata-only receipts
 
 **Decision:** Normalize accepted and refused OpenAI- and Anthropic-shaped adapter

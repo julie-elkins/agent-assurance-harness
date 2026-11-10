@@ -1,0 +1,24 @@
+{
+  "reauthorization_record_version": 1,
+  "decision_id": "reauth-run-synthetic-001-001",
+  "decision": "reauthorized",
+  "decision_target": "release-agent-v1",
+  "evidence_ids": [
+    "run-synthetic-001"
+  ],
+  "owner_id": "assurance-team",
+  "decided_by": "human-reviewer",
+  "decided_at": "2026-11-10T11:30:00Z",
+  "expires_at": "2026-12-01T00:00:00Z",
+  "baseline_revisions_digest": "sha256:63fa32930a13fd3c60ba95943c03997bd1e3582c9c8be07a7bbae3a156fe0b36",
+  "current_revisions_digest": "sha256:e6a192d04f69450ebd167ed49a9ea38d1a7bef34ea9ab5c3dfe268e1af9e54b4",
+  "rerun_executor_version": 1,
+  "selected_check_ids": [
+    "authorization-negative-controls",
+    "evidence-completeness-gate",
+    "tool-safety-regression"
+  ],
+  "rerun_result_digest": "sha256:85f450511719969378f732931cb2d49e21d68fe866ee003de21c7623910b22d2",
+  "residual_risk": "Synthetic controls do not establish live model quality.",
+  "next_action": "Review again before the expiration time."
+}

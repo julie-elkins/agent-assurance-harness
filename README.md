@@ -291,6 +291,19 @@ uv run python tools/reauthorization_record.py \
   --fail-on-nonreusable
 ```
 
+The [CI evidence reauthorization contract](.github/workflows/reauthorization.yml)
+connects these steps on pull requests, pushes, and manual runs. It generates the
+synthetic change-impact plan, runs the bounded offline checks, validates the
+separate human record, and uploads metadata-only reports for review. The workflow
+uses read-only repository permissions and fails when the rerun is incomplete or
+the decision is expired, mismatched, or otherwise not reusable.
+
+This is a contract test for the assurance boundary, not a deployment approval
+workflow. It does not create human decisions, call a live model provider, or
+change the existing release-provenance and release-promotion jobs. The checked-in
+human record has an expiration time so the example cannot remain green forever
+without review.
+
 The [provider evidence receipt](docs/PROVIDER_EVIDENCE_RECEIPT.md) connects the
 existing OpenAI- and Anthropic-shaped adapters to that registry. It records which
 provider-shaped run produced the metadata, which evidence ID it supports, what

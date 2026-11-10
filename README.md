@@ -253,6 +253,25 @@ evidence result to named checks and an owner. It stores check IDs, not shell com
 so the plan can guide a trusted workflow without becoming an unreviewed execution
 surface.
 
+The [bounded rerun executor](docs/RERUN_EXECUTOR.md) is the first trusted workflow
+for those IDs. It runs only built-in offline synthetic checks, requires the guarded
+positive path and its deliberately degraded negative control, and emits a
+metadata-only result. Unknown IDs, missing checks, failed controls, and exceeded
+limits remain blocked or refused. A completed rerun does not authorize release.
+
+Run the example:
+
+```bash
+uv run python tools/rerun_executor.py \
+  --baseline-revisions examples/change-impact/baseline-revisions.json \
+  --current-revisions examples/change-impact/current-revisions.json \
+  --manifest examples/run-manifest/manifest.json \
+  --registry examples/change-impact/evidence-registry.json \
+  --changed-path policies/release-policy.json \
+  --markdown \
+  --fail-on-noncompleted
+```
+
 The [provider evidence receipt](docs/PROVIDER_EVIDENCE_RECEIPT.md) connects the
 existing OpenAI- and Anthropic-shaped adapters to that registry. It records which
 provider-shaped run produced the metadata, which evidence ID it supports, what

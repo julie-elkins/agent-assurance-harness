@@ -272,6 +272,25 @@ uv run python tools/rerun_executor.py \
   --fail-on-noncompleted
 ```
 
+The [human reauthorization record](docs/REAUTHORIZATION_RECORD.md) is the next
+boundary after a completed rerun. It validates that an accountable person made an
+explicit reuse decision for the exact evidence ID, decision target, revision
+digests, selected checks, and rerun-result digest. It fails closed when the rerun
+is incomplete, the artifact has changed, or the decision has expired. Reauthorization
+means evidence may be reused within the declared scope and time; it is not deployment
+approval.
+
+Run the synthetic positive example:
+
+```bash
+uv run python tools/reauthorization_record.py \
+  --record examples/reauthorization-record/record.json \
+  --rerun-result examples/reauthorization-record/rerun-result.json \
+  --now 2026-11-10T12:00:00Z \
+  --markdown \
+  --fail-on-nonreusable
+```
+
 The [provider evidence receipt](docs/PROVIDER_EVIDENCE_RECEIPT.md) connects the
 existing OpenAI- and Anthropic-shaped adapters to that registry. It records which
 provider-shaped run produced the metadata, which evidence ID it supports, what

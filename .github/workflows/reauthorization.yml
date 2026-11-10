@@ -1,0 +1,79 @@
+name: Evidence reauthorization contract
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  reauthorization-contract:
+    name: Synthetic evidence reauthorization contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
+        with:
+          python-version: "3.11"
+
+      - name: Install locked dependencies
+        run: uv sync --locked --extra dev
+
+      - name: Generate synthetic change-impact plan
+        run: >-
+          uv run python tools/agent_impact_plan.py
+          --baseline-revisions examples/change-impact/baseline-revisions.json
+          --current-revisions examples/change-impact/current-revisions.json
+          --manifest examples/run-manifest/manifest.json
+          --registry examples/change-impact/evidence-registry.json
+          --changed-path policies/release-policy.json
+          --output /tmp/agent-reauthorization-impact.json
+          --markdown
+          >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Run bounded synthetic rerun
+        run: >-
+          uv run python tools/rerun_executor.py
+          --baseline-revisions examples/change-impact/baseline-revisions.json
+          --current-revisions examples/change-impact/current-revisions.json
+          --manifest examples/run-manifest/manifest.json
+          --registry examples/change-impact/evidence-registry.json
+          --changed-path policies/release-policy.json
+          --output /tmp/agent-reauthorization-rerun.json
+          --markdown
+          --fail-on-noncompleted
+          >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Validate human reauthorization
+        run: >-
+          uv run python tools/reauthorization_record.py
+          --record examples/reauthorization-record/record.json
+          --rerun-result examples/reauthorization-record/rerun-result.json
+          --output /tmp/agent-reauthorization-validation.json
+          --markdown
+          --fail-on-nonreusable
+          >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload metadata-only evidence contract
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: evidence-reauthorization-contract
+          path: |
+            /tmp/agent-reauthorization-impact.json
+            /tmp/agent-reauthorization-rerun.json
+            /tmp/agent-reauthorization-validation.json
+          if-no-files-found: error
+          retention-days: 14

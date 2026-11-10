@@ -34,6 +34,30 @@ The example returns `reauthorized` because:
 The `--now` option makes demonstrations and tests deterministic. In normal use,
 the validator uses the current UTC time.
 
+## Run the CI contract
+
+The dedicated [evidence reauthorization workflow](../.github/workflows/reauthorization.yml)
+connects the three boundaries in order:
+
+1. generate a synthetic change-impact plan;
+2. run the bounded offline checks selected by that plan; and
+3. validate the checked-in human reauthorization record against its exact rerun
+   result.
+
+The workflow fails if the rerun does not complete or the reauthorization is not
+currently reusable. It uploads the plan, rerun, and validation reports as
+metadata-only artifacts—identifiers, states, hashes, counts, and reason codes,
+not prompts, traces, credentials, or provider output—even when a later step
+fails. The workflow has read-only repository permissions and does not write a
+decision record, deployment state, or release approval.
+
+The checked-in record is an expiring synthetic contract fixture. CI validates its
+real expiration against the current UTC time, so the workflow is expected to
+require a reviewed fixture update after `expires_at`. That expiration is
+deliberate: a stale example must become visible instead of remaining green
+forever. This workflow validates the assurance boundary; it is not deployment
+approval and does not prove production safety or live model quality.
+
 ## Record contract
 
 The record is a separate JSON artifact defined by

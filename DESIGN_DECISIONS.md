@@ -210,6 +210,37 @@ step would turn a synthetic test result into an unowned release decision.
 reused within its declared scope and time. It does not approve deployment,
 prove production safety, or establish live model quality.
 
+## Exercise reauthorization as a separate CI contract
+
+**Decision:** Add a dedicated, read-only CI workflow that generates the synthetic
+change-impact plan, runs the bounded offline executor, validates the separate
+human reauthorization record, and uploads the three metadata-only reports.
+
+**Instead of:** Adding the reauthorization sequence to the release-promotion
+workflow, generating human decisions automatically, or treating a passing CI job
+as deployment approval.
+
+**Why:** A CI (Continuous Integration) contract should make the evidence lifecycle
+repeatable before merge while preserving the human authority boundary. A separate
+workflow keeps synthetic assurance reviewable and prevents a public fixture from
+quietly acquiring release authority. Uploading the reports even after a later
+step fails lets a reviewer distinguish missing output from a blocked decision.
+
+**Verification:** `.github/workflows/reauthorization.yml` runs the plan, rerun,
+and validator in dependency order, fails on non-completed or non-reusable states,
+uses read-only repository permissions, pins its actions, and uploads the
+metadata-only outputs with a finite retention period. The workflow contract test
+also checks that the release approval inputs are not present.
+
+**Costs if wrong:** The repository has another CI job and the checked-in synthetic
+record must be reviewed when it expires. That cost is accepted because a stale
+human decision should become visible rather than remain silently reusable.
+
+**What this does not prove:** A green workflow proves only that this synthetic
+contract executed and that its checked-in decision was reusable at validation
+time. It does not prove live model quality, production safety, or deployment
+readiness.
+
 ## Bind provider-shaped runs through metadata-only receipts
 
 **Decision:** Normalize accepted and refused OpenAI- and Anthropic-shaped adapter

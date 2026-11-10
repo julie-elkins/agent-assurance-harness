@@ -157,6 +157,33 @@ commands immediately but preserves reviewability and avoids arbitrary execution.
 or passed. The trusted workflow must record the resulting evidence and reauthorization
 separately.
 
+## Execute only code-side allowlisted rerun checks
+
+**Decision:** Add a bounded offline executor that maps registered check IDs to
+reviewed synthetic checks in code and requires each selected check's negative
+control to be caught.
+
+**Instead of:** Executing commands from the evidence registry, or treating a
+completed process as proof that the affected evidence is safe to reuse.
+
+**Why:** The planner's `rerun_required` state is actionable only if a trusted
+workflow can perform the named synthetic checks. Keeping the executable mapping
+in code prevents metadata from becoming arbitrary execution, while requiring a
+known-bad control prevents a positive path from producing a misleading green
+result.
+
+**Verification:** `tools/rerun_executor.py` refuses unknown IDs, enforces local
+check and elapsed-time limits, runs the built-in synthetic suite once, and emits
+only metadata. Unit and integration tests cover unchanged, completed, blocked,
+refused, and limit-exceeded outcomes.
+
+**Costs if wrong:** A new check requires a reviewed code change in addition to a
+registry update, and the offline lane cannot measure live-provider behavior.
+
+**What this does not prove:** A completed rerun does not prove live model quality,
+production safety, or human reauthorization. It proves only that the selected
+synthetic controls completed inside this executor boundary.
+
 ## Bind provider-shaped runs through metadata-only receipts
 
 **Decision:** Normalize accepted and refused OpenAI- and Anthropic-shaped adapter

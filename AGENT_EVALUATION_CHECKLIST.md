@@ -56,6 +56,8 @@ replace the detailed evidence table.
       cannot support the decision alone.
 - [ ] The result is bound to the exact system revision being reviewed.
 - [ ] Change impact, rerun, reauthorization, or rollback conditions are known.
+- [ ] If change impact says `rerun_required`, the selected checks are
+      allowlisted, bounded, and each required negative control is caught.
 - [ ] A named owner can approve, hold, roll back, or escalate the decision.
 
 ## 1. Decision and requirements
@@ -151,6 +153,7 @@ sequence of planning, tool calls, intermediate state, retries, and recovery deci
 | --- | --- | --- | --- | --- | --- |
 |  | Release contract |  | Blocking and informative thresholds | Blocking checks and non-blocking observations are explicit before results are read. | Do not infer the release rule from the score. |
 |  | Change impact |  | Changed revisions and rerun plan | Relevant model, prompt, tool, policy, data, or evaluator changes trigger review. | Mark prior evidence stale or require reauthorization. |
+|  | Bounded rerun execution |  | Rerun result with selected check IDs, statuses, limits, and negative-control outcomes | Every selected trusted check completed within its limit and its known negative control was caught. | Keep prior evidence blocked; repair the check or rerun inputs. |
 |  | Human decision |  | Approval, hold, rollback, or residual-risk record | A named accountable person owns the final decision. | Keep the workflow on hold. |
 |  | Rollback or containment |  | Reversal plan and verification result | The team can narrow, stop, or reverse the changed behavior. | Do not broaden the release. |
 

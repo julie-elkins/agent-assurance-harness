@@ -55,6 +55,31 @@ interface is documented, so the provider-specific study is deferred.
 **What this does not prove:** The synthetic track does not establish Ember
 quality, latency, cost, or behaviour on real tasks.
 
+## Keep Scorecard as a default-branch supply-chain scan
+
+**Decision:** Run the pinned Scorecard workflow on `main`, on its schedule,
+after branch-protection changes, or by manual dispatch, but do not require its
+status as a pull-request check.
+
+**Instead of:** Triggering Scorecard on pull requests or requiring a
+`Scorecard analysis` status that the action cannot produce for a feature branch.
+
+**Why:** The observed Scorecard action rejected the PR-branch dispatch with
+`Only the default branch main is supported`. Making that incompatible status
+required would block otherwise mergeable changes without evaluating the
+change. Keeping the scan on `main` preserves supply-chain coverage at the
+supported boundary.
+
+**Verification:** The workflow remains pinned and runs on `main`; the
+`protect-main` ruleset requires checks that support pull-request evaluation.
+
+**Costs if wrong:** A supply-chain finding may be reported after merge rather
+than before it. That risk is accepted until a Scorecard version supports
+feature-branch analysis or a separate PR-compatible scan is added.
+
+**What this does not prove:** A green pull-request gate does not replace the
+default-branch Scorecard scan or establish complete supply-chain security.
+
 ## Keep the required path synthetic and provider-neutral
 
 **Decision:** Run the required CI path against deterministic synthetic scenarios and

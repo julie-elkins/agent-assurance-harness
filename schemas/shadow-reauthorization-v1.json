@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/schemas/shadow-reauthorization-v1.json",
+  "title": "Synthetic provider shadow reauthorization fixture",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "shadow_reauthorization_version",
+    "data_class",
+    "purpose",
+    "base_manifest",
+    "proposals"
+  ],
+  "properties": {
+    "shadow_reauthorization_version": {
+      "const": 1
+    },
+    "data_class": {
+      "const": "synthetic"
+    },
+    "purpose": {
+      "$ref": "#/$defs/identifier"
+    },
+    "base_manifest": {
+      "$ref": "#/$defs/identifier"
+    },
+    "proposals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/proposal"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9_.:/-]*$"
+    },
+    "proposal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider_id",
+        "model_id",
+        "agent_id",
+        "expected_current_status",
+        "expected_changed_status",
+        "case"
+      ],
+      "properties": {
+        "provider_id": {
+          "enum": [
+            "openai",
+            "anthropic"
+          ]
+        },
+        "model_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "agent_id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "expected_current_status": {
+          "enum": [
+            "reauthorized",
+            "reauthorization_required",
+            "blocked",
+            "human_review"
+          ]
+        },
+        "expected_changed_status": {
+          "enum": [
+            "reauthorized",
+            "reauthorization_required",
+            "blocked",
+            "human_review"
+          ]
+        },
+        "case": {
+          "$ref": "shadow-execution-v1.json#/$defs/case"
+        }
+      }
+    }
+  }
+}

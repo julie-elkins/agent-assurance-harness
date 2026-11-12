@@ -1,0 +1,56 @@
+{
+  "shadow_reauthorization_version": 1,
+  "data_class": "synthetic",
+  "purpose": "compare-provider-shadow-reuse",
+  "base_manifest": "base-manifest.json",
+  "proposals": [
+    {
+      "provider_id": "anthropic",
+      "model_id": "claude-synthetic",
+      "agent_id": "anthropic-shadow-agent",
+      "expected_current_status": "reauthorized",
+      "expected_changed_status": "reauthorization_required",
+      "case": {
+        "case_id": "anthropic-safe-action",
+        "action": {
+          "action_id": "action-anthropic-001",
+          "operation_id": "operation-anthropic-001",
+          "tool_name": "change_request",
+          "effect_class": "repository-change",
+          "intended_effect": "create-change-request",
+          "policy_revision": "policy-r1",
+          "authority_status": "granted",
+          "requires_human_approval": false
+        },
+        "simulation": {
+          "outcome": "matched",
+          "expected_decision": "allow"
+        }
+      }
+    },
+    {
+      "provider_id": "openai",
+      "model_id": "openai-synthetic",
+      "agent_id": "openai-shadow-agent",
+      "expected_current_status": "reauthorized",
+      "expected_changed_status": "reauthorization_required",
+      "case": {
+        "case_id": "openai-safe-action",
+        "action": {
+          "action_id": "action-openai-001",
+          "operation_id": "operation-openai-001",
+          "tool_name": "change_request",
+          "effect_class": "repository-change",
+          "intended_effect": "create-change-request",
+          "policy_revision": "policy-r1",
+          "authority_status": "granted",
+          "requires_human_approval": false
+        },
+        "simulation": {
+          "outcome": "matched",
+          "expected_decision": "allow"
+        }
+      }
+    }
+  ]
+}

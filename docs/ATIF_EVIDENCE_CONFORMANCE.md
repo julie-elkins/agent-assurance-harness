@@ -53,6 +53,11 @@ The current profile accepts `ATIF-v1.2` and `ATIF-v1.5`, matching the versions
 handled by the public Harbor adapter. A future profile can add another schema
 version after its adapter contract and negative controls are reviewed.
 
+The `harbor-adapter-v1.2.json` fixture is a synthetic copy of the public
+receipt-to-summary contract exercised by the Harbor adapter's post-merge smoke.
+It contains no raw trajectory or provider data; its purpose is to catch drift
+in the shared field names, statuses, counts, digest format, and schema version.
+
 ## Muse Ember track
 
 The repository includes a synthetic `muse-ember` fixture to prove that a

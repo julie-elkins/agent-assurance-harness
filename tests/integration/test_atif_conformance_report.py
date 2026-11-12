@@ -35,6 +35,15 @@ def test_positive_fixture_emits_metadata_only_report():
     assert "provider_response" not in result.stdout
 
 
+def test_harbor_adapter_fixture_emits_accepted_report():
+    result = _run("harbor-adapter-v1.2.json")
+
+    assert result.returncode == 0
+    report = json.loads(result.stdout)
+    assert report["conformance_passed"]
+    assert report["schema_version"] == "ATIF-v1.2"
+
+
 def test_negative_fixture_returns_nonzero_and_only_reports_refusal_metadata():
     result = _run("missing-artifact.json")
 

@@ -26,6 +26,14 @@ def test_muse_ember_synthetic_track_uses_the_same_evidence_contract():
     assert report.source_id == "muse-ember"
 
 
+def test_harbor_adapter_post_merge_fixture_passes_the_same_contract():
+    report = run_atif_conformance(_fixture("harbor-adapter-v1.2.json"))
+
+    assert report.conformance_passed
+    assert report.source_id == "harbor"
+    assert report.schema_version == "ATIF-v1.2"
+
+
 def test_missing_trajectory_artifact_is_refused_even_when_terminal_status_says_completed():
     report = run_atif_conformance(_fixture("missing-artifact.json"))
 

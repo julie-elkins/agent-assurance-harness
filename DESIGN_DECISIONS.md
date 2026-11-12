@@ -4,6 +4,82 @@ This file explains the choices that shape the Agent Assurance Harness. It is a
 learning aid and reviewer map, not a claim that one architecture is universally
 correct. The implementation and tests remain the source of truth.
 
+## Extend the harness with ATIF evidence conformance
+
+**Decision:** Add an ATIF (Agent Trajectory Interchange Format) evidence-
+conformance lane to this harness that validates an identifier-only trajectory
+summary from a local provider or Harbor adapter.
+
+**Instead of:** Creating a second public evidence-conformance repository, adding
+another raw trajectory format, or publishing complete provider traces.
+
+**Why:** This harness already owns provider-neutral conformance, metadata-only
+receipts, revision binding, and provenance checks. The missing capability was a
+focused check that a trajectory artifact was observed, linked, and safe to
+report. Keeping the new lane here makes that boundary part of the existing
+assurance path rather than creating two competing contracts.
+
+**Verification:** The ATIF evidence-conformance CLI runs synthetic positive and
+negative controls for unsupported schemas, missing artifacts, incomplete event
+linkage, terminal-status contradictions, and raw-content refusal.
+
+**Costs if wrong:** The lane remains coupled to this harness and cannot replay
+or semantically inspect raw trajectories. A future local-only integration may
+need to be extracted if independent adoption becomes more important than one
+integrated assurance path.
+
+**What this does not prove:** A passing evidence summary does not prove task
+correctness, model quality, live provider availability, or production safety.
+
+## Keep Muse Ember as a provider track, not an assurance-core dependency
+
+**Decision:** Add Muse Ember through the same provider-neutral evidence contract,
+starting with a synthetic fixture until an official public Ember endpoint and
+model identifier are available.
+
+**Instead of:** Adding an unverified live client or treating private tester
+access as a public integration contract.
+
+**Why:** A provider track tests provider behaviour; the assurance core tests
+whether evidence supports a claim. Separating them lets the same negative
+controls compare providers without inventing an endpoint or spending credits
+before the interface is established.
+
+**Verification:** The synthetic `muse-ember` fixture passes the same ATIF
+evidence-conformance checks as the Harbor fixture, while the documentation
+labels it as synthetic rather than a live model result.
+
+**Costs if wrong:** No live Ember comparison is claimed until the public
+interface is documented, so the provider-specific study is deferred.
+
+**What this does not prove:** The synthetic track does not establish Ember
+quality, latency, cost, or behaviour on real tasks.
+
+## Keep Scorecard as a default-branch supply-chain scan
+
+**Decision:** Run the pinned Scorecard workflow on `main`, on its schedule,
+after branch-protection changes, or by manual dispatch, but do not require its
+status as a pull-request check.
+
+**Instead of:** Triggering Scorecard on pull requests or requiring a
+`Scorecard analysis` status that the action cannot produce for a feature branch.
+
+**Why:** The observed Scorecard action rejected the PR-branch dispatch with
+`Only the default branch main is supported`. Making that incompatible status
+required would block otherwise mergeable changes without evaluating the
+change. Keeping the scan on `main` preserves supply-chain coverage at the
+supported boundary.
+
+**Verification:** The workflow remains pinned and runs on `main`; the
+`protect-main` ruleset requires checks that support pull-request evaluation.
+
+**Costs if wrong:** A supply-chain finding may be reported after merge rather
+than before it. That risk is accepted until a Scorecard version supports
+feature-branch analysis or a separate PR-compatible scan is added.
+
+**What this does not prove:** A green pull-request gate does not replace the
+default-branch Scorecard scan or establish complete supply-chain security.
+
 ## Keep the required path synthetic and provider-neutral
 
 **Decision:** Run the required CI path against deterministic synthetic scenarios and

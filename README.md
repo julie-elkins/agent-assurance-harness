@@ -68,6 +68,42 @@ official-source changes and explicitly queued social leads. It produces a
 metadata-only review queue; it does not scrape a private LinkedIn feed, edit
 course content, or authorize publication.
 
+### Public portfolio path
+
+The public work is organized as one evidence path rather than a collection of
+unrelated repositories:
+
+1. [Claude Evaluation Lab](https://github.com/julie-elkins/claude-evaluation-lab)
+   introduces agent evaluation through repeatable learner exercises.
+2. This repository provides the assurance layer: evidence contracts, negative
+   controls, bounded retry, and release decisions.
+3. [Harbor Assurance Adapter](https://github.com/julie-elkins/harbor-assurance-adapter)
+   provides a bounded benchmark execution path for comparing coding agents while
+   keeping benchmark status separate from assurance status.
+4. [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity)
+   studies whether the measurement itself supports the decision.
+
+The [Agent Systems Design Guide](https://github.com/julie-elkins/agent-systems-design-guide)
+provides the design vocabulary and decision boundaries used across the path.
+
+### Check trajectory evidence conformance
+
+The [ATIF evidence-conformance lane](docs/ATIF_EVIDENCE_CONFORMANCE.md) checks the
+metadata projection from a local provider or Harbor adapter. ATIF (Agent Trajectory
+Interchange Format) is treated as an evidence boundary here: the public report
+checks schema, artifact presence, event linkage, terminal consistency, and the
+metadata-only redaction policy without exporting raw trajectories.
+
+```bash
+uv run python tools/atif_conformance_report.py \
+  --summary examples/atif-conformance/positive.json \
+  --markdown \
+  --fail-on-findings
+```
+
+This is deliberately separate from task correctness. A task can pass its verifier
+and still be blocked when its expected evidence artifact is missing or incomplete.
+
 For the shortest outside-reviewer path, use the [Showcase](SHOWCASE.md). It runs an
 offline synthetic assurance demo and documents the optional metadata-only demonstration
 against a local checkout of the public

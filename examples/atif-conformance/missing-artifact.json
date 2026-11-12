@@ -1,0 +1,13 @@
+{
+  "source_id": "harbor",
+  "run_id": "synthetic-run-missing-artifact",
+  "schema_version": "ATIF-v1.5",
+  "trajectory_digest": null,
+  "step_count": 0,
+  "tool_call_count": 0,
+  "terminal_status": "completed",
+  "artifact_status": "missing",
+  "artifact_count": 0,
+  "redaction_policy": "metadata-only-v1",
+  "event_linkage_status": "missing"
+}

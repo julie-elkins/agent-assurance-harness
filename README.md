@@ -68,6 +68,13 @@ official-source changes and explicitly queued social leads. It produces a
 metadata-only review queue; it does not scrape a private LinkedIn feed, edit
 course content, or authorize publication.
 
+The [teaching and adoption evidence guide](docs/TEACHING_AND_ADOPTION_EVIDENCE.md)
+connects the harness's synthetic controls to audience calibration,
+demonstration-first instruction, failure-driven labs, instructor calibration,
+and bounded learner evidence. The reusable strategy cards live in the public
+[AI Teaching Strategies](https://github.com/julie-elkins/ai-teaching-strategies)
+repository.
+
 ### Public portfolio path
 
 The public work is organized as one evidence path rather than a collection of

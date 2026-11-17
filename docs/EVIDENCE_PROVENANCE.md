@@ -44,6 +44,19 @@ This is not a cryptographic signature, a semantic quality judgment, or proof tha
 provider response was correct. Those require separately approved evidence and evaluation
 layers.
 
+## Evidence custody and authorization
+
+Evidence custody means identifying who holds the record used to support a decision
+and whether the executor could rewrite or delete it. For a consequential action,
+record the authorization owner separately from the agent or tool that performed the
+action. If the executor controls the only copy of the evidence, treat that record
+as weaker than independently held evidence and keep the result bounded or
+`not_evaluated`.
+
+The public harness records only synthetic identifiers and states. It does not claim
+that a real evidence store is append-only, immutable, or independently operated.
+Those properties require system-specific controls and verification.
+
 ## What remains out of scope
 
 The current record is a validated metadata receipt, not a signed attestation. A signed

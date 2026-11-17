@@ -113,6 +113,7 @@ Semantic checks judge meaning and evidentiary support rather than exact text ide
 |  | Label operations and adjudication |  | Versioned rubric, reviewer sampling, calibration, disagreement, adjudication, and label provenance record | Human labels are traceable to the rubric, reviewer state, sampling rule, and disposition. | Keep the result exploratory or `review_required`; do not treat an unresolved label queue as ground truth. |
 |  | Verifier-of-verifier validity |  | Independent check of evaluator findings and false-positive/false-negative controls | A verifier's findings are challenged by an independent layer; fabricated or unsupported findings remain visible. | Do not use the verifier as a release gate until its own errors are measured. |
 |  | Evaluator layers |  | Trace-linked evaluator report and human review record | Deterministic checks cover schemas, tool calls, authorization, required evidence, latency, and cost; semantic or agent-based grading is calibrated or abstains. | Keep the result `not_evaluated`; do not collapse missing evidence into a score. |
+|  | Trust-gated autonomy |  | Calibration, independent-breaker, and autonomy decision record | Autonomy expands only after evaluator validity and the highest-risk false-pass path are checked. | Keep the workflow at its current authority or require human review. |
 
 ## 5. Behavioral, multi-turn, and trajectory evaluation
 
@@ -134,6 +135,7 @@ sequence of planning, tool calls, intermediate state, retries, and recovery deci
 | --- | --- | --- | --- | --- | --- |
 |  | Trace completeness |  | Trace schema and completeness report | Required task, revision, tool, state, outcome, and evaluator fields exist. | Report not evaluated; absent evidence is not a pass. |
 |  | Revision binding |  | Model, prompt, tool, data, policy, harness, and grader revisions | The result is bound to the exact system under review. | Require a rerun or reauthorization. |
+|  | Evidence custody |  | Authorization owner, evidence holder, and executor-mutability record | The accountable authority and the party holding the decision evidence are named; the executor's ability to rewrite or delete it is explicit. | Do not treat the record as independent release evidence. |
 |  | Privacy boundary |  | Output scan and data-classification decision | Shared artifacts contain only permitted metadata or approved content. | Remove or quarantine the artifact. |
 |  | Status visibility |  | Counts for completed, skipped, refused, failed, and unavailable checks | The report cannot silently omit checks that did not run. | Block the report from release use. |
 

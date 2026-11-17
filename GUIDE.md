@@ -63,6 +63,20 @@ It does not prove:
 Those limits matter because a green synthetic gate is evidence about the checked contract,
 not a universal quality claim.
 
+## 🧭 Take this forward
+
+**Remember:** a harness is the complete workflow around the model—tools,
+permissions, policies, state, and evaluators.
+
+**Try next:** name the authorization owner, the independent evidence holder, and
+the false-pass check before expanding an agent's autonomy.
+
+**Inspect:** calibration, negative controls, evidence source and age, executor
+mutability, and the human decision record.
+
+**Do not infer:** a passing synthetic gate, public incident report, or model score
+proves that a live harness is trustworthy in every environment.
+
 ## Shadow execution
 
 Shadow execution is a pre-effect rehearsal: the harness compares an agent's

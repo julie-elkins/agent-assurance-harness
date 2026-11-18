@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="560" viewBox="0 0 1200 560" role="img" aria-labelledby="title desc">
+  <title id="title">Agent assurance showcase flow</title>
+  <desc id="desc">A synthetic agent run becomes identifier-only evidence, then a guarded path passes while an unsafe negative control is blocked before a release decision.</desc>
+  <rect width="1200" height="560" rx="28" fill="#F6F8FB"/>
+  <text x="60" y="72" fill="#102A43" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="30" font-weight="700">
+    A green result is useful only when the required control ran
+  </text>
+  <text x="60" y="108" fill="#486581" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18">
+    Offline synthetic proof for an AI agent release path
+  </text>
+
+  <g font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif">
+    <rect x="60" y="160" width="235" height="230" rx="18" fill="#FFFFFF" stroke="#BCCCDC" stroke-width="2"/>
+    <circle cx="98" cy="204" r="22" fill="#D9EAF7"/>
+    <text x="98" y="211" text-anchor="middle" fill="#0B69A3" font-size="20" font-weight="700">1</text>
+    <text x="132" y="211" fill="#102A43" font-size="19" font-weight="700">Synthetic run</text>
+    <text x="84" y="258" fill="#334E68" font-size="16">Agent request</text>
+    <text x="84" y="286" fill="#627D98" font-size="15">Offline and</text>
+    <text x="84" y="309" fill="#627D98" font-size="15">provider-neutral</text>
+    <rect x="84" y="337" width="185" height="28" rx="14" fill="#E6F6FF"/>
+    <text x="176" y="357" text-anchor="middle" fill="#0B69A3" font-size="13" font-weight="600">synthetic IDs only</text>
+
+    <path d="M310 275 H345" stroke="#829AB1" stroke-width="3"/>
+    <path d="M337 266 L349 275 L337 284" fill="none" stroke="#829AB1" stroke-width="3"/>
+
+    <rect x="360" y="160" width="235" height="230" rx="18" fill="#FFFFFF" stroke="#BCCCDC" stroke-width="2"/>
+    <circle cx="398" cy="204" r="22" fill="#D9EAF7"/>
+    <text x="398" y="211" text-anchor="middle" fill="#0B69A3" font-size="20" font-weight="700">2</text>
+    <text x="432" y="211" fill="#102A43" font-size="19" font-weight="700">Evidence contract</text>
+    <text x="384" y="258" fill="#334E68" font-size="16">Required checks</text>
+    <text x="384" y="286" fill="#627D98" font-size="15">tool use • authorization</text>
+    <text x="384" y="309" fill="#627D98" font-size="15">abstention • source</text>
+    <rect x="384" y="337" width="185" height="28" rx="14" fill="#E6F6FF"/>
+    <text x="476" y="357" text-anchor="middle" fill="#0B69A3" font-size="13" font-weight="600">evidence observed?</text>
+
+    <path d="M610 275 H645" stroke="#829AB1" stroke-width="3"/>
+    <path d="M637 266 L649 275 L637 284" fill="none" stroke="#829AB1" stroke-width="3"/>
+
+    <rect x="660" y="160" width="235" height="230" rx="18" fill="#FFFFFF" stroke="#BCCCDC" stroke-width="2"/>
+    <circle cx="698" cy="204" r="22" fill="#D9EAF7"/>
+    <text x="698" y="211" text-anchor="middle" fill="#0B69A3" font-size="20" font-weight="700">3</text>
+    <text x="732" y="211" fill="#102A43" font-size="19" font-weight="700">Decision gate</text>
+    <rect x="684" y="246" width="187" height="45" rx="12" fill="#DFF6DD"/>
+    <text x="777" y="275" text-anchor="middle" fill="#176B3A" font-size="17" font-weight="700">PASS · guarded path</text>
+    <rect x="684" y="304" width="187" height="45" rx="12" fill="#FDE2E1"/>
+    <text x="777" y="333" text-anchor="middle" fill="#A61B1B" font-size="17" font-weight="700">BLOCKED · unsafe case</text>
+    <text x="777" y="374" text-anchor="middle" fill="#627D98" font-size="13">negative control caught</text>
+
+    <path d="M910 275 H945" stroke="#829AB1" stroke-width="3"/>
+    <path d="M937 266 L949 275 L937 284" fill="none" stroke="#829AB1" stroke-width="3"/>
+
+    <rect x="960" y="160" width="180" height="230" rx="18" fill="#FFFFFF" stroke="#BCCCDC" stroke-width="2"/>
+    <circle cx="998" cy="204" r="22" fill="#D9EAF7"/>
+    <text x="998" y="211" text-anchor="middle" fill="#0B69A3" font-size="20" font-weight="700">4</text>
+    <text x="1032" y="211" fill="#102A43" font-size="19" font-weight="700">Review</text>
+    <text x="984" y="258" fill="#334E68" font-size="16">Metadata only</text>
+    <text x="984" y="286" fill="#627D98" font-size="15">status</text>
+    <text x="984" y="309" fill="#627D98" font-size="15">IDs • counts • hashes</text>
+    <rect x="984" y="337" width="132" height="28" rx="14" fill="#FFF4D6"/>
+    <text x="1050" y="357" text-anchor="middle" fill="#8D5B00" font-size="13" font-weight="600">human decision</text>
+  </g>
+
+  <rect x="60" y="438" width="1080" height="64" rx="16" fill="#102A43"/>
+  <text x="600" y="477" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif" font-size="18" font-weight="600">
+    Pre-merge safety evidence — not a live model-quality score or deployment approval
+  </text>
+</svg>

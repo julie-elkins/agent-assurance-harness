@@ -1,0 +1,26 @@
+{
+  "source_evidence_receipt_version": 1,
+  "receipt_id": "receipt:aws:lambda-runtime",
+  "evidence_id": "evidence:aws:lambda-runtime",
+  "claim_id": "claim:regional-availability",
+  "source_id": "aws-official-docs",
+  "authority": "aws-official",
+  "source_url": "https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-model.html",
+  "source_locator": "regional-availability",
+  "retrieved_at": "2026-11-07",
+  "document_updated_at": null,
+  "source_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "scope": {
+    "partition": "aws",
+    "service": "lambda",
+    "source_role": "documentation"
+  },
+  "lookup_status": "completed",
+  "support_status": "insufficient",
+  "human_disposition": "pending_review",
+  "limitations": [
+    "The source check does not establish that the item answer key is correct.",
+    "The document update time was not available from the lookup."
+  ],
+  "what_it_does_not_show": "This receipt does not contain item text or source text and does not authorize changing the review outcome."
+}

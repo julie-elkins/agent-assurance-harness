@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/julie-elkins/agent-assurance-harness/blob/main/schemas/reauthorization-record-v1.json",
+  "title": "Agent evidence reauthorization record v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "reauthorization_record_version",
+    "decision_id",
+    "decision",
+    "decision_target",
+    "evidence_ids",
+    "owner_id",
+    "decided_by",
+    "decided_at",
+    "expires_at",
+    "baseline_revisions_digest",
+    "current_revisions_digest",
+    "rerun_executor_version",
+    "selected_check_ids",
+    "rerun_result_digest",
+    "residual_risk",
+    "next_action"
+  ],
+  "properties": {
+    "reauthorization_record_version": { "const": 1 },
+    "decision_id": {
+      "type": "string",
+      "pattern": "^[^\\s]+$",
+      "minLength": 1
+    },
+    "decision": {
+      "enum": ["reauthorized", "held", "blocked"]
+    },
+    "decision_target": {
+      "type": "string",
+      "pattern": "^[^\\s]+$",
+      "minLength": 1
+    },
+    "evidence_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "type": "string", "pattern": "^[^\\s]+$" }
+    },
+    "owner_id": {
+      "type": "string",
+      "pattern": "^[^\\s]+$",
+      "minLength": 1
+    },
+    "decided_by": {
+      "type": "string",
+      "pattern": "^[^\\s]+$",
+      "minLength": 1
+    },
+    "decided_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "baseline_revisions_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "current_revisions_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "rerun_executor_version": { "const": 1 },
+    "selected_check_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+      }
+    },
+    "rerun_result_digest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "residual_risk": {
+      "type": "string",
+      "minLength": 1
+    },
+    "next_action": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

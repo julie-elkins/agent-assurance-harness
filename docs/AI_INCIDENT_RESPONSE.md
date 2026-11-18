@@ -129,6 +129,11 @@ The goal is not to diagnose a real incident. The goal is to practice asking what
 be stopped, what evidence must be preserved, what authority must be revoked, and what
 regression test should prevent recurrence.
 
+For a provider-neutral, offline benchmark of interruption and recovery evidence,
+see the [ESAC-Bench Recovery Track](https://github.com/julie-elkins/esac-bench/blob/main/docs/benchmark-spec.md#recovery-track).
+It complements this incident-response guide; it does not replace a production
+recovery plan, rollback rehearsal, or human approval.
+
 ## What this guide does not prove
 
 - It does not establish live model quality or alignment.

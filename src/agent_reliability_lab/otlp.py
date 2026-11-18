@@ -32,7 +32,7 @@ from .recorder import TraceRecorder
 # FIELD CONVENTION: These names come from the OpenTelemetry GenAI semantic convention
 # and the OTLP/JSON export shape. The importer reads only the fields it can normalize.
 # See https://opentelemetry.io/docs/specs/otlp/ and
-# https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md.
+# https://github.com/open-telemetry/semantic-conventions-genai.
 _SENSITIVE_ATTRIBUTE_KEYS = frozenset(
     {
         "gen_ai.input.messages",

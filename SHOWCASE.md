@@ -3,6 +3,29 @@
 This is the fastest way for an outside reviewer to see what the project does and why
 the controls matter.
 
+## The five-minute reviewer route
+
+The shortest meaningful proof is the offline synthetic showcase:
+
+```bash
+uv sync --extra dev
+uv run python tools/showcase_demo.py --markdown
+```
+
+Read the output as a control demonstration, not as a model-quality score:
+
+- `Guarded agent: PASS` shows that the expected evidence contract can pass;
+- evaluator and mutation controls show that deliberately planted failures were caught;
+- the memory-policy negative control shows that lower relative cost cannot compensate for
+  discarded authorization, retry, source, or long-running evidence; and
+- metadata-only output shows what a public review artifact can expose without publishing
+  prompts, traces, credentials, or provider responses.
+
+The production implication is narrow but useful: before a change reaches a merge or
+release decision, the team can require evidence that the declared controls ran. The
+showcase does not prove live model reliability, production safety, or deployment
+readiness.
+
 The showcase has seven related lanes:
 
 1. An offline synthetic lane for repeatable CI (continuous integration, the automated
@@ -41,6 +64,25 @@ synthetic result used to prove that the evaluator catches a known failure.
 
 The output contains identifiers, statuses, counts, and hashes only. It does not contain
 lesson text, prompts, credentials, provider output, or source paths.
+
+## Constrained candidate comparison
+
+The candidate comparison is a small decision surface for evaluation-driven
+optimization. It applies hard constraints for safety, evidence completeness,
+held-out performance, and repeated-run stability before comparing quality,
+cost, and latency. A Pareto frontier is the set of candidates where no
+eligible candidate is at least as good on every declared objective and better
+on one. The report leaves the final choice to a human reviewer.
+
+```bash
+uv run python tools/pareto_candidate_report.py
+```
+
+The synthetic fixture deliberately includes a cheap, high-quality candidate
+that fails the safety gate, a dominated candidate, and an unstable candidate.
+The expected frontier is `quality-first-safe` plus `balanced-safe`. This is a
+review handoff, not a release approval, optimizer, production benchmark, or
+live-provider result.
 
 Expected successful output:
 

@@ -1,12 +1,14 @@
 # Agent Assurance Harness
 
-Evidence gates for shipping AI agent code to production.
+A runnable evaluation harness that shows whether an AI agent's required safety controls
+actually ran before code moves toward production.
 
-A production assurance harness for AI agents and technical-content systems.
+It tests tool-using AI agents and technical-content systems against explicit evidence
+contracts: observable facts that must exist before a result can act, abstain, or report
+success honestly. The public path is synthetic, offline, provider-neutral, and
+metadata-only.
 
-A provider-neutral harness for testing whether tool-using AI agents have the evidence to
-act, abstain, and report honestly, plus a bounded Course Doctor workflow for deciding
-when technical training content is ready for human approval.
+## Start here
 
 The [ESAC-Bench Recovery Track](https://github.com/julie-elkins/esac-bench/blob/main/docs/benchmark-spec.md#recovery-track)
 provides a separate seven-case benchmark for testing restoration, side-effect
@@ -20,12 +22,106 @@ and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIV
 defines the delivery controls to apply to future builds. This README remains the full
 command reference and feature history.
 
+If you have five minutes, run the offline showcase:
+
+```bash
+uv sync --extra dev
+uv run python tools/showcase_demo.py --markdown
+```
+
+![Agent assurance showcase: synthetic run, evidence contract, decision gate, and metadata-only review](docs/assets/assurance-showcase.svg)
+
+The visual summarizes the proof path: a synthetic run produces identifier-only evidence,
+the gate accepts the guarded path, blocks the unsafe negative control, and hands a
+metadata-only result to a reviewer.
+
+Look for four things:
+
+- the guarded synthetic agent passes;
+- deliberately unsafe evaluator and mutation controls are caught;
+- the bounded memory policy blocks a policy that forgets required evidence; and
+- the report contains statuses, identifiers, counts, and hashes—not prompts, traces,
+  credentials, or provider output.
+
+That is the core story: a green result is useful only when the required evidence was
+observed, and a plausible task result must still be blocked when a safety or evidence
+control is missing.
+
+For a private domain-review integration, see the
+[review workflow assurance guide](docs/REVIEW_WORKFLOW_ASSURANCE.md). It defines
+the metadata-only manifest boundary and returns `pass_for_human_review` or
+`blocked`; it never receives domain content or authorizes release.
+
+## Who this is for
+
+- **AI engineers:** test agent behavior, authorization, abstention, and release paths.
+- **Evaluation engineers:** check whether an evaluator can catch a known false pass.
+- **Reviewers and hiring managers:** inspect runnable evidence, design reasoning, and
+  production limits.
+- **Learners and technical enablement teams:** follow the risk, run the control, observe
+  the tradeoff, and then inspect the implementation.
+
+The [Showcase](SHOWCASE.md) is the shortest reviewer path. The
+[Agent Assurance Harness Guide](GUIDE.md) explains how to operate the controls, and
+[Building the Agent Assurance Harness](BUILD_GUIDE.md) explains the design rationale and
+extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIVERY_STANDARD.md)
+defines the delivery controls to apply to future builds. This README remains the full
+command reference and feature history.
+
 The [Portfolio Evidence Guide](ROLE_ALIGNMENT_GUIDE.md) maps the runnable controls to
 technical education, developer experience, and enablement requirements. The reusable
 patterns behind the launch-to-field workflow live in the public
 [Agent Systems Design Guide](https://github.com/julie-elkins/agent-systems-design-guide);
 the MCP-specific patterns remain in the
 [MCP Server Design Guide](https://github.com/julie-elkins/mcp-server-design-guide).
+
+The [Update Radar](docs/UPDATE_RADAR.md) is the bounded maintenance path for
+official-source changes and explicitly queued social leads. It produces a
+metadata-only review queue; it does not scrape a private LinkedIn feed, edit
+course content, or authorize publication.
+
+The [teaching and adoption evidence guide](docs/TEACHING_AND_ADOPTION_EVIDENCE.md)
+connects the harness's synthetic controls to audience calibration,
+demonstration-first instruction, failure-driven labs, instructor calibration,
+and bounded learner evidence. The reusable strategy cards live in the public
+[AI Teaching Strategies](https://github.com/julie-elkins/ai-teaching-strategies)
+repository.
+
+### Public portfolio path
+
+The public work is organized as one evidence path rather than a collection of
+unrelated repositories:
+
+1. [Claude Evaluation Lab](https://github.com/julie-elkins/claude-evaluation-lab)
+   introduces agent evaluation through repeatable learner exercises.
+2. This repository provides the assurance layer: evidence contracts, negative
+   controls, bounded retry, and release decisions.
+3. [Harbor Assurance Adapter](https://github.com/julie-elkins/harbor-assurance-adapter)
+   provides a bounded benchmark execution path for comparing coding agents while
+   keeping benchmark status separate from assurance status.
+4. [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity)
+   studies whether the measurement itself supports the decision.
+
+The [Agent Systems Design Guide](https://github.com/julie-elkins/agent-systems-design-guide)
+provides the design vocabulary and decision boundaries used across the path.
+
+### Check trajectory evidence conformance
+
+The [ATIF evidence-conformance lane](docs/ATIF_EVIDENCE_CONFORMANCE.md) checks the
+metadata projection from a local provider or Harbor adapter. ATIF (Agent Trajectory
+Interchange Format) is treated as an evidence boundary here: the public report
+checks schema, artifact presence, event linkage, terminal consistency, and the
+metadata-only redaction policy without exporting raw trajectories.
+
+```bash
+uv run python tools/atif_conformance_report.py \
+  --summary examples/atif-conformance/positive.json \
+  --markdown \
+  --fail-on-findings
+```
+
+This is deliberately separate from task correctness. A task can pass its verifier
+and still be blocked when its expected evidence artifact is missing or incomplete.
 
 For the shortest outside-reviewer path, use the [Showcase](SHOWCASE.md). It runs an
 offline synthetic assurance demo and documents the optional metadata-only demonstration
@@ -65,6 +161,12 @@ before the public contract has earned it.
 
 The [design decisions](DESIGN_DECISIONS.md) explain why the harness stays synthetic,
 metadata-only, negative-control-driven, and separate from provider cache mechanics.
+The [Agent Evaluation Checklist](AGENT_EVALUATION_CHECKLIST.md) applies those controls
+across requirements, test cases, deterministic and semantic checks, multi-turn and
+trajectory behavior, grader validity, uncertainty, release decisions, and monitoring.
+Use the [evaluation-layer guide](https://github.com/julie-elkins/agent-systems-design-guide/blob/main/EVALUATION_LAYERS.md)
+first to identify whether the checklist is supporting a research result, an
+application or agent decision, a production release, or a monitoring response.
 Each decision links the alternative, consequence, verification, and limitation so a
 newer engineer can follow the reasoning rather than copy a pattern without its boundary.
 
@@ -106,6 +208,16 @@ system and learning how to validate the evaluation itself.
   to catch a transport-success result whose task outcome is still unsafe.
 - **Part 3:** Continue to [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity)
   to test whether the measurement itself supports a decision.
+
+### Research companion: response-quality measurement
+
+The companion
+[response-quality study](https://github.com/julie-elkins/llm-eval-validity/tree/main/research/response-quality)
+records the frozen provider comparison and its claim boundaries. This harness
+contains the reusable implementation and teaching patterns—evidence contracts,
+layered evaluators, independent breakers, synthetic controls, and bounded
+efficiency metadata—but it is not the source of that study's live-provider
+results.
 
 ### Learner objective
 
@@ -197,6 +309,57 @@ The optional [evidence registry](schemas/evidence-registry-v1.json) maps an affe
 evidence result to named checks and an owner. It stores check IDs, not shell commands,
 so the plan can guide a trusted workflow without becoming an unreviewed execution
 surface.
+
+The [bounded rerun executor](docs/RERUN_EXECUTOR.md) is the first trusted workflow
+for those IDs. It runs only built-in offline synthetic checks, requires the guarded
+positive path and its deliberately degraded negative control, and emits a
+metadata-only result. Unknown IDs, missing checks, failed controls, and exceeded
+limits remain blocked or refused. A completed rerun does not authorize release.
+
+Run the example:
+
+```bash
+uv run python tools/rerun_executor.py \
+  --baseline-revisions examples/change-impact/baseline-revisions.json \
+  --current-revisions examples/change-impact/current-revisions.json \
+  --manifest examples/run-manifest/manifest.json \
+  --registry examples/change-impact/evidence-registry.json \
+  --changed-path policies/release-policy.json \
+  --markdown \
+  --fail-on-noncompleted
+```
+
+The [human reauthorization record](docs/REAUTHORIZATION_RECORD.md) is the next
+boundary after a completed rerun. It validates that an accountable person made an
+explicit reuse decision for the exact evidence ID, decision target, revision
+digests, selected checks, and rerun-result digest. It fails closed when the rerun
+is incomplete, the artifact has changed, or the decision has expired. Reauthorization
+means evidence may be reused within the declared scope and time; it is not deployment
+approval.
+
+Run the synthetic positive example:
+
+```bash
+uv run python tools/reauthorization_record.py \
+  --record examples/reauthorization-record/record.json \
+  --rerun-result examples/reauthorization-record/rerun-result.json \
+  --now 2026-11-10T12:00:00Z \
+  --markdown \
+  --fail-on-nonreusable
+```
+
+The [CI evidence reauthorization contract](.github/workflows/reauthorization.yml)
+connects these steps on pull requests, pushes, and manual runs. It generates the
+synthetic change-impact plan, runs the bounded offline checks, validates the
+separate human record, and uploads metadata-only reports for review. The workflow
+uses read-only repository permissions and fails when the rerun is incomplete or
+the decision is expired, mismatched, or otherwise not reusable.
+
+This is a contract test for the assurance boundary, not a deployment approval
+workflow. It does not create human decisions, call a live model provider, or
+change the existing release-provenance and release-promotion jobs. The checked-in
+human record has an expiration time so the example cannot remain green forever
+without review.
 
 The [provider evidence receipt](docs/PROVIDER_EVIDENCE_RECEIPT.md) connects the
 existing OpenAI- and Anthropic-shaped adapters to that registry. It records which
@@ -628,12 +791,16 @@ the shortest learner path through the harness. It teaches one complete workflow:
 bounded execution, independent breaker evaluation, semantic-outcome checks, bounded
 retry and cost metadata, and human escalation.
 
-For the security path, read the [AI Incident Response
+For the runtime security path, read the [AI Incident Response
 Guide](docs/AI_INCIDENT_RESPONSE.md), then run the [AI Incident Response Tabletop
-Lab](examples/ai-incident-response-lab/README.md). These materials add an AI-specific
-incident overlay: model and context revisions, untrusted content, tool authority,
-execution authority, containment, evidence preservation, and staged recovery. The
-guide and tabletop remain synthetic and metadata-only; they do not claim production
+Lab](examples/ai-incident-response-lab/README.md). For the measurement path, read the
+[AI Evaluation Incident Response guide](docs/AI_EVALUATION_INCIDENT_RESPONSE.md).
+It covers false-green reports, evaluator and case-set drift, missing telemetry,
+invalid judge evidence, release-gate failures, containment, re-evaluation, and
+follow-up regression controls. These materials add AI-specific incident overlays:
+model and context revisions, untrusted content, tool authority, execution authority,
+evaluation validity, evidence preservation, and staged recovery. The guides and
+tabletop remain synthetic and metadata-only; they do not claim production
 incident-response readiness.
 
 Run it from the repository root:
@@ -674,6 +841,13 @@ return to the [AI Incident Response Tabletop Lab](examples/ai-incident-response-
 to assign owners, draft a bounded status update, and choose a controlled recovery
 change. The lesson uses a RACI model (Responsible, Accountable, Consulted, and Informed)
 and remains a synthetic learning exercise, not a production runbook.
+
+For a provider-neutral benchmark of those recovery questions, see the
+[ESAC-Bench Recovery Track](https://github.com/julie-elkins/esac-bench/blob/main/docs/benchmark-spec.md#recovery-track).
+It uses seven synthetic interruption and handoff cases and reports final-state
+restoration, side-effect integrity, recovery-evidence completeness, and bounded
+recovery separately. It is a benchmark control, not proof of production
+disaster recovery.
 
 Use the [Production AI Agent Readiness Checklist](docs/PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
 last. It is a crosswalk into the existing evidence, workflow, evaluation, security,
@@ -1887,7 +2061,10 @@ export telemetry. The bridge accepts a strict local subset of OTLP/JSON and reco
 GenAI `execute_tool` spans. It also accepts the documented `agent.reliability.*` events
 for claims, answers, abstentions, authorization, side effects, and output flags.
 The field mapping follows the [OTLP specification](https://opentelemetry.io/docs/specs/otlp/)
-and the [OpenTelemetry GenAI span conventions](https://github.com/open-telemetry/semantic-conventions/blob/main/docs/gen-ai/gen-ai-spans.md).
+and the [OpenTelemetry GenAI semantic conventions](https://github.com/open-telemetry/semantic-conventions-genai).
+The conventions are a developing provider-neutral vocabulary, so record the
+revision or retrieval date and preserve provider-specific extensions at the
+adapter boundary.
 
 ```bash
 uv run agent-reliability \

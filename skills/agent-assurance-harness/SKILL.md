@@ -88,6 +88,13 @@ negative control and make the delivery gate fail when it is not caught.
   an independent breaker (an evaluator deliberately trying to expose a false pass).
   Add a degraded case that the breaker must catch and report evaluator validity
   separately from task outcome.
+- Treat autonomy as trust-gated: require evaluator calibration, an independent
+  false-pass check, named authorization ownership, and a bounded response when
+  evaluation is unavailable or inconclusive before expanding authority.
+- Record evidence custody for consequential decisions: who holds the evidence,
+  whether the executor can rewrite or delete it, and whether the record is
+  independently reviewable. A public incident report is not telemetry-backed
+  evidence by itself.
 - When adding a learner-facing example, provide a fast first result, a workflow map,
   copy-paste commands, expected output, troubleshooting, and an honest evidence
   template. Do not turn stars, visitors, or tutorial reach into claims about learners

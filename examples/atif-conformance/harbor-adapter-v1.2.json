@@ -1,0 +1,14 @@
+{
+  "artifact_count": 1,
+  "artifact_status": "observed",
+  "event_linkage_status": "complete",
+  "redaction_policy": "metadata-only-v1",
+  "run_id": "terminal-bench-mini-swe-agent-89c7a0ac17be58f4",
+  "schema_version": "ATIF-v1.2",
+  "semantic_outcome": "passed",
+  "source_id": "harbor",
+  "step_count": 63,
+  "terminal_status": "completed",
+  "tool_call_count": 61,
+  "trajectory_digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+}

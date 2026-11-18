@@ -1,0 +1,13 @@
+{
+  "source_id": "harbor",
+  "run_id": "synthetic-run-partial-linkage",
+  "schema_version": "ATIF-v1.5",
+  "trajectory_digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "step_count": 3,
+  "tool_call_count": 1,
+  "terminal_status": "completed",
+  "artifact_status": "observed",
+  "artifact_count": 1,
+  "redaction_policy": "metadata-only-v1",
+  "event_linkage_status": "partial"
+}

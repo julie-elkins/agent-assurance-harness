@@ -9,6 +9,7 @@ DELIVERY_STANDARD = REPOSITORY / "PRODUCTION_DELIVERY_STANDARD.md"
 ASSURANCE_SKILL = REPOSITORY / "skills" / "agent-assurance-harness" / "SKILL.md"
 SHOWCASE = REPOSITORY / "SHOWCASE.md"
 ROLE_GUIDE = REPOSITORY / "ROLE_ALIGNMENT_GUIDE.md"
+EVALUATION_CHECKLIST = REPOSITORY / "AGENT_EVALUATION_CHECKLIST.md"
 
 
 def test_guide_exists_and_local_references_are_present():
@@ -42,7 +43,13 @@ def test_guide_exists_and_local_references_are_present():
     assert "tools/launch_to_field_report.py" in role_guide
     assert "tools/instructor_calibration_report.py" in role_guide
     assert "tools/agent_memory_policy_report.py" in role_guide
-    assert "DESIGN_DECISIONS.md" in README.read_text(encoding="utf-8")
+    readme = README.read_text(encoding="utf-8")
+    assert "DESIGN_DECISIONS.md" in readme
+    assert "required safety controls" in readme
+    assert "## Start here" in readme
+    assert "## Who this is for" in readme
+    assert "tools/showcase_demo.py --markdown" in readme
+    assert "docs/assets/assurance-showcase.svg" in readme
     assert "tools/portfolio_assurance_report.py" in role_guide
     assert "--course-root" in role_guide
     assert "Instructor calibration" in showcase
@@ -55,15 +62,26 @@ def test_guide_exists_and_local_references_are_present():
     assert "tools/developer_workflow_report.py" in showcase
     assert "Green-but-unaudited negative control caught" in showcase
     assert "DEVELOPER_WORKFLOW_ASSURANCE.md" in showcase
-    assert "tools/developer_workflow_report.py" in README.read_text(encoding="utf-8")
-    assert "Security hardening" in README.read_text(encoding="utf-8")
+    assert "The five-minute reviewer route" in showcase
+    assert "Guarded agent: PASS" in showcase
+    assert "tools/developer_workflow_report.py" in readme
+    assert "Security hardening" in readme
+    assert "Agent Evaluation Checklist" in readme
+    checklist = EVALUATION_CHECKLIST.read_text(encoding="utf-8")
+    assert "# Agent evaluation checklist" in checklist
+    assert "multi-turn" in checklist
+    assert "Trajectory validity" in checklist
+    assert "If evidence is missing" in checklist
     assert "Security hardening around the harness" in guide
     assert "phases 43–47" in build_guide
     assert "immutable commit" in skill
     assert "supply-chain hardening" in role_guide.lower()
+    assert "smallest meaningful public proof" in guide
+    assert "For the maintainer path" in guide
 
     for relative_path in (
         "README.md",
+        "AGENT_EVALUATION_CHECKLIST.md",
         "BUILD_GUIDE.md",
         "SECURITY.md",
         "AGENTS.md",
@@ -73,6 +91,7 @@ def test_guide_exists_and_local_references_are_present():
         "tools/render_assurance_summary.py",
         "tools/golden_trace_report.py",
         "SHOWCASE.md",
+        "docs/assets/assurance-showcase.svg",
         "ROLE_ALIGNMENT_GUIDE.md",
         "examples/traces/golden-manifest.json",
         ".github/workflows/reliability.yml",

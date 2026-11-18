@@ -63,6 +63,20 @@ It does not prove:
 Those limits matter because a green synthetic gate is evidence about the checked contract,
 not a universal quality claim.
 
+## 🧭 Take this forward
+
+**Remember:** a harness is the complete workflow around the model—tools,
+permissions, policies, state, and evaluators.
+
+**Try next:** name the authorization owner, the independent evidence holder, and
+the false-pass check before expanding an agent's autonomy.
+
+**Inspect:** calibration, negative controls, evidence source and age, executor
+mutability, and the human decision record.
+
+**Do not infer:** a passing synthetic gate, public incident report, or model score
+proves that a live harness is trustworthy in every environment.
+
 ## Shadow execution
 
 Shadow execution is a pre-effect rehearsal: the harness compares an agent's
@@ -107,16 +121,38 @@ live provider behaviour or real-tool safety.
 
 ## The five-minute path
 
-Install the locked development environment and run the local suite:
+Start with the smallest meaningful public proof:
 
 ```bash
 uv sync --extra dev
+uv run python tools/showcase_demo.py --markdown
+```
+
+The showcase gives a new reviewer one complete path: a guarded synthetic agent, known
+false-pass controls, a launch-to-field enablement check, instructor calibration, and the
+bounded synthetic memory-policy lane. A negative control is a deliberately degraded case
+that should be caught; it proves the evaluator can block the failure it claims to detect.
+
+Read the result in this order:
+
+1. Confirm the guarded path passes.
+2. Confirm the evaluator and mutation controls caught their planted failures.
+3. Confirm the memory-policy negative control is blocked because required evidence was
+   forgotten.
+4. Confirm the output remains metadata-only.
+
+The production connection is a pre-merge safety test: a repeatable check that runs before
+code is accepted into the main branch. It provides evidence that the declared controls
+ran; it does not prove live model reliability or production readiness.
+
+For the maintainer path, run the full local suite:
+
+```bash
 uv run pytest
 uv run agent-reliability --json
 ```
 
-The default report compares the naive and guarded synthetic reference adapters. The naive
-adapter is a deliberate negative control; its failures are expected. Use
+The default report compares the naive and guarded synthetic reference adapters. Use
 `--fail-on-findings` when a caller wants any blocking finding to return a non-zero exit
 code.
 

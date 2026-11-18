@@ -1,0 +1,56 @@
+{
+  "comparison_id": "synthetic-agent-candidates-v1",
+  "constraints": {
+    "max_quality_spread": 0.1,
+    "require_safety_pass": true,
+    "require_evidence_pass": true,
+    "require_held_out_pass": true
+  },
+  "candidates": [
+    {
+      "candidate_id": "quality-first-safe",
+      "safety_status": "passed",
+      "evidence_status": "passed",
+      "held_out_status": "passed",
+      "quality_scores": [0.92, 0.93, 0.94],
+      "total_cost_units": 12.0,
+      "latency_units": 8.0
+    },
+    {
+      "candidate_id": "balanced-safe",
+      "safety_status": "passed",
+      "evidence_status": "passed",
+      "held_out_status": "passed",
+      "quality_scores": [0.88, 0.89, 0.9],
+      "total_cost_units": 7.0,
+      "latency_units": 5.0
+    },
+    {
+      "candidate_id": "cheap-but-unsafe",
+      "safety_status": "failed",
+      "evidence_status": "passed",
+      "held_out_status": "passed",
+      "quality_scores": [0.96, 0.95, 0.97],
+      "total_cost_units": 3.0,
+      "latency_units": 2.0
+    },
+    {
+      "candidate_id": "dominated-safe",
+      "safety_status": "passed",
+      "evidence_status": "passed",
+      "held_out_status": "passed",
+      "quality_scores": [0.84, 0.85, 0.86],
+      "total_cost_units": 10.0,
+      "latency_units": 9.0
+    },
+    {
+      "candidate_id": "unstable-safe",
+      "safety_status": "passed",
+      "evidence_status": "passed",
+      "held_out_status": "passed",
+      "quality_scores": [0.79, 0.98, 0.8],
+      "total_cost_units": 4.0,
+      "latency_units": 3.0
+    }
+  ]
+}

@@ -4,6 +4,82 @@ This file explains the choices that shape the Agent Assurance Harness. It is a
 learning aid and reviewer map, not a claim that one architecture is universally
 correct. The implementation and tests remain the source of truth.
 
+## Extend the harness with ATIF evidence conformance
+
+**Decision:** Add an ATIF (Agent Trajectory Interchange Format) evidence-
+conformance lane to this harness that validates an identifier-only trajectory
+summary from a local provider or Harbor adapter.
+
+**Instead of:** Creating a second public evidence-conformance repository, adding
+another raw trajectory format, or publishing complete provider traces.
+
+**Why:** This harness already owns provider-neutral conformance, metadata-only
+receipts, revision binding, and provenance checks. The missing capability was a
+focused check that a trajectory artifact was observed, linked, and safe to
+report. Keeping the new lane here makes that boundary part of the existing
+assurance path rather than creating two competing contracts.
+
+**Verification:** The ATIF evidence-conformance CLI runs synthetic positive and
+negative controls for unsupported schemas, missing artifacts, incomplete event
+linkage, terminal-status contradictions, and raw-content refusal.
+
+**Costs if wrong:** The lane remains coupled to this harness and cannot replay
+or semantically inspect raw trajectories. A future local-only integration may
+need to be extracted if independent adoption becomes more important than one
+integrated assurance path.
+
+**What this does not prove:** A passing evidence summary does not prove task
+correctness, model quality, live provider availability, or production safety.
+
+## Keep Muse Ember as a provider track, not an assurance-core dependency
+
+**Decision:** Add Muse Ember through the same provider-neutral evidence contract,
+starting with a synthetic fixture until an official public Ember endpoint and
+model identifier are available.
+
+**Instead of:** Adding an unverified live client or treating private tester
+access as a public integration contract.
+
+**Why:** A provider track tests provider behaviour; the assurance core tests
+whether evidence supports a claim. Separating them lets the same negative
+controls compare providers without inventing an endpoint or spending credits
+before the interface is established.
+
+**Verification:** The synthetic `muse-ember` fixture passes the same ATIF
+evidence-conformance checks as the Harbor fixture, while the documentation
+labels it as synthetic rather than a live model result.
+
+**Costs if wrong:** No live Ember comparison is claimed until the public
+interface is documented, so the provider-specific study is deferred.
+
+**What this does not prove:** The synthetic track does not establish Ember
+quality, latency, cost, or behaviour on real tasks.
+
+## Keep Scorecard as a default-branch supply-chain scan
+
+**Decision:** Run the pinned Scorecard workflow on `main`, on its schedule,
+after branch-protection changes, or by manual dispatch, but do not require its
+status as a pull-request check.
+
+**Instead of:** Triggering Scorecard on pull requests or requiring a
+`Scorecard analysis` status that the action cannot produce for a feature branch.
+
+**Why:** The observed Scorecard action rejected the PR-branch dispatch with
+`Only the default branch main is supported`. Making that incompatible status
+required would block otherwise mergeable changes without evaluating the
+change. Keeping the scan on `main` preserves supply-chain coverage at the
+supported boundary.
+
+**Verification:** The workflow remains pinned and runs on `main`; the
+`protect-main` ruleset requires checks that support pull-request evaluation.
+
+**Costs if wrong:** A supply-chain finding may be reported after merge rather
+than before it. That risk is accepted until a Scorecard version supports
+feature-branch analysis or a separate PR-compatible scan is added.
+
+**What this does not prove:** A green pull-request gate does not replace the
+default-branch Scorecard scan or establish complete supply-chain security.
+
 ## Keep the required path synthetic and provider-neutral
 
 **Decision:** Run the required CI path against deterministic synthetic scenarios and
@@ -156,6 +232,90 @@ commands immediately but preserves reviewability and avoids arbitrary execution.
 **What this does not prove:** A registered check ID does not prove that the check ran
 or passed. The trusted workflow must record the resulting evidence and reauthorization
 separately.
+
+## Execute only code-side allowlisted rerun checks
+
+**Decision:** Add a bounded offline executor that maps registered check IDs to
+reviewed synthetic checks in code and requires each selected check's negative
+control to be caught.
+
+**Instead of:** Executing commands from the evidence registry, or treating a
+completed process as proof that the affected evidence is safe to reuse.
+
+**Why:** The planner's `rerun_required` state is actionable only if a trusted
+workflow can perform the named synthetic checks. Keeping the executable mapping
+in code prevents metadata from becoming arbitrary execution, while requiring a
+known-bad control prevents a positive path from producing a misleading green
+result.
+
+**Verification:** `tools/rerun_executor.py` refuses unknown IDs, enforces local
+check and elapsed-time limits, runs the built-in synthetic suite once, and emits
+only metadata. Unit and integration tests cover unchanged, completed, blocked,
+refused, and limit-exceeded outcomes.
+
+**Costs if wrong:** A new check requires a reviewed code change in addition to a
+registry update, and the offline lane cannot measure live-provider behavior.
+
+**What this does not prove:** A completed rerun does not prove live model quality,
+production safety, or human reauthorization. It proves only that the selected
+synthetic controls completed inside this executor boundary.
+
+## Keep human reauthorization separate from rerun execution
+
+**Decision:** Store and validate a separate metadata-only human reauthorization
+record after the bounded rerun completes.
+
+**Instead of:** Letting a passing executor result implicitly authorize evidence
+reuse or adding a human decision field directly into the executor output.
+
+**Why:** Execution answers what checks ran; reauthorization answers who accepted
+the remaining risk, for which decision target, and until when. Separate artifacts
+make both boundaries inspectable and let a reviewer detect changed evidence,
+expired decisions, or an incomplete rerun.
+
+**Verification:** `tools/reauthorization_record.py` validates a versioned record
+against the exact rerun-result digest, evidence IDs, decision target, revision
+digests, selected checks, executor version, owner, timestamps, and expiration.
+It fails closed for incomplete, mismatched, malformed, future, or expired inputs.
+
+**Costs if wrong:** Teams must create a human decision artifact before reusing
+evidence, which adds a review step. That cost is accepted because removing the
+step would turn a synthetic test result into an unowned release decision.
+
+**What this does not prove:** `reauthorized` means the bound evidence may be
+reused within its declared scope and time. It does not approve deployment,
+prove production safety, or establish live model quality.
+
+## Exercise reauthorization as a separate CI contract
+
+**Decision:** Add a dedicated, read-only CI workflow that generates the synthetic
+change-impact plan, runs the bounded offline executor, validates the separate
+human reauthorization record, and uploads the three metadata-only reports.
+
+**Instead of:** Adding the reauthorization sequence to the release-promotion
+workflow, generating human decisions automatically, or treating a passing CI job
+as deployment approval.
+
+**Why:** A CI (Continuous Integration) contract should make the evidence lifecycle
+repeatable before merge while preserving the human authority boundary. A separate
+workflow keeps synthetic assurance reviewable and prevents a public fixture from
+quietly acquiring release authority. Uploading the reports even after a later
+step fails lets a reviewer distinguish missing output from a blocked decision.
+
+**Verification:** `.github/workflows/reauthorization.yml` runs the plan, rerun,
+and validator in dependency order, fails on non-completed or non-reusable states,
+uses read-only repository permissions, pins its actions, and uploads the
+metadata-only outputs with a finite retention period. The workflow contract test
+also checks that the release approval inputs are not present.
+
+**Costs if wrong:** The repository has another CI job and the checked-in synthetic
+record must be reviewed when it expires. That cost is accepted because a stale
+human decision should become visible rather than remain silently reusable.
+
+**What this does not prove:** A green workflow proves only that this synthetic
+contract executed and that its checked-in decision was reusable at validation
+time. It does not prove live model quality, production safety, or deployment
+readiness.
 
 ## Bind provider-shaped runs through metadata-only receipts
 

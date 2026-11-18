@@ -816,6 +816,13 @@ to assign owners, draft a bounded status update, and choose a controlled recover
 change. The lesson uses a RACI model (Responsible, Accountable, Consulted, and Informed)
 and remains a synthetic learning exercise, not a production runbook.
 
+For a provider-neutral benchmark of those recovery questions, see the
+[ESAC-Bench Recovery Track](https://github.com/julie-elkins/esac-bench/blob/main/docs/benchmark-spec.md#recovery-track).
+It uses seven synthetic interruption and handoff cases and reports final-state
+restoration, side-effect integrity, recovery-evidence completeness, and bounded
+recovery separately. It is a benchmark control, not proof of production
+disaster recovery.
+
 Use the [Production AI Agent Readiness Checklist](docs/PRODUCTION_AI_AGENT_READINESS_CHECKLIST.md)
 last. It is a crosswalk into the existing evidence, workflow, evaluation, security,
 incident-response, and delivery-path guides; it is not a production approval.

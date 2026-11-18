@@ -8,6 +8,12 @@ A provider-neutral harness for testing whether tool-using AI agents have the evi
 act, abstain, and report honestly, plus a bounded Course Doctor workflow for deciding
 when technical training content is ready for human approval.
 
+The [ESAC-Bench Recovery Track](https://github.com/julie-elkins/esac-bench/blob/main/docs/benchmark-spec.md#recovery-track)
+provides a separate seven-case benchmark for testing restoration, side-effect
+integrity, recovery evidence, and bounded recovery. This repository's labs
+explain and exercise the surrounding assurance controls; the benchmark remains
+synthetic and does not prove production disaster recovery.
+
 Start with the [Agent Assurance Harness Guide](GUIDE.md) for the reviewer/operator path,
 then read [Building the Agent Assurance Harness](BUILD_GUIDE.md) for the design rationale
 and extension path. The reusable [Production Delivery Standard](PRODUCTION_DELIVERY_STANDARD.md)

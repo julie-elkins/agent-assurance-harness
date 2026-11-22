@@ -70,6 +70,7 @@ that the check passed.
 | --- | --- | --- | --- |
 | Task outcome | Did the requested task succeed, or did only the transport return successfully? | Separate transport status, semantic outcome, and missing-context behavior. | [Production AI Engineering Bridge Lab](../examples/production-ai-engineering-bridge-lab/README.md) |
 | Evaluation coverage | Do evaluations include normal, edge, adversarial, and failure cases? | Dataset identifiers, expected outcomes, negative controls, and coverage result. | [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity) |
+| Model routing and fallback | Did the workflow change models or execution paths, and does the evidence explain whether continuation remained safe? | Selected model, route reason, capability and permission differences, revision binding, approval state, and authoritative postcondition evidence. | [Developer Workflow Assurance](DEVELOPER_WORKFLOW_ASSURANCE.md) |
 | Repeatability | Will the evaluation run again when the model, prompt, data, tool, or policy changes? | Trigger, schedule, revision binding, threshold, and human review path. | [LLM Eval Validity](https://github.com/julie-elkins/llm-eval-validity) |
 | Independent challenge | Can a breaker or verifier catch a false pass without sharing the builder's assumptions? | Independent control, known negative control, and blocked result. | [Agent Workflow Teaching Lab](../examples/agent-workflow-teaching-lab/README.md) |
 

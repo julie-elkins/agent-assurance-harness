@@ -52,6 +52,25 @@ provider output, credentials, or local repository contents.
   evidence, and postcondition reconciliation (a readback that confirms the resulting
   state).
 
+### Model routing and fallback are part of the evidence contract
+
+Model selection is part of the workflow configuration, not an invisible
+implementation detail. When a workflow changes models, record the selected model,
+the reason for the route, the required capability, and the relevant model,
+policy, tool, and permission revisions.
+
+A **fallback** is a new evaluated configuration. It is not automatically
+**recovery**, which means that the workflow understood the prior failure and
+continued safely. Before a fallback may continue an external action, the
+workflow must preserve the approval boundary, reuse stable operation identity,
+check the authoritative state, and account for capability, privacy, cost, and
+quality differences.
+
+If the action result is ambiguous or the required evidence is unavailable, the
+metadata-only report must return an explicit unknown or unavailable state. A
+successful fallback response or a local completion flag is not proof that the
+external action occurred exactly once.
+
 ## What it does not prove
 
 This is an assurance workflow demonstration, not a source-code correctness benchmark.

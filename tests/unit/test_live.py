@@ -1,3 +1,4 @@
+import io
 import json
 import urllib.error
 import urllib.request
@@ -28,14 +29,15 @@ def _policy(
     provider_id: str = "openai",
     allow_network: bool = True,
 ) -> LiveProviderPolicy:
+    credential_env_var = {
+        "openai": "OPENAI_API_KEY",
+        "anthropic": "ANTHROPIC_API_KEY",
+        "muse-ember": "MODEL_API_KEY",
+    }[provider_id]
     return LiveProviderPolicy(
         provider_id=provider_id,
         model="synthetic-model",
-        credential_env_var=(
-            "OPENAI_API_KEY"
-            if provider_id == "openai"
-            else "ANTHROPIC_API_KEY"
-        ),
+        credential_env_var=credential_env_var,
         limits=ProviderLimits(
             max_requests=1,
             max_output_tokens=64,
@@ -301,6 +303,71 @@ def test_anthropic_live_adapter_uses_approved_endpoint_and_headers(monkeypatch):
     assert b"test-secret" not in observed["body"]
 
 
+def test_muse_ember_live_adapter_uses_meta_responses_endpoint(monkeypatch):
+    monkeypatch.setenv("MODEL_API_KEY", "test-secret")
+    observed = {}
+
+    def transport(url, headers, body, timeout_seconds):
+        observed["url"] = url
+        observed["headers"] = headers
+        observed["body"] = body
+        observed["timeout_seconds"] = timeout_seconds
+        output = {
+            "events": [
+                {
+                    "type": "classification",
+                    "kind": "claim",
+                    "id": "claim:authorization_required",
+                },
+                {"type": "classification", "kind": "abstention"},
+            ]
+        }
+        return json.dumps(
+            {
+                "output": [
+                    {
+                        "type": "message",
+                        "content": [
+                            {
+                                "type": "output_text",
+                                "text": json.dumps(output),
+                            }
+                        ],
+                    }
+                ],
+                "usage": {"output_tokens": 32},
+            }
+        ).encode("utf-8")
+
+    result = live_provider_adapter(
+        _policy(provider_id="muse-ember"),
+        transport=transport,
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.refusal is None
+    assert result.trace is not None
+    assert result.trace.agent_id == "muse-ember-live"
+    assert observed["url"] == "https://api.meta.ai/v1/responses"
+    assert observed["headers"]["Authorization"] == "Bearer test-secret"
+    assert observed["headers"]["Accept"] == "application/json"
+    assert observed["headers"]["User-Agent"] == "agent-assurance-harness/0.67"
+    assert b"test-secret" not in observed["body"]
+    body = json.loads(observed["body"])
+    assert body["model"] == "synthetic-model"
+    assert body["store"] is False
+    assert body["reasoning"] == {"effort": "minimal"}
+    assert body["text"]["format"]["type"] == "json_schema"
+    assert body["text"]["format"]["name"] == "agent_reliability_events"
+    assert body["text"]["format"]["schema"]["required"] == ["events"]
+    assert "Synthetic request:" in body["input"]
+    assert "classification, not reliability" in body["input"]
+    assert body["input"].find("unauthorized-side-effect") >= 0
+    assert observed["timeout_seconds"] == 5.0
+
+
 def test_anthropic_tool_loop_pairs_synthetic_result_before_final_classification(
     monkeypatch,
 ):
@@ -465,6 +532,34 @@ def test_live_adapter_refuses_non_bytes_transport_output(monkeypatch):
     assert result.trace is None
     assert result.refusal is not None
     assert result.refusal.error == "provider_transport_invalid_response"
+
+
+def test_live_adapter_reports_only_structured_http_error_identifiers(monkeypatch):
+    monkeypatch.setenv("MODEL_API_KEY", "test-secret")
+
+    def transport(*args):
+        raise urllib.error.HTTPError(
+            "https://api.meta.ai/v1/responses",
+            401,
+            "Unauthorized",
+            {},
+            io.BytesIO(
+                b'{"error":{"type":"invalid_request_error","code":"invalid_api_key","message":"do not expose"}}'
+            ),
+        )
+
+    result = live_provider_adapter(
+        _policy(provider_id="muse-ember"),
+        transport=transport,
+    ).run(
+        _request(),
+        environment_for_scenario("unauthorized-side-effect"),
+    )
+
+    assert result.refusal is not None
+    assert "type=invalid_request_error" in result.refusal.message
+    assert "code=invalid_api_key" in result.refusal.message
+    assert "do not expose" not in result.refusal.message
 
 
 def test_live_transport_redirect_handler_refuses_redirects():

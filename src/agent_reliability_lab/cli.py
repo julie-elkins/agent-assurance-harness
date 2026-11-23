@@ -122,7 +122,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--live-provider",
-        choices=("openai", "anthropic"),
+        choices=("openai", "anthropic", "muse-ember"),
         help="Run one explicitly bounded live provider scenario.",
     )
     parser.add_argument(
@@ -336,11 +336,11 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
             return 2
-        credential_env_var = (
-            "OPENAI_API_KEY"
-            if args.live_provider == "openai"
-            else "ANTHROPIC_API_KEY"
-        )
+        credential_env_var = {
+            "openai": "OPENAI_API_KEY",
+            "anthropic": "ANTHROPIC_API_KEY",
+            "muse-ember": "MODEL_API_KEY",
+        }[args.live_provider]
         policy = LiveProviderPolicy(
             provider_id=args.live_provider,
             model=args.model,

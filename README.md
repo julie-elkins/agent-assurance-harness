@@ -29,6 +29,10 @@ uv sync --extra dev
 uv run python tools/showcase_demo.py --markdown
 ```
 
+For the focused hackathon path, run the [Muse Ember Evidence Gate](docs/MUSE_EMBER_EVIDENCE_GATE.md).
+It keeps the deterministic offline proof separate from one explicitly bounded live
+Muse Ember request.
+
 ![Agent assurance showcase: synthetic run, evidence contract, decision gate, and metadata-only review](docs/assets/assurance-showcase.svg)
 
 The visual summarizes the proof path: a synthetic run produces identifier-only evidence,

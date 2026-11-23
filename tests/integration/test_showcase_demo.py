@@ -54,3 +54,43 @@ def test_showcase_markdown_explains_where_review_starts():
     assert "Bounded synthetic agent memory policy" in result.stdout
     assert "Required evidence is retained" in result.stdout
     assert "lesson-001.md" not in result.stdout
+
+
+def test_muse_ember_evidence_gate_demo_is_offline_by_default():
+    result = subprocess.run(
+        [sys.executable, "tools/muse_ember_evidence_gate_demo.py"],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    report = json.loads(result.stdout)
+    assert report["offline"]["guarded_agent_passed"] is True
+    assert report["offline"]["evaluator_controls_caught"]
+    assert report["offline"]["mutation_controls_caught"]
+    assert report["live"] is None
+    assert report["controls"]["metadata_only"] is True
+    assert report["controls"]["synthetic_inputs_only"] is True
+    assert report["controls"]["raw_provider_output_retained"] is False
+    assert report["controls"]["network_called"] is False
+
+
+def test_muse_ember_evidence_gate_demo_requires_explicit_live_ceilings():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "tools/muse_ember_evidence_gate_demo.py",
+            "--live",
+            "--allow-network",
+        ],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 2
+    assert "--max-requests" in result.stderr
+    assert "MODEL_API_KEY" not in result.stderr

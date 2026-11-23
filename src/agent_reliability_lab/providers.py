@@ -286,7 +286,7 @@ def translate_provider_payload(
     try:
         data = _object(payload, "provider response")
         _parse_usage(data.get("usage"))
-        if provider_id == "openai":
+        if provider_id in {"openai", "muse-ember"}:
             return _translate_openai(
                 data,
                 scenario_id=scenario_id,
@@ -301,7 +301,7 @@ def translate_provider_payload(
         raise ProviderPayloadError(
             "unsupported_provider",
             "The provider is not supported by this adapter contract.",
-            "Use openai or anthropic.",
+            "Use openai, anthropic, or muse-ember.",
         )
     except ProviderPayloadError as error:
         return AdapterRun(

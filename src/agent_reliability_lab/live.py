@@ -38,10 +38,12 @@ from .providers import (
 _ENDPOINTS = {
     "openai": "https://api.openai.com/v1/responses",
     "anthropic": "https://api.anthropic.com/v1/messages",
+    "muse-ember": "https://api.meta.ai/v1/responses",
 }
 _CREDENTIALS = {
     "openai": "OPENAI_API_KEY",
     "anthropic": "ANTHROPIC_API_KEY",
+    "muse-ember": "MODEL_API_KEY",
 }
 _MAX_RESPONSE_BYTES = DEFAULT_MAX_RESPONSE_BYTES
 _PLACEHOLDER_CREDENTIALS = frozenset(
@@ -76,6 +78,30 @@ _LIVE_INSTRUCTIONS = (
     "Use only identifiers already present in the request or stable synthetic "
     "identifiers; never invent prose."
 )
+_MUSE_EMBER_INSTRUCTIONS = (
+    f"{_LIVE_INSTRUCTIONS} "
+    "For this Muse Ember Responses request, use the OpenAI-compatible events "
+    "format: return exactly one top-level object with exactly one key named "
+    "events. Use event type classification, not reliability, for classification "
+    "events. Do not return content, workflow, or any other top-level key."
+)
+_MUSE_EMBER_TEXT_FORMAT = {
+    "format": {
+        "type": "json_schema",
+        "name": "agent_reliability_events",
+        "schema": {
+            "type": "object",
+            "properties": {
+                "events": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                }
+            },
+            "required": ["events"],
+            "additionalProperties": False,
+        },
+    }
+}
 
 
 HttpTransport = Callable[[str, dict[str, str], bytes, float], bytes]
@@ -92,9 +118,6 @@ class _NoRedirectHandler(urllib.request.HTTPRedirectHandler):
             headers,
             None,
         )
-
-
-_LIVE_OPENER = urllib.request.build_opener(_NoRedirectHandler())
 
 
 @dataclass(frozen=True)
@@ -116,7 +139,7 @@ class LiveProviderPolicy:
             return _refusal(
                 "unsupported_provider",
                 "The live provider is not supported.",
-                "Use openai or anthropic.",
+                "Use openai, anthropic, or muse-ember.",
             )
         if self.credential_env_var != expected_credential:
             return _refusal(
@@ -229,7 +252,7 @@ class LiveProviderAdapter:
             )
         except urllib.error.HTTPError as error:
             return AdapterRun(
-                refusal=_http_refusal(error.code),
+                refusal=_live_http_refusal(error),
             )
         except (OSError, urllib.error.URLError, TimeoutError):
             return AdapterRun(
@@ -343,6 +366,19 @@ def _request_body(
             "input": json.dumps(safe_request, sort_keys=True),
             "max_output_tokens": policy.limits.max_output_tokens,
         }
+    elif policy.provider_id == "muse-ember":
+        payload = {
+            "model": policy.model,
+            "store": False,
+            "reasoning": {"effort": "minimal"},
+            "text": _MUSE_EMBER_TEXT_FORMAT,
+            "input": (
+                f"{_MUSE_EMBER_INSTRUCTIONS}\n\n"
+                "Synthetic request:\n"
+                f"{json.dumps(safe_request, sort_keys=True)}"
+            ),
+            "max_output_tokens": policy.limits.max_output_tokens,
+        }
     else:
         payload = {
             "model": policy.model,
@@ -359,15 +395,19 @@ def _request_body(
 
 
 def _headers(provider_id: str, credential: str) -> dict[str, str]:
-    if provider_id == "openai":
+    if provider_id in {"openai", "muse-ember"}:
         return {
             "Authorization": f"Bearer {credential}",
             "Content-Type": "application/json",
+            "Accept": "application/json",
+            "User-Agent": "agent-assurance-harness/0.67",
         }
     return {
         "x-api-key": credential,
         "anthropic-version": "2023-06-01",
         "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "agent-assurance-harness/0.67",
     }
 
 
@@ -378,13 +418,13 @@ def _extract_model_payload(provider_id: str, response: object) -> dict[str, obje
             "The provider response was not an object.",
             "Use the provider's structured JSON response.",
         )
-    if provider_id == "openai":
+    if provider_id in {"openai", "muse-ember"}:
         text = _openai_output_text(response)
         payload = _json_object(text)
         if set(payload) != {"events"}:
             raise ProviderPayloadError(
                 "provider_response_refused",
-                "The OpenAI response did not contain exactly the safe events field.",
+                "The Responses API response did not contain exactly the safe events field.",
                 "Return only an events array with identifier-only records.",
             )
         return payload
@@ -515,7 +555,7 @@ def _combine_payload(
     model_payload: dict[str, object],
     usage: dict[str, int | float],
 ) -> dict[str, object]:
-    if provider_id == "openai":
+    if provider_id in {"openai", "muse-ember"}:
         return {"events": model_payload["events"], "usage": usage}
     combined: dict[str, object] = {
         "content": model_payload["content"],
@@ -539,11 +579,16 @@ def _default_transport(
         headers=headers,
         method="POST",
     )
-    try:
-        with _LIVE_OPENER.open(request, timeout=timeout_seconds) as response:
-            return response.read(_MAX_RESPONSE_BYTES + 1)
-    except urllib.error.HTTPError:
-        raise
+    with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+        if response.geturl() != url:
+            raise urllib.error.HTTPError(
+                url,
+                310,
+                "provider redirects are disabled",
+                response.headers,
+                None,
+            )
+        return response.read(_MAX_RESPONSE_BYTES + 1)
 
 
 def _is_synthetic_environment(environment: object) -> bool:
@@ -599,3 +644,37 @@ def _http_refusal(status_code: int) -> AdapterRefusal:
         f"The provider rejected the request with HTTP {status_code}.",
         "Check the model identifier and reviewed request contract; response content was discarded.",
     )
+
+
+def _live_http_refusal(error: urllib.error.HTTPError) -> AdapterRefusal:
+    """Add only structured provider error identifiers to the local refusal."""
+
+    refusal = _http_refusal(error.code)
+    detail = _safe_http_error_detail(error)
+    if detail is None:
+        return refusal
+    return replace(
+        refusal,
+        message=f"{refusal.message} Provider error identifiers: {detail}.",
+    )
+
+
+def _safe_http_error_detail(error: urllib.error.HTTPError) -> str | None:
+    """Extract provider error type/code without retaining response text."""
+
+    try:
+        raw = error.read(_MAX_RESPONSE_BYTES)
+        payload = json.loads(raw.decode("utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    if not isinstance(payload, dict):
+        return None
+    provider_error = payload.get("error")
+    if not isinstance(provider_error, dict):
+        return None
+    identifiers = []
+    for key in ("type", "code", "param"):
+        value = provider_error.get(key)
+        if isinstance(value, str) and value:
+            identifiers.append(f"{key}={value}")
+    return ", ".join(identifiers) or None

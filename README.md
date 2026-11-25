@@ -127,6 +127,21 @@ uv run python tools/atif_conformance_report.py \
 This is deliberately separate from task correctness. A task can pass its verifier
 and still be blocked when its expected evidence artifact is missing or incomplete.
 
+### Trace retention is not training authorization
+
+The harness's metadata-only boundary is also a reuse boundary. Retaining a
+trace for evaluation does not authorize training, fine-tuning, publication, or
+sharing it with another system. Raw prompts, outputs, tool payloads, personal
+data, secrets, and provider-private material stay in the approved private
+environment.
+
+Before reusing a trace, make a separate decision about privacy, security,
+copyright, provider terms, consent, retention, and access. A verified passing
+trace may be a training candidate only after that review. A failed or unsafe
+trace is usually more useful as local diagnostic evidence or a bounded
+regression case than as a training example. Public fixtures remain synthetic,
+redacted, identifier-only, or metadata-only.
+
 For the shortest outside-reviewer path, use the [Showcase](SHOWCASE.md). It runs an
 offline synthetic assurance demo and documents the optional metadata-only demonstration
 against a local checkout of the public
